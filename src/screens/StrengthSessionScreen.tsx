@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { appendEvent, getSessionEvents } from '../domain/sessionStore';
-import type { SessionRow } from '../domain/types';
+import { appendEvent, getSessionById, getSessionEvents, setSessionStatus } from '../domain/sessionStore';
+import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
   Card,
@@ -40,10 +40,7 @@ type DraftSet = {
   timeSeconds: number;
 };
 
-type StrengthSessionScreenProps = {
-  session: SessionRow;
-  onFinish: () => void;
-};
+type StrengthSessionScreenProps = RootStackScreenProps<'StrengthLogger'>;
 
 const EXERCISES: StrengthExercise[] = [
   { id: 'pullups', name: 'Weighted Pull-ups', kind: 'reps', target: 'Back - 3 Sets' },
@@ -88,7 +85,10 @@ const parseLoggedSets = (events: { type: string; payload: unknown }[]): Strength
   return sets;
 };
 
-export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScreenProps) => {
+export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScreenProps) => {
+  const { sessionId } = route.params;
+  const session = getSessionById(sessionId);
+
   const [tick, setTick] = useState(0);
   const [restStart, setRestStart] = useState<number | null>(null);
   const [restElapsed, setRestElapsed] = useState(0);
@@ -115,7 +115,12 @@ export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScre
     }
   }, [tick, restStart]);
 
-  const events = useMemo(() => getSessionEvents(session.id), [session.id, tick]);
+  const handleFinish = () => {
+    setSessionStatus(sessionId, 'completed');
+    navigation.navigate('Tabs');
+  };
+
+  const events = useMemo(() => getSessionEvents(sessionId), [sessionId, tick]);
   const loggedSets = useMemo(() => parseLoggedSets(events), [events]);
   const selectedExercise = EXERCISES.find((exercise) => exercise.id === selectedExerciseId) ?? EXERCISES[0];
 
@@ -154,7 +159,7 @@ export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScre
       return;
     }
 
-    appendEvent(session.id, 'SET_LOGGED', {
+    appendEvent(sessionId, 'SET_LOGGED', {
       exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
       setNumber: target.setNumber,
@@ -180,7 +185,7 @@ export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScre
   };
 
   const handleUndo = () => {
-    appendEvent(session.id, 'SET_UNDONE', { at: Date.now() });
+    appendEvent(sessionId, 'SET_UNDONE', { at: Date.now() });
   };
 
   const handleRestStart = () => {
@@ -188,11 +193,11 @@ export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScre
     setRestElapsed(0);
     setRestTargetMs(180000);
     setShowRestSheet(true);
-    appendEvent(session.id, 'REST_STARTED', { at: Date.now() });
+    appendEvent(sessionId, 'REST_STARTED', { at: Date.now() });
   };
 
   const handleRestEnd = () => {
-    appendEvent(session.id, 'REST_ENDED', { at: Date.now(), durationMs: restElapsed });
+    appendEvent(sessionId, 'REST_ENDED', { at: Date.now(), durationMs: restElapsed });
     setRestStart(null);
     setRestElapsed(0);
     setShowRestSheet(false);
@@ -204,14 +209,22 @@ export const StrengthSessionScreen = ({ session, onFinish }: StrengthSessionScre
 
   const restRemaining = Math.max(0, restTargetMs - restElapsed);
 
+  if (!session) {
+    return (
+      <View style={styles.screen}>
+        <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Pull Day</Text>
-          <Text style={styles.headerTimer}>Session Time {formatSessionTime(Date.now() - session.started_at)}</Text>
+          <Text style={styles.headerTimer}>Session Time {formatSessionTime(Date.now() - (session?.started_at ?? Date.now()))}</Text>
         </View>
-        <Button label="Finish" onPress={onFinish} style={styles.finishButton} />
+        <Button label="Finish" onPress={handleFinish} style={styles.finishButton} />
       </View>
 
       <View style={styles.metricsRow}>

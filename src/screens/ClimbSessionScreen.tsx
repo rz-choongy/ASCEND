@@ -1,8 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { appendEvent } from '../domain/sessionStore';
-import type { SessionRow } from '../domain/types';
+import { appendEvent, getSessionById, setSessionStatus } from '../domain/sessionStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
+import type { RootStackScreenProps } from '../navigation/types';
 import { Button, Chip, Divider, IconButton, colors, radius, spacing, typography } from '../ui';
 
 type GradeOption = {
@@ -13,10 +13,7 @@ type GradeOption = {
 
 type ScaleOption = 'tape' | 'vscale' | 'french';
 
-type ClimbSessionScreenProps = {
-  session: SessionRow;
-  onFinish: () => void;
-};
+type ClimbSessionScreenProps = RootStackScreenProps<'ClimbLogger'>;
 
 const GRADE_OPTIONS: GradeOption[] = [
   { label: 'V0', min: 0, max: 0 },
@@ -48,7 +45,10 @@ const formatLogTime = (ms: number): string => {
   return `${hours}:${minutes}`;
 };
 
-export const ClimbSessionScreen = ({ session, onFinish }: ClimbSessionScreenProps) => {
+export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
+  const { sessionId } = route.params;
+  const session = getSessionById(sessionId);
+
   const [tick, setTick] = useState(0);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[4]);
   const [scale, setScale] = useState<ScaleOption>('tape');
@@ -58,13 +58,26 @@ export const ClimbSessionScreen = ({ session, onFinish }: ClimbSessionScreenProp
     return () => clearInterval(interval);
   }, []);
 
-  const logs = useClimbSessionLogs(session.id, tick);
+  const logs = useClimbSessionLogs(sessionId, tick);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
-  const duration = formatDurationParts(Date.now() - session.started_at);
+  const duration = formatDurationParts(Date.now() - (session?.started_at ?? Date.now()));
   const points = recentLogs.length * 5;
 
+  const handleFinish = () => {
+    setSessionStatus(sessionId, 'completed');
+    navigation.navigate('Tabs');
+  };
+
+  if (!session) {
+    return (
+      <View style={styles.screen}>
+        <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
+      </View>
+    );
+  }
+
   const handleLog = (result: 'SEND' | 'FLASH') => {
-    appendEvent(session.id, 'CLIMB_LOGGED', {
+    appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeLabel: selectedGrade.label,
       gradeMin: selectedGrade.min,
       gradeMax: selectedGrade.max,
@@ -73,7 +86,7 @@ export const ClimbSessionScreen = ({ session, onFinish }: ClimbSessionScreenProp
   };
 
   const handleUndo = () => {
-    appendEvent(session.id, 'CLIMB_UNDONE', { at: Date.now() });
+    appendEvent(sessionId, 'CLIMB_UNDONE', { at: Date.now() });
   };
 
   return (
@@ -171,7 +184,7 @@ export const ClimbSessionScreen = ({ session, onFinish }: ClimbSessionScreenProp
       </ScrollView>
 
       <View style={styles.finishBar}>
-        <Button label="Finish Session" onPress={onFinish} style={styles.finishButton} />
+        <Button label="Finish Session" onPress={handleFinish} style={styles.finishButton} />
       </View>
     </View>
   );

@@ -4,6 +4,7 @@ import { getAll } from '../db/db';
 import { applyClimbEvents } from '../domain/climbLogUtils';
 import { appendEvent, getSessionEvents } from '../domain/sessionStore';
 import type { SessionRow } from '../domain/types';
+import type { RootStackScreenProps } from '../navigation/types';
 import { Button, Chip, Divider, ListRow, colors, radius, spacing, typography } from '../ui';
 
 type GradeOption = {
@@ -28,9 +29,7 @@ type StrengthSet = {
   exerciseName?: string;
 };
 
-type SessionHistoryScreenProps = {
-  onStartNewSession?: () => void;
-};
+type SessionHistoryScreenProps = RootStackScreenProps<'SessionDetail'>;
 
 const GRADE_OPTIONS: GradeOption[] = [
   { label: 'V0', min: 0, max: 0 },
@@ -126,7 +125,8 @@ const parseStrengthSets = (events: { type: string; payload: unknown }[]): Streng
   return sets;
 };
 
-export const SessionHistoryScreen = ({ onStartNewSession }: SessionHistoryScreenProps) => {
+export const SessionHistoryScreen = ({ navigation }: SessionHistoryScreenProps) => {
+  const onStartNewSession = () => navigation.navigate('Tabs');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);

@@ -1,168 +1,69 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { Platform, SafeAreaView, StatusBar as NativeStatusBar, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { migrate } from './src/db/migrate';
-import {
-  createSession,
-  getActiveSession,
-  getSessionById,
-  setSessionStatus,
-} from './src/domain/sessionStore';
-import type { SessionRow, SessionType } from './src/domain/types';
+import type { RootStackParamList, TabParamList } from './src/navigation/types';
+import { CalendarScreen } from './src/screens/CalendarScreen';
 import { ClimbSessionScreen } from './src/screens/ClimbSessionScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { LogScreen } from './src/screens/LogScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
-import { Button, colors, spacing } from './src/ui';
+import { colors } from './src/ui';
 
-type AppScreen =
-  | { name: 'tabs' }
-  | { name: 'strength'; sessionId: string }
-  | { name: 'climb'; sessionId: string }
-  | { name: 'history' };
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
 
-export default function App() {
-  const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [screen, setScreen] = useState<AppScreen>({ name: 'tabs' });
-  const safeTop = Platform.OS === 'android' ? NativeStatusBar.currentHeight ?? 0 : 0;
-
-  useEffect(() => {
-    migrate();
-    setActiveSession(getActiveSession());
-  }, []);
-
-  const refresh = () => {
-    setActiveSession(getActiveSession());
-    setRefreshKey((prev) => prev + 1);
-  };
-
-  const navigateToActiveSession = () => {
-    const session = getActiveSession();
-    if (!session) {
-      return;
-    }
-    if (session.type === 'strength') {
-      setScreen({ name: 'strength', sessionId: session.id });
-      return;
-    }
-    setScreen({ name: 'climb', sessionId: session.id });
-  };
-
-  const handleStartQuickSession = (type: SessionType) => {
-    if (getActiveSession()) {
-      navigateToActiveSession();
-      return;
-    }
-    const sessionId = createSession(type);
-    refresh();
-    if (type === 'strength') {
-      setScreen({ name: 'strength', sessionId });
-      return;
-    }
-    setScreen({ name: 'climb', sessionId });
-  };
-
-  const handleFinishSession = (sessionId: string) => {
-    setSessionStatus(sessionId, 'completed');
-    refresh();
-    setScreen({ name: 'tabs' });
-  };
-
-  const handleOpenHistory = () => {
-    setScreen({ name: 'history' });
-  };
-
-  const renderTabs = () => (
-    <View style={styles.content}>
-      <HomeScreen
-        activeSession={activeSession}
-        onStartQuickSession={handleStartQuickSession}
-        onResumeSession={navigateToActiveSession}
-      />
-    </View>
-  );
-
+function TabNavigator() {
   return (
-    <View style={styles.appShell}>
-      {screen.name === 'tabs' ? null : (
-        <SafeAreaView style={[styles.sessionHeader, { paddingTop: spacing.xs + safeTop }]}>
-          <Button
-            label="Back"
-            variant="ghost"
-            onPress={() => setScreen({ name: 'tabs' })}
-            style={styles.backButton}
-            textStyle={styles.backButtonText}
-          />
-        </SafeAreaView>
-      )}
-
-      {screen.name === 'tabs' ? renderTabs() : null}
-      {screen.name === 'strength' ? (
-        getSessionById(screen.sessionId) ? (
-          <StrengthSessionScreen
-            session={getSessionById(screen.sessionId) as SessionRow}
-            onFinish={() => handleFinishSession(screen.sessionId)}
-          />
-        ) : (
-          <View style={styles.content}>
-            <Text style={styles.emptyText}>Session not found.</Text>
-          </View>
-        )
-      ) : null}
-      {screen.name === 'climb' ? (
-        getSessionById(screen.sessionId) ? (
-          <ClimbSessionScreen
-            session={getSessionById(screen.sessionId) as SessionRow}
-            onFinish={() => handleFinishSession(screen.sessionId)}
-          />
-        ) : (
-          <View style={styles.content}>
-            <Text style={styles.emptyText}>Session not found.</Text>
-          </View>
-        )
-      ) : null}
-      {screen.name === 'history' ? (
-        <SessionHistoryScreen
-          onStartNewSession={() => {
-            setScreen({ name: 'tabs' });
-          }}
-        />
-      ) : null}
-
-      <StatusBar style="light" />
-    </View>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 13,
+          fontWeight: '600',
+          letterSpacing: 0.5,
+        },
+      }}
+    >
+      <Tab.Screen name="Log" component={LogScreen} />
+      <Tab.Screen name="Calendar" component={CalendarScreen} />
+    </Tab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  appShell: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  sessionHeader: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  backButton: {
-    minHeight: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
-  },
-  backButtonText: {
-    fontSize: 11,
-    letterSpacing: 1,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    padding: spacing.sm,
-  },
-});
+export default function App() {
+  useEffect(() => {
+    migrate();
+  }, []);
+
+  return (
+    <>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tabs" component={TabNavigator} />
+          <Stack.Screen
+            name="ClimbLogger"
+            component={ClimbSessionScreen}
+            options={{ presentation: 'fullScreenModal' }}
+          />
+          <Stack.Screen
+            name="StrengthLogger"
+            component={StrengthSessionScreen}
+            options={{ presentation: 'fullScreenModal' }}
+          />
+          <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <StatusBar style="light" />
+    </>
+  );
+}
