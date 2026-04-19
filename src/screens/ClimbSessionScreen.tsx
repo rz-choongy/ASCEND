@@ -1,17 +1,15 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { appendEvent, getSessionById, setSessionStatus } from '../domain/sessionStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Chip, Divider, IconButton, colors, radius, spacing, typography } from '../ui';
+import { Button, Divider, colors, radius, spacing, typography } from '../ui';
 
 type GradeOption = {
   label: string;
   min: number;
   max: number;
 };
-
-type ScaleOption = 'tape' | 'vscale' | 'french';
 
 type ClimbSessionScreenProps = RootStackScreenProps<'ClimbLogger'>;
 
@@ -26,18 +24,6 @@ const GRADE_OPTIONS: GradeOption[] = [
   { label: 'V7+', min: 7, max: 10 },
 ];
 
-const formatDurationParts = (ms: number) => {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return {
-    hours: hours.toString().padStart(2, '0'),
-    minutes: minutes.toString().padStart(2, '0'),
-    seconds: seconds.toString().padStart(2, '0'),
-  };
-};
-
 const formatLogTime = (ms: number): string => {
   const date = new Date(ms);
   const hours = `${date.getHours()}`.padStart(2, '0');
@@ -49,22 +35,36 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const { sessionId } = route.params;
   const session = getSessionById(sessionId);
 
-  const [tick, setTick] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[4]);
-  const [scale, setScale] = useState<ScaleOption>('tape');
 
-  useEffect(() => {
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const logs = useClimbSessionLogs(sessionId, tick);
+  const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
-  const duration = formatDurationParts(Date.now() - (session?.started_at ?? Date.now()));
-  const points = recentLogs.length * 5;
 
-  const handleFinish = () => {
+  const bump = () => setRefreshKey((k) => k + 1);
+
+  const handleLog = (result: 'SEND' | 'FLASH') => {
+    appendEvent(sessionId, 'CLIMB_LOGGED', {
+      gradeLabel: selectedGrade.label,
+      gradeMin: selectedGrade.min,
+      gradeMax: selectedGrade.max,
+      result,
+    });
+    bump();
+  };
+
+  const handleUndo = () => {
+    appendEvent(sessionId, 'CLIMB_UNDONE', { at: Date.now() });
+    bump();
+  };
+
+  const handleDone = () => {
     setSessionStatus(sessionId, 'completed');
+    navigation.navigate('Tabs');
+  };
+
+  const handleAbandon = () => {
+    setSessionStatus(sessionId, 'abandoned');
     navigation.navigate('Tabs');
   };
 
@@ -76,43 +76,13 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     );
   }
 
-  const handleLog = (result: 'SEND' | 'FLASH') => {
-    appendEvent(sessionId, 'CLIMB_LOGGED', {
-      gradeLabel: selectedGrade.label,
-      gradeMin: selectedGrade.min,
-      gradeMax: selectedGrade.max,
-      result,
-    });
-  };
-
-  const handleUndo = () => {
-    appendEvent(sessionId, 'CLIMB_UNDONE', { at: Date.now() });
-  };
+  const hasLogs = recentLogs.length > 0;
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Log Session</Text>
-          <Text style={styles.subtitle}>Boulder Co. Downtown - Today</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.timerPill}>
-            <Text style={styles.timerText}>
-              {duration.hours}:{duration.minutes}:{duration.seconds}
-            </Text>
-          </View>
-          <IconButton label="..." />
-        </View>
-      </View>
+      <Text style={styles.title}>Climbing Session</Text>
 
-      <View style={styles.segmentRow}>
-        <Chip label="Tape Only" selected={scale === 'tape'} onPress={() => setScale('tape')} />
-        <Chip label="V-Scale" selected={scale === 'vscale'} onPress={() => setScale('vscale')} />
-        <Chip label="French" selected={scale === 'french'} onPress={() => setScale('french')} />
-      </View>
-
-      <Text style={styles.sectionLabel}>Select Route</Text>
+      <Text style={styles.sectionLabel}>Select Grade</Text>
       <View style={styles.gradeGrid}>
         {GRADE_OPTIONS.map((grade, index) => {
           const color = colors.gradePalette[index % colors.gradePalette.length];
@@ -138,29 +108,28 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         <Button label="Send" variant="success" onPress={() => handleLog('SEND')} style={styles.actionButton} />
       </View>
 
-      <View style={styles.sessionHeaderRow}>
-        <Text style={styles.sectionLabel}>Current Session ({recentLogs.length})</Text>
-        <View style={styles.pointsPill}>
-          <Text style={styles.pointsText}>{points} Points</Text>
-        </View>
-      </View>
-
       <View style={styles.logHeaderRow}>
-        <Text style={styles.sectionLabel}>Recent Logs</Text>
-        <Button
-          label="Undo"
-          variant="ghost"
-          onPress={handleUndo}
-          style={styles.undoButton}
-          textStyle={styles.undoText}
-        />
+        <Text style={styles.sectionLabel}>
+          Logged{recentLogs.length > 0 ? ` (${recentLogs.length})` : ''}
+        </Text>
+        {hasLogs ? (
+          <Button
+            label="Undo"
+            variant="ghost"
+            onPress={handleUndo}
+            style={styles.undoButton}
+            textStyle={styles.undoText}
+          />
+        ) : null}
       </View>
       <Divider style={styles.divider} />
 
       <ScrollView style={styles.logList} contentContainerStyle={styles.logListContent}>
-        {recentLogs.length === 0 ? <Text style={styles.emptyText}>No climbs logged yet.</Text> : null}
+        {recentLogs.length === 0 ? (
+          <Text style={styles.emptyText}>No climbs logged yet. Hit Send or Flash to start.</Text>
+        ) : null}
         {recentLogs.map((log, index) => (
-          <View key={`${log.gradeLabel}-${index}`} style={styles.logRow}>
+          <View key={`${log.gradeLabel}-${log.createdAt}-${index}`} style={styles.logRow}>
             <View
               style={[
                 styles.logAccent,
@@ -184,7 +153,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       </ScrollView>
 
       <View style={styles.finishBar}>
-        <Button label="Finish Session" onPress={handleFinish} style={styles.finishButton} />
+        {hasLogs ? (
+          <Button label="Done" onPress={handleDone} style={styles.finishButton} />
+        ) : (
+          <Button label="Abandon Session" variant="ghost" onPress={handleAbandon} style={styles.finishButton} />
+        )}
       </View>
     </View>
   );
@@ -198,41 +171,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
   title: {
     ...typography.title,
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  timerPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  timerText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
     marginBottom: spacing.sm,
   },
   sectionLabel: {
@@ -270,28 +210,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  sessionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pointsPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentMuted,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pointsText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
   logHeaderRow: {
-    marginTop: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
