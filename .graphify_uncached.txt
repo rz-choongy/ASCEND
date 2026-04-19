@@ -1,0 +1,20 @@
+CLAUDE.md
+Climb + Gym Workout Tracker.md
+Docs for reference\Architecture.md
+Docs for reference\Design Inspo.md
+Docs for reference\PRD v1.md
+Docs for reference\User_Journeys.md
+graphify-out\graph.html
+graphify-out\GRAPH_REPORT.md
+assets\adaptive-icon.png
+assets\favicon.png
+assets\icon.png
+assets\splash-icon.png
+Design\Climbing session finish screen.png
+Design\climbing_analytics.png
+Design\hangboard tracker.png
+Design\rest timer.png
+Design\strength_logger.png
+Design\tape based climbing session.png
+Design\training routine library.png
+Design\weight trainer session.png

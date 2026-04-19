@@ -1,0 +1,3222 @@
+{
+  "nodes": [
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "label": "App.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_tabnavigator",
+      "label": "TabNavigator()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_db_db_ts",
+      "label": "db.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "db_run",
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "db_getall",
+      "label": "getAll()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "db_getfirst",
+      "label": "getFirst()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_db_migrate_ts",
+      "label": "migrate.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\migrate.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "migrate_migrate",
+      "label": "migrate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\migrate.ts",
+      "source_location": "L3"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils_ts",
+      "label": "climbLogUtils.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "climblogutils_isclimbpayload",
+      "label": "isClimbPayload()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L24"
+    },
+    {
+      "id": "climblogutils_isrelabelpayload",
+      "label": "isRelabelPayload()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L42"
+    },
+    {
+      "id": "climblogutils_applyclimbevents",
+      "label": "applyClimbEvents()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L61"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "label": "dateUtils.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "dateutils_formatlocaldate",
+      "label": "formatLocalDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "dateutils_parselocaldate",
+      "label": "parseLocalDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L8"
+    },
+    {
+      "id": "dateutils_startofweekmonday",
+      "label": "startOfWeekMonday()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "dateutils_adddays",
+      "label": "addDays()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L21"
+    },
+    {
+      "id": "dateutils_startofmonth",
+      "label": "startOfMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "dateutils_endofmonth",
+      "label": "endOfMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "dateutils_todaystartms",
+      "label": "toDayStartMs()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "dateutils_todayendms",
+      "label": "toDayEndMs()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "label": "sessionStore.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "sessionstore_uuid",
+      "label": "uuid()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L17"
+    },
+    {
+      "id": "sessionstore_createsession",
+      "label": "createSession()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "sessionstore_appendevent",
+      "label": "appendEvent()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L49"
+    },
+    {
+      "id": "sessionstore_getactivesession",
+      "label": "getActiveSession()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L69"
+    },
+    {
+      "id": "sessionstore_getsessionbyid",
+      "label": "getSessionById()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L76"
+    },
+    {
+      "id": "sessionstore_getsessionevents",
+      "label": "getSessionEvents()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L80"
+    },
+    {
+      "id": "sessionstore_setsessionstatus",
+      "label": "setSessionStatus()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L101"
+    },
+    {
+      "id": "sessionstore_setsessionnotes",
+      "label": "setSessionNotes()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L120"
+    },
+    {
+      "id": "sessionstore_getsessionsformonth",
+      "label": "getSessionsForMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L124"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_domain_types_ts",
+      "label": "types.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs_ts",
+      "label": "useClimbSessionLogs.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "useclimbsessionlogs_useclimbsessionlogs",
+      "label": "useClimbSessionLogs()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_navigation_types_ts",
+      "label": "types.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\navigation\\types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "label": "CalendarScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "calendarscreen_todaydate",
+      "label": "todayDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L34"
+    },
+    {
+      "id": "calendarscreen_firstofmonth",
+      "label": "firstOfMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L39"
+    },
+    {
+      "id": "calendarscreen_buildmonthgrid",
+      "label": "buildMonthGrid()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L44"
+    },
+    {
+      "id": "calendarscreen_prevmonth",
+      "label": "prevMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L117"
+    },
+    {
+      "id": "calendarscreen_nextmonth",
+      "label": "nextMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L122"
+    },
+    {
+      "id": "calendarscreen_formattime",
+      "label": "formatTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L130"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "label": "ClimbSessionScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "climbsessionscreen_formatdurationparts",
+      "label": "formatDurationParts()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L29"
+    },
+    {
+      "id": "climbsessionscreen_formatlogtime",
+      "label": "formatLogTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "climbsessionscreen_handlefinish",
+      "label": "handleFinish()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L66"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_homescreen_tsx",
+      "label": "HomeScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\HomeScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_logscreen_tsx",
+      "label": "LogScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\LogScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "logscreen_logscreen",
+      "label": "LogScreen()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\LogScreen.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "label": "SessionHistoryScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "sessionhistoryscreen_formatdatetime",
+      "label": "formatDateTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L45"
+    },
+    {
+      "id": "sessionhistoryscreen_formatheadertime",
+      "label": "formatHeaderTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L53"
+    },
+    {
+      "id": "sessionhistoryscreen_formatlogtime",
+      "label": "formatLogTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L71"
+    },
+    {
+      "id": "sessionhistoryscreen_parsegradevalue",
+      "label": "parseGradeValue()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L78"
+    },
+    {
+      "id": "sessionhistoryscreen_comparegradelabels",
+      "label": "compareGradeLabels()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L87"
+    },
+    {
+      "id": "sessionhistoryscreen_pickmaxgradelabel",
+      "label": "pickMaxGradeLabel()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L101"
+    },
+    {
+      "id": "sessionhistoryscreen_parsestrengthsets",
+      "label": "parseStrengthSets()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L109"
+    },
+    {
+      "id": "sessionhistoryscreen_onstartnewsession",
+      "label": "onStartNewSession()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L129"
+    },
+    {
+      "id": "sessionhistoryscreen_handlerelabel",
+      "label": "handleRelabel()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L215"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "label": "StrengthSessionScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "strengthsessionscreen_formatduration",
+      "label": "formatDuration()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L51"
+    },
+    {
+      "id": "strengthsessionscreen_formatsessiontime",
+      "label": "formatSessionTime()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L58"
+    },
+    {
+      "id": "strengthsessionscreen_initialdraftset",
+      "label": "initialDraftSet()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L68"
+    },
+    {
+      "id": "strengthsessionscreen_parseloggedsets",
+      "label": "parseLoggedSets()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L75"
+    },
+    {
+      "id": "strengthsessionscreen_handlefinish",
+      "label": "handleFinish()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L118"
+    },
+    {
+      "id": "strengthsessionscreen_updatedraft",
+      "label": "updateDraft()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L132"
+    },
+    {
+      "id": "strengthsessionscreen_adddraftset",
+      "label": "addDraftSet()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L146"
+    },
+    {
+      "id": "strengthsessionscreen_handlecompleteset",
+      "label": "handleCompleteSet()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L156"
+    },
+    {
+      "id": "strengthsessionscreen_handleundo",
+      "label": "handleUndo()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L187"
+    },
+    {
+      "id": "strengthsessionscreen_handlereststart",
+      "label": "handleRestStart()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L191"
+    },
+    {
+      "id": "strengthsessionscreen_handlerestend",
+      "label": "handleRestEnd()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L199"
+    },
+    {
+      "id": "strengthsessionscreen_handleaddrest",
+      "label": "handleAddRest()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L206"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "label": "AppHeader.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "appheader_appheader",
+      "label": "AppHeader()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_bottomtab_tsx",
+      "label": "BottomTab.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\BottomTab.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "label": "Button.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "button_getvariantstyles",
+      "label": "getVariantStyles()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L17"
+    },
+    {
+      "id": "button_button",
+      "label": "Button()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L73"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "label": "Card.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "card_card",
+      "label": "Card()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_chip_tsx",
+      "label": "Chip.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Chip.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_divider_tsx",
+      "label": "Divider.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Divider.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "divider_divider",
+      "label": "Divider()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Divider.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton_tsx",
+      "label": "IconButton.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "iconbutton_iconbutton",
+      "label": "IconButton()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L14"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "label": "ListRow.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "listrow_listrow",
+      "label": "ListRow()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "label": "MetricCard.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "label": "AnalyticsScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "analyticsscreen_formatdate",
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "analyticsscreen_formatweekday",
+      "label": "formatWeekday()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L25"
+    },
+    {
+      "id": "analyticsscreen_startofweek",
+      "label": "startOfWeek()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L29"
+    },
+    {
+      "id": "analyticsscreen_adddays",
+      "label": "addDays()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "analyticsscreen_parsegradevalue",
+      "label": "parseGradeValue()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L43"
+    },
+    {
+      "id": "analyticsscreen_comparegradelabels",
+      "label": "compareGradeLabels()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L52"
+    },
+    {
+      "id": "analyticsscreen_gradevaluefor",
+      "label": "gradeValueFor()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L66"
+    },
+    {
+      "id": "analyticsscreen_grademidpointfor",
+      "label": "gradeMidpointFor()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L73"
+    },
+    {
+      "id": "analyticsscreen_pickmaxgradelabel",
+      "label": "pickMaxGradeLabel()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L80"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "label": "ClimbSummaryScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "climbsummaryscreen_formatduration",
+      "label": "formatDuration()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L13"
+    },
+    {
+      "id": "climbsummaryscreen_formatdate",
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "climbsummaryscreen_handleconfirm",
+      "label": "handleConfirm()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L60"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "label": "PlannerScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "label": "plannerStore.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "plannerstore_uuid",
+      "label": "uuid()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "plannerstore_addplannedsession",
+      "label": "addPlannedSession()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "plannerstore_removeplannedsession",
+      "label": "removePlannedSession()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L45"
+    },
+    {
+      "id": "plannerstore_getplannedsessionsfordate",
+      "label": "getPlannedSessionsForDate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L49"
+    },
+    {
+      "id": "plannerstore_getplannedsessionsinrange",
+      "label": "getPlannedSessionsInRange()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L66"
+    },
+    {
+      "id": "plannerstore_getcompletedsessionsinrange",
+      "label": "getCompletedSessionsInRange()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L83"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_settingsscreen_tsx",
+      "label": "SettingsScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\SettingsScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "settingsscreen_settingsscreen",
+      "label": "SettingsScreen()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\SettingsScreen.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "label": "StrengthSummaryScreen.tsx",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "strengthsummaryscreen_parsesets",
+      "label": "parseSets()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L20"
+    },
+    {
+      "id": "strengthsummaryscreen_formatduration",
+      "label": "formatDuration()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L33"
+    },
+    {
+      "id": "strengthsummaryscreen_handleconfirm",
+      "label": "handleConfirm()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L58"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannermonth_ts",
+      "label": "usePlannerMonth.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "useplannermonth_useplannermonth",
+      "label": "usePlannerMonth()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannerweek_ts",
+      "label": "usePlannerWeek.ts",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "useplannerweek_useplannerweek",
+      "label": "usePlannerWeek()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L17"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "expo_status_bar",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "native_stack",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "bottom_tabs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_migrate",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_navigation_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_screens_logscreen",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_app_tsx",
+      "target": "app_tabnavigator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\App.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_index_ts",
+      "target": "expo",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\index.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_index_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_app",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\index.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_db_ts",
+      "target": "expo_sqlite",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_db_ts",
+      "target": "db_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_db_ts",
+      "target": "db_getall",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_db_ts",
+      "target": "db_getfirst",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\db.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_migrate_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_db",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\migrate.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_db_migrate_ts",
+      "target": "migrate_migrate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\migrate.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils_ts",
+      "target": "climblogutils_isclimbpayload",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils_ts",
+      "target": "climblogutils_isrelabelpayload",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils_ts",
+      "target": "climblogutils_applyclimbevents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\climbLogUtils.ts",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_formatlocaldate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_parselocaldate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_startofweekmonday",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_adddays",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_startofmonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_endofmonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_todaystartms",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils_ts",
+      "target": "dateutils_todayendms",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\dateUtils.ts",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "expo_crypto",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_db",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_uuid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_createsession",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_appendevent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_getactivesession",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_getsessionbyid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_getsessionevents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_setsessionstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_setsessionnotes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore_ts",
+      "target": "sessionstore_getsessionsformonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_createsession",
+      "target": "sessionstore_uuid",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_appendevent",
+      "target": "sessionstore_uuid",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs_ts",
+      "target": "useclimbsessionlogs_useclimbsessionlogs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\hooks\\useClimbSessionLogs.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_navigation_types_ts",
+      "target": "native_stack",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\navigation\\types.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_navigation_types_ts",
+      "target": "bottom_tabs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\navigation\\types.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "bottom_tabs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "native_stack",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_navigation_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_typography",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_todaydate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_firstofmonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_buildmonthgrid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_prevmonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_nextmonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_calendarscreen_tsx",
+      "target": "calendarscreen_formattime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\CalendarScreen.tsx",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_hooks_useclimbsessionlogs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_navigation_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "climbsessionscreen_formatdurationparts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "climbsessionscreen_formatlogtime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_climbsessionscreen_tsx",
+      "target": "climbsessionscreen_handlefinish",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_homescreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\HomeScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_homescreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\HomeScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_homescreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\HomeScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_logscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\LogScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_logscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\LogScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_logscreen_tsx",
+      "target": "logscreen_logscreen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\LogScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_db",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_navigation_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_formatdatetime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_formatheadertime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_formatlogtime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_parsegradevalue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_comparegradelabels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L87",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_pickmaxgradelabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_parsestrengthsets",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_onstartnewsession",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_sessionhistoryscreen_tsx",
+      "target": "sessionhistoryscreen_handlerelabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionhistoryscreen_comparegradelabels",
+      "target": "sessionhistoryscreen_parsegradevalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_navigation_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_formatduration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_formatsessiontime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_initialdraftset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_parseloggedsets",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handlefinish",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_updatedraft",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_adddraftset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handlecompleteset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handleundo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handlereststart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L191",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handlerestend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_screens_strengthsessionscreen_tsx",
+      "target": "strengthsessionscreen_handleaddrest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L206",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_spacing",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_typography",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_appheader_tsx",
+      "target": "appheader_appheader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\AppHeader.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_bottomtab_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\BottomTab.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_bottomtab_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\BottomTab.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_bottomtab_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\BottomTab.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_typography",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "button_getvariantstyles",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_button_tsx",
+      "target": "button_button",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "button_button",
+      "target": "button_getvariantstyles",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Button.tsx",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_shadows",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_card_tsx",
+      "target": "card_card",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Card.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_chip_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Chip.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_chip_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Chip.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_chip_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Chip.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_divider_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Divider.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_divider_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Divider.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_divider_tsx",
+      "target": "divider_divider",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\Divider.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_iconbutton_tsx",
+      "target": "iconbutton_iconbutton",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\IconButton.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_listrow_tsx",
+      "target": "listrow_listrow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\ListRow.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_colors",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_radius",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_ui_components_metriccard_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui_tokens_typography",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\ui\\components\\MetricCard.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_db",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_formatdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_formatweekday",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_startofweek",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_adddays",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_parsegradevalue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_comparegradelabels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_gradevaluefor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_grademidpointfor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_analyticsscreen_tsx",
+      "target": "analyticsscreen_pickmaxgradelabel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "analyticsscreen_comparegradelabels",
+      "target": "analyticsscreen_parsegradevalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "analyticsscreen_gradevaluefor",
+      "target": "analyticsscreen_parsegradevalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "analyticsscreen_grademidpointfor",
+      "target": "analyticsscreen_parsegradevalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\AnalyticsScreen.tsx",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_climblogutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "climbsummaryscreen_formatduration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "climbsummaryscreen_formatdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "climbsummaryscreen_handleconfirm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_climbsummaryscreen_tsx",
+      "target": "climbsummaryscreen_formatdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "climbsummaryscreen_formatdate",
+      "target": "climbsummaryscreen_formatduration",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_hooks_useplannermonth",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_hooks_useplannerweek",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\PlannerScreen.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "expo_crypto",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_db_db",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_quarantine_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_quarantine_dateutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_uuid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_addplannedsession",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_removeplannedsession",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_getplannedsessionsfordate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_getplannedsessionsinrange",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_plannerstore_ts",
+      "target": "plannerstore_getcompletedsessionsinrange",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_addplannedsession",
+      "target": "plannerstore_uuid",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_settingsscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\SettingsScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_settingsscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\SettingsScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_settingsscreen_tsx",
+      "target": "settingsscreen_settingsscreen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\SettingsScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "react_native",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_sessionstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_types",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "c_users_choon_portfolio_projects_ascend_src_ui",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "strengthsummaryscreen_parsesets",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "strengthsummaryscreen_formatduration",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_strengthsummaryscreen_tsx",
+      "target": "strengthsummaryscreen_handleconfirm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannermonth_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannermonth_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannermonth_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_plannerstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannermonth_ts",
+      "target": "useplannermonth_useplannermonth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerMonth.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannerweek_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannerweek_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_dateutils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannerweek_ts",
+      "target": "c_users_choon_portfolio_projects_ascend_src_domain_plannerstore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_users_choon_portfolio_projects_ascend_src_quarantine_useplannerweek_ts",
+      "target": "useplannerweek_useplannerweek",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\usePlannerWeek.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "migrate_migrate",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\db\\migrate.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_createsession",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_appendevent",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_getactivesession",
+      "target": "db_getfirst",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_getsessionbyid",
+      "target": "db_getfirst",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_getsessionevents",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_setsessionstatus",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_setsessionnotes",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionstore_getsessionsformonth",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\domain\\sessionStore.ts",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "climbsessionscreen_handlefinish",
+      "target": "sessionstore_setsessionstatus",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\ClimbSessionScreen.tsx",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "sessionhistoryscreen_handlerelabel",
+      "target": "sessionstore_appendevent",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\SessionHistoryScreen.tsx",
+      "source_location": "L219",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsessionscreen_handlefinish",
+      "target": "sessionstore_setsessionstatus",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsessionscreen_handlecompleteset",
+      "target": "sessionstore_appendevent",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsessionscreen_handleundo",
+      "target": "sessionstore_appendevent",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsessionscreen_handlereststart",
+      "target": "sessionstore_appendevent",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L196",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsessionscreen_handlerestend",
+      "target": "sessionstore_appendevent",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\screens\\StrengthSessionScreen.tsx",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "climbsummaryscreen_handleconfirm",
+      "target": "sessionstore_setsessionnotes",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "climbsummaryscreen_handleconfirm",
+      "target": "sessionstore_setsessionstatus",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\ClimbSummaryScreen.tsx",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_addplannedsession",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_addplannedsession",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_removeplannedsession",
+      "target": "db_run",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getplannedsessionsfordate",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getplannedsessionsinrange",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getcompletedsessionsinrange",
+      "target": "dateutils_todaystartms",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getcompletedsessionsinrange",
+      "target": "dateutils_parselocaldate",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getcompletedsessionsinrange",
+      "target": "dateutils_todayendms",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "plannerstore_getcompletedsessionsinrange",
+      "target": "db_getall",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\plannerStore.ts",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsummaryscreen_handleconfirm",
+      "target": "sessionstore_setsessionnotes",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "strengthsummaryscreen_handleconfirm",
+      "target": "sessionstore_setsessionstatus",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\choon\\Portfolio projects\\ASCEND\\src\\_quarantine\\StrengthSummaryScreen.tsx",
+      "source_location": "L60",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

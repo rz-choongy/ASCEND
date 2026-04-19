@@ -130,3 +130,14 @@ export function getSessionsForMonth(year: number, month: number): SessionRow[] {
     ['completed', start, end]
   );
 }
+
+export function getSessionsForDate(dateStr: string): SessionRow[] {
+  // dateStr is 'YYYY-MM-DD'
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const start = new Date(y, m - 1, d).getTime();
+  const end = new Date(y, m - 1, d + 1).getTime();
+  return getAll<SessionRow>(
+    'SELECT * FROM sessions WHERE status = ? AND started_at >= ? AND started_at < ? ORDER BY started_at ASC',
+    ['completed', start, end]
+  );
+}
