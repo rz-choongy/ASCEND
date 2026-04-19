@@ -1,87 +1,62 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { appendEvent, getSessionById, getSessionEvents, setSessionStatus } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
-  Card,
   Chip,
   Divider,
-  IconButton,
-  ListRow,
-  MetricCard,
   colors,
   radius,
   spacing,
   typography,
 } from '../ui';
 
-type StrengthExercise = {
-  id: string;
-  name: string;
-  kind: 'reps' | 'time';
-  target?: string;
-};
-
 type StrengthSetPayload = {
-  exerciseId: string;
   exerciseName: string;
-  setNumber: number;
-  reps?: number;
-  weight?: number;
-  unit: 'kg';
-  timeSeconds?: number;
-};
-
-type DraftSet = {
-  setNumber: number;
   reps: number;
   weight: number;
-  timeSeconds: number;
+  unit: 'kg';
+  createdAt?: number;
 };
+
+type LoggedSet = StrengthSetPayload & { createdAt: number };
 
 type StrengthSessionScreenProps = RootStackScreenProps<'StrengthLogger'>;
 
-const EXERCISES: StrengthExercise[] = [
-  { id: 'pullups', name: 'Weighted Pull-ups', kind: 'reps', target: 'Back - 3 Sets' },
-  { id: 'row', name: 'Barbell Row', kind: 'reps', target: '60kg x 8' },
-  { id: 'hangboard', name: 'Hangboard Repeaters', kind: 'time', target: 'Fingers - 6 Sets' },
+const EXERCISES = [
+  { id: 'pullups', name: 'Pull-ups' },
+  { id: 'pushups', name: 'Push-ups' },
+  { id: 'row', name: 'Barbell Row' },
+  { id: 'hangboard', name: 'Hangboard' },
+  { id: 'dips', name: 'Dips' },
 ];
 
-const formatDuration = (ms: number): string => {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+const formatLogTime = (ms: number): string => {
+  const date = new Date(ms);
+  const hours = `${date.getHours()}`.padStart(2, '0');
+  const minutes = `${date.getMinutes()}`.padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
-const formatSessionTime = (ms: number): string => {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+const formatSetLabel = (set: LoggedSet): string => {
+  const weightLabel = set.weight === 0 ? 'bw' : `${set.weight}kg`;
+  return `${set.reps}×${weightLabel}`;
 };
 
-const initialDraftSet = (setNumber: number): DraftSet => ({
-  setNumber,
-  reps: 5,
-  weight: 20,
-  timeSeconds: 7,
-});
-
-const parseLoggedSets = (events: { type: string; payload: unknown }[]): StrengthSetPayload[] => {
-  const sets: StrengthSetPayload[] = [];
-  events.forEach((event) => {
+const parseLoggedSets = (
+  events: { type: string; payload: unknown; createdAt: number }[]
+): LoggedSet[] => {
+  const sets: LoggedSet[] = [];
+  for (const event of events) {
     if (event.type === 'SET_LOGGED') {
-      sets.push(event.payload as StrengthSetPayload);
+      const p = event.payload as StrengthSetPayload;
+      sets.push({ ...p, createdAt: event.createdAt });
     }
     if (event.type === 'SET_UNDONE') {
       sets.pop();
     }
-  });
+  }
   return sets;
 };
 
@@ -89,125 +64,48 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const { sessionId } = route.params;
   const session = getSessionById(sessionId);
 
-  const [tick, setTick] = useState(0);
-  const [restStart, setRestStart] = useState<number | null>(null);
-  const [restElapsed, setRestElapsed] = useState(0);
-  const [restTargetMs, setRestTargetMs] = useState(180000);
-  const [showRestSheet, setShowRestSheet] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedExerciseId, setSelectedExerciseId] = useState(EXERCISES[0].id);
-  const [copyLast, setCopyLast] = useState(true);
-  const [draftsByExercise, setDraftsByExercise] = useState<Record<string, DraftSet[]>>(() => {
-    const initial: Record<string, DraftSet[]> = {};
-    EXERCISES.forEach((exercise) => {
-      initial[exercise.id] = [initialDraftSet(1)];
-    });
-    return initial;
-  });
+  const [reps, setReps] = useState(8);
+  const [weight, setWeight] = useState(20);
 
-  useEffect(() => {
-    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const bump = () => setRefreshKey((k) => k + 1);
 
-  useEffect(() => {
-    if (restStart) {
-      setRestElapsed(Date.now() - restStart);
-    }
-  }, [tick, restStart]);
-
-  const handleFinish = () => {
-    setSessionStatus(sessionId, 'completed');
-    navigation.navigate('Tabs');
-  };
-
-  const events = useMemo(() => getSessionEvents(sessionId), [sessionId, tick]);
+  const events = useMemo(
+    () => getSessionEvents(sessionId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionId, refreshKey]
+  );
   const loggedSets = useMemo(() => parseLoggedSets(events), [events]);
-  const selectedExercise = EXERCISES.find((exercise) => exercise.id === selectedExerciseId) ?? EXERCISES[0];
+  const recentSets = useMemo(() => loggedSets.slice().reverse(), [loggedSets]);
 
-  const totalVolume = loggedSets.reduce((sum, set) => sum + (set.reps ?? 0) * (set.weight ?? 0), 0);
-  const bestWeight = Math.max(0, ...loggedSets.map((set) => set.weight ?? 0));
+  const selectedExercise = EXERCISES.find((e) => e.id === selectedExerciseId) ?? EXERCISES[0];
+  const hasLogs = loggedSets.length > 0;
 
-  const draftSets = draftsByExercise[selectedExercise.id] ?? [initialDraftSet(1)];
-
-  const updateDraft = (index: number, field: keyof DraftSet, delta: number) => {
-    setDraftsByExercise((prev) => {
-      const current = prev[selectedExercise.id] ?? [initialDraftSet(1)];
-      const next = current.map((draft, draftIndex) => {
-        if (draftIndex !== index) {
-          return draft;
-        }
-        const nextValue = Math.max(0, draft[field] + delta);
-        return { ...draft, [field]: nextValue };
-      });
-      return { ...prev, [selectedExercise.id]: next };
-    });
-  };
-
-  const addDraftSet = (seed?: DraftSet) => {
-    setDraftsByExercise((prev) => {
-      const current = prev[selectedExercise.id] ?? [initialDraftSet(1)];
-      const lastNumber = current.length > 0 ? current[current.length - 1].setNumber : 0;
-      const nextNumber = lastNumber + 1;
-      const nextSet = seed ? { ...seed, setNumber: nextNumber } : initialDraftSet(nextNumber);
-      return { ...prev, [selectedExercise.id]: [...current, nextSet] };
-    });
-  };
-
-  const handleCompleteSet = (index: number) => {
-    const target = draftSets[index];
-    if (!target) {
-      return;
-    }
-
+  const handleLogSet = () => {
     appendEvent(sessionId, 'SET_LOGGED', {
-      exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
-      setNumber: target.setNumber,
-      reps: selectedExercise.kind === 'reps' ? target.reps : undefined,
-      weight: selectedExercise.kind === 'reps' ? target.weight : undefined,
+      reps,
+      weight,
       unit: 'kg',
-      timeSeconds: selectedExercise.kind === 'time' ? target.timeSeconds : undefined,
-    } as StrengthSetPayload);
-
-    setDraftsByExercise((prev) => {
-      const current = prev[selectedExercise.id] ?? [];
-      const remaining = current.filter((_, idx) => idx !== index);
-      if (remaining.length === 0) {
-        const seed = copyLast ? target : initialDraftSet(target.setNumber + 1);
-        return { ...prev, [selectedExercise.id]: [seed] };
-      }
-      if (copyLast) {
-        const nextNumber = Math.max(...current.map((item) => item.setNumber)) + 1;
-        remaining.push({ ...target, setNumber: nextNumber });
-      }
-      return { ...prev, [selectedExercise.id]: remaining };
-    });
+    } satisfies StrengthSetPayload);
+    bump();
   };
 
   const handleUndo = () => {
     appendEvent(sessionId, 'SET_UNDONE', { at: Date.now() });
+    bump();
   };
 
-  const handleRestStart = () => {
-    setRestStart(Date.now());
-    setRestElapsed(0);
-    setRestTargetMs(180000);
-    setShowRestSheet(true);
-    appendEvent(sessionId, 'REST_STARTED', { at: Date.now() });
+  const handleDone = () => {
+    setSessionStatus(sessionId, 'completed');
+    navigation.navigate('Tabs');
   };
 
-  const handleRestEnd = () => {
-    appendEvent(sessionId, 'REST_ENDED', { at: Date.now(), durationMs: restElapsed });
-    setRestStart(null);
-    setRestElapsed(0);
-    setShowRestSheet(false);
+  const handleAbandon = () => {
+    setSessionStatus(sessionId, 'abandoned');
+    navigation.navigate('Tabs');
   };
-
-  const handleAddRest = () => {
-    setRestTargetMs((prev) => prev + 30000);
-  };
-
-  const restRemaining = Math.max(0, restTargetMs - restElapsed);
 
   if (!session) {
     return (
@@ -219,182 +117,103 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Pull Day</Text>
-          <Text style={styles.headerTimer}>Session Time {formatSessionTime(Date.now() - (session?.started_at ?? Date.now()))}</Text>
-        </View>
-        <Button label="Finish" onPress={handleFinish} style={styles.finishButton} />
-      </View>
+      <Text style={styles.title}>Gym Session</Text>
 
-      <View style={styles.metricsRow}>
-        <MetricCard label="Volume" value={`${totalVolume.toFixed(0)} kg`} accentColor={colors.accent} />
-        <MetricCard label="Sets" value={`${loggedSets.length}`} accentColor={colors.accentSoft} />
-        <MetricCard label="Best" value={`${bestWeight.toFixed(0)} kg`} accentColor={colors.accent} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionLabel}>Exercises</Text>
-        <View style={styles.exerciseRow}>
-          {EXERCISES.map((exercise) => (
-            <Chip
-              key={exercise.id}
-              label={exercise.name}
-              selected={exercise.id === selectedExerciseId}
-              onPress={() => setSelectedExerciseId(exercise.id)}
-              style={styles.exerciseChip}
-            />
-          ))}
-        </View>
-
-        {selectedExercise.kind === 'time' ? (
-          <Card style={styles.intervalCard}>
-            <View style={styles.intervalHeader}>
-              <Text style={styles.intervalLabel}>Active Hang</Text>
-              <IconButton label="||" variant="ghost" />
-            </View>
-            <Text style={styles.intervalTime}>
-              {formatDuration((draftSets[0]?.timeSeconds ?? 0) * 1000)}
-            </Text>
-            <Text style={styles.intervalMeta}>Next Rest (3m)</Text>
-            <View style={styles.intervalActions}>
-              <Button
-                label="Reset"
-                variant="secondary"
-                onPress={() => updateDraft(0, 'timeSeconds', -(draftSets[0]?.timeSeconds ?? 0))}
-              />
-              <Button label="Pause Timer" variant="primary" onPress={() => undefined} />
-            </View>
-          </Card>
-        ) : null}
-
-        <Card style={styles.logCard}>
-          <View style={styles.logHeader}>
-            <View>
-              <Text style={styles.logTitle}>{selectedExercise.name}</Text>
-              {selectedExercise.target ? <Text style={styles.logSubtitle}>{selectedExercise.target}</Text> : null}
-            </View>
-            <View style={styles.logHeaderActions}>
-              <Pressable style={styles.copyToggle} onPress={() => setCopyLast((prev) => !prev)}>
-                <View style={[styles.copyDot, copyLast ? styles.copyDotActive : null]} />
-                <Text style={styles.copyText}>Copy last set</Text>
-              </Pressable>
-              <Button label="Undo" variant="ghost" onPress={handleUndo} style={styles.undoButton} textStyle={styles.undoText} />
-            </View>
-          </View>
-
-          <View style={styles.setHeaderRow}>
-            <Text style={styles.setHeaderText}>Set</Text>
-            <Text style={styles.setHeaderText}>Load</Text>
-            <Text style={styles.setHeaderText}>{selectedExercise.kind === 'reps' ? 'Reps' : 'Time'}</Text>
-            <Text style={styles.setHeaderText}>Done</Text>
-          </View>
-          <Divider style={styles.divider} />
-
-          {draftSets.map((draft, index) => (
-            <View key={`${selectedExercise.id}-${draft.setNumber}`} style={styles.setRow}>
-              <View style={styles.setNumberCell}>
-                <Text style={styles.setNumberText}>{draft.setNumber}</Text>
-              </View>
-              {selectedExercise.kind === 'reps' ? (
-                <View style={styles.valueCell}>
-                  <Pressable onPress={() => updateDraft(index, 'weight', -1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>-</Text>
-                  </Pressable>
-                  <Text style={styles.valueText}>{draft.weight}</Text>
-                  <Pressable onPress={() => updateDraft(index, 'weight', 1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>+</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.valueCell}>
-                  <Text style={styles.valueText}>-</Text>
-                </View>
-              )}
-
-              {selectedExercise.kind === 'reps' ? (
-                <View style={styles.valueCell}>
-                  <Pressable onPress={() => updateDraft(index, 'reps', -1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>-</Text>
-                  </Pressable>
-                  <Text style={styles.valueText}>{draft.reps}</Text>
-                  <Pressable onPress={() => updateDraft(index, 'reps', 1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>+</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.valueCell}>
-                  <Pressable onPress={() => updateDraft(index, 'timeSeconds', -1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>-</Text>
-                  </Pressable>
-                  <Text style={styles.valueText}>{draft.timeSeconds}s</Text>
-                  <Pressable onPress={() => updateDraft(index, 'timeSeconds', 1)} style={styles.adjustButton}>
-                    <Text style={styles.adjustText}>+</Text>
-                  </Pressable>
-                </View>
-              )}
-
-              <Pressable style={styles.completeButton} onPress={() => handleCompleteSet(index)}>
-                <Text style={styles.completeText}>OK</Text>
-              </Pressable>
-            </View>
-          ))}
-
-          <Button
-            label="Add Set"
-            variant="ghost"
-            onPress={() => addDraftSet(copyLast ? draftSets[draftSets.length - 1] : undefined)}
-            style={styles.addSetButton}
-          />
-        </Card>
-
-        <Text style={styles.sectionLabel}>Logged Sets</Text>
-        {loggedSets.length === 0 ? <Text style={styles.emptyText}>No sets logged yet.</Text> : null}
-        {loggedSets.map((set, index) => (
-          <ListRow
-            key={`${set.exerciseId}-${index}`}
-            title={set.exerciseName}
-            subtitle={`Set ${set.setNumber}`}
-            meta={set.reps ? `${set.reps} reps @ ${set.weight ?? 0}kg` : `${set.timeSeconds ?? 0}s`}
+      {/* Exercise chips */}
+      <Text style={styles.sectionLabel}>Exercise</Text>
+      <View style={styles.chipRow}>
+        {EXERCISES.map((exercise) => (
+          <Chip
+            key={exercise.id}
+            label={exercise.name}
+            selected={exercise.id === selectedExerciseId}
+            onPress={() => setSelectedExerciseId(exercise.id)}
           />
         ))}
+      </View>
 
-        <Card style={styles.restCard}>
-          <View style={styles.restRow}>
-            <View>
-              <Text style={styles.restLabel}>Rest Timer</Text>
-              <Text style={styles.restTime}>{formatDuration(restElapsed)}</Text>
-            </View>
-            <Button
-              label={restStart ? 'End Rest' : 'Start Rest'}
-              variant={restStart ? 'warning' : 'secondary'}
-              onPress={restStart ? handleRestEnd : handleRestStart}
-              style={styles.restButton}
-            />
+      {/* Input controls */}
+      <View style={styles.inputSection}>
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Reps</Text>
+          <View style={styles.stepper}>
+            <Pressable
+              onPress={() => setReps((v) => Math.max(1, v - 1))}
+              style={styles.stepButton}
+            >
+              <Text style={styles.stepText}>−</Text>
+            </Pressable>
+            <Text style={styles.stepValue}>{reps}</Text>
+            <Pressable onPress={() => setReps((v) => v + 1)} style={styles.stepButton}>
+              <Text style={styles.stepText}>+</Text>
+            </Pressable>
           </View>
-        </Card>
+        </View>
+
+        <View style={styles.inputRow}>
+          <Text style={styles.inputLabel}>Weight</Text>
+          <View style={styles.stepper}>
+            <Pressable
+              onPress={() => setWeight((v) => Math.max(0, v - 1))}
+              style={styles.stepButton}
+            >
+              <Text style={styles.stepText}>−</Text>
+            </Pressable>
+            <Text style={styles.stepValue}>{weight === 0 ? 'bw' : `${weight} kg`}</Text>
+            <Pressable onPress={() => setWeight((v) => v + 1)} style={styles.stepButton}>
+              <Text style={styles.stepText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <Button label="Log Set" onPress={handleLogSet} style={styles.logSetButton} />
+      </View>
+
+      {/* Logged sets */}
+      <View style={styles.logHeaderRow}>
+        <Text style={styles.sectionLabel}>
+          Logged{recentSets.length > 0 ? ` (${recentSets.length})` : ''}
+        </Text>
+        {hasLogs ? (
+          <Button
+            label="Undo"
+            variant="ghost"
+            onPress={handleUndo}
+            style={styles.undoButton}
+            textStyle={styles.undoText}
+          />
+        ) : null}
+      </View>
+      <Divider style={styles.divider} />
+
+      <ScrollView style={styles.logList} contentContainerStyle={styles.logListContent}>
+        {recentSets.length === 0 ? (
+          <Text style={styles.emptyText}>No sets logged yet.</Text>
+        ) : null}
+        {recentSets.map((set, index) => (
+          <View key={`${set.exerciseName}-${set.createdAt}-${index}`} style={styles.logRow}>
+            <View style={styles.logBody}>
+              <Text style={styles.logExercise}>{set.exerciseName}</Text>
+              <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
+            </View>
+            <Text style={styles.logTime}>{formatLogTime(set.createdAt)}</Text>
+          </View>
+        ))}
       </ScrollView>
 
-      {restStart && showRestSheet ? (
-        <Pressable style={styles.restOverlay} onPress={() => setShowRestSheet(false)}>
-          <Pressable style={styles.restSheet} onPress={() => undefined}>
-            <View style={styles.restHandle} />
-            <Text style={styles.restTitle}>Resting</Text>
-            <Text style={styles.restCountdown}>{formatDuration(restRemaining)}</Text>
-            <View style={styles.restActions}>
-              <Button label="+30s" variant="secondary" onPress={handleAddRest} style={styles.restActionButton} />
-              <Button label="Skip" variant="ghost" onPress={handleRestEnd} style={styles.restActionButton} />
-            </View>
-            <Text style={styles.restHint}>Tap outside to minimize</Text>
-          </Pressable>
-        </Pressable>
-      ) : null}
-      {restStart && !showRestSheet ? (
-        <Pressable style={styles.restMini} onPress={() => setShowRestSheet(true)}>
-          <Text style={styles.restMiniLabel}>Resting</Text>
-          <Text style={styles.restMiniTime}>{formatDuration(restRemaining)}</Text>
-        </Pressable>
-      ) : null}
+      {/* Bottom action */}
+      <View style={styles.finishBar}>
+        {hasLogs ? (
+          <Button label="Done" onPress={handleDone} style={styles.finishButton} />
+        ) : (
+          <Button
+            label="Abandon Session"
+            variant="ghost"
+            onPress={handleAbandon}
+            style={styles.finishButton}
+          />
+        )}
+      </View>
     </View>
   );
 };
@@ -403,312 +222,136 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
   },
-  headerTitle: {
+  title: {
     ...typography.title,
-  },
-  headerTimer: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  finishButton: {
-    minHeight: 44,
-    paddingHorizontal: 18,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.xl,
+    marginBottom: spacing.sm,
   },
   sectionLabel: {
     ...typography.section,
     marginBottom: spacing.xs,
   },
-  exerciseRow: {
+  chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
-  exerciseChip: {
-    flexGrow: 1,
-  },
-  intervalCard: {
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  intervalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  intervalLabel: {
-    ...typography.meta,
-    color: colors.textSecondary,
-  },
-  intervalTime: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  intervalMeta: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  intervalActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  logCard: {
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  logHeader: {
-    marginBottom: spacing.xs,
-  },
-  logTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  logSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  logHeaderActions: {
-    marginTop: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
-  },
-  copyToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  copyDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  inputSection: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.textMuted,
+    borderColor: colors.border,
+    padding: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
-  copyDotActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  copyText: {
+  inputLabel: {
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 13,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+    width: 60,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  stepButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  stepValue: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    minWidth: 56,
+    textAlign: 'center',
+  },
+  logSetButton: {
+    marginTop: spacing.xs,
+  },
+  logHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   undoButton: {
-    minHeight: 32,
-    paddingHorizontal: 10,
+    minHeight: 36,
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
   undoText: {
     fontSize: 10,
   },
-  setHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-  },
-  setHeaderText: {
-    flex: 1,
-    fontSize: 10,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
   divider: {
     marginVertical: spacing.xs,
   },
-  setRow: {
+  logList: {
+    flex: 1,
+  },
+  logListContent: {
+    paddingBottom: spacing.lg,
+  },
+  logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
-    gap: spacing.xs,
-  },
-  setNumberCell: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  setNumberText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  valueCell: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: radius.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
+    marginBottom: spacing.xs,
   },
-  adjustButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logBody: {
+    flex: 1,
   },
-  adjustText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  valueText: {
+  logExercise: {
     color: colors.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
-  },
-  completeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completeText: {
-    color: colors.textInverse,
-    fontSize: 16,
     fontWeight: '700',
   },
-  addSetButton: {
-    marginTop: spacing.xs,
+  logDetail: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  logTime: {
+    color: colors.textMuted,
+    fontSize: 11,
   },
   emptyText: {
     color: colors.textMuted,
     fontSize: 12,
-    marginBottom: spacing.xs,
   },
-  restCard: {
-    padding: spacing.sm,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
+  finishBar: {
+    paddingTop: spacing.xs,
   },
-  restRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  restLabel: {
-    ...typography.meta,
-  },
-  restTime: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.warning,
-    marginTop: 4,
-  },
-  restButton: {
-    minHeight: 44,
-  },
-  restOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  restSheet: {
-    backgroundColor: colors.surfaceAlt,
-    padding: spacing.sm,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
-  },
-  restHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.borderSoft,
-    alignSelf: 'center',
-  },
-  restTitle: {
-    ...typography.meta,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  restCountdown: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.warning,
-    textAlign: 'center',
-  },
-  restActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  restActionButton: {
-    flex: 1,
-  },
-  restHint: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: colors.textMuted,
-  },
-  restMini: {
-    position: 'absolute',
-    right: spacing.sm,
-    bottom: spacing.sm,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  restMiniLabel: {
-    ...typography.meta,
-    color: colors.textSecondary,
-  },
-  restMiniTime: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.warning,
+  finishButton: {
+    width: '100%',
   },
 });
