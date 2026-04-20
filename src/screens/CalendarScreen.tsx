@@ -28,8 +28,8 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const DOT_CLIMB = colors.accent;   // #18c4cf teal — climb/water feel
-const DOT_STRENGTH = colors.success; // #22c55e green — contrasts well with teal
+const DOT_CLIMB = colors.accent;
+const DOT_STRENGTH = colors.success;
 
 function todayDate(): Date {
   const now = new Date();
@@ -45,7 +45,7 @@ function buildMonthGrid(monthStart: Date): (Date | null)[] {
   const year = monthStart.getFullYear();
   const month = monthStart.getMonth();
   const firstDayOfWeek = monthStart.getDay(); // 0=Sun
-  // Convert to Mon-based offset: Mon=0 … Sun=6
+  // Convert to Mon-based offset: Mon=0, Sun=6.
   const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -114,14 +114,30 @@ export function CalendarScreen() {
 
   const grid = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
 
+  function selectMonth(monthOffset: number) {
+    setCurrentMonth((month) => {
+      const target = new Date(month.getFullYear(), month.getMonth() + monthOffset, 1);
+      setSelectedDate((selected) => {
+        const daysInTargetMonth = new Date(
+          target.getFullYear(),
+          target.getMonth() + 1,
+          0
+        ).getDate();
+        const selectedDay = Math.min(selected.getDate(), daysInTargetMonth);
+        return new Date(target.getFullYear(), target.getMonth(), selectedDay);
+      });
+      return target;
+    });
+  }
+
   function prevMonth() {
     if (!canGoPrev) return;
-    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+    selectMonth(-1);
   }
 
   function nextMonth() {
     if (!canGoNext) return;
-    setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+    selectMonth(1);
   }
 
   const selectedKey = formatLocalDate(selectedDate);

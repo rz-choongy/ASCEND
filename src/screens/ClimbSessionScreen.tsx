@@ -44,6 +44,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const bump = () => setRefreshKey((k) => k + 1);
 
   const handleLog = (result: 'SEND' | 'FLASH') => {
+    if (session?.status !== 'active') return;
     appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeLabel: selectedGrade.label,
       gradeMin: selectedGrade.min,
@@ -54,16 +55,25 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   };
 
   const handleUndo = () => {
+    if (session?.status !== 'active') return;
     appendEvent(sessionId, 'CLIMB_UNDONE', { at: Date.now() });
     bump();
   };
 
   const handleDone = () => {
+    if (session?.status !== 'active') {
+      navigation.navigate('Tabs');
+      return;
+    }
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');
   };
 
   const handleAbandon = () => {
+    if (session?.status !== 'active') {
+      navigation.navigate('Tabs');
+      return;
+    }
     setSessionStatus(sessionId, 'abandoned');
     navigation.navigate('Tabs');
   };

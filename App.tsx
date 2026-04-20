@@ -1,8 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View } from 'react-native';
 import { migrate } from './src/db/migrate';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { CalendarScreen } from './src/screens/CalendarScreen';
@@ -41,9 +42,21 @@ function TabNavigator() {
 }
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     migrate();
+    setIsReady(true);
   }, []);
+
+  if (!isReady) {
+    return (
+      <>
+        <View style={{ flex: 1, backgroundColor: colors.background }} />
+        <StatusBar style="light" />
+      </>
+    );
+  }
 
   return (
     <>

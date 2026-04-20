@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { colors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
-import { shadows } from '../tokens/shadows';
 
 type CardTone = 'surface' | 'raised';
 
@@ -30,6 +29,10 @@ const styles = StyleSheet.create({
   surface: {},
   raised: {
     backgroundColor: colors.surfaceAlt,
-    ...shadows.soft,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });

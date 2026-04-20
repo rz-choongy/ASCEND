@@ -36,6 +36,14 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# local workspace/editor state
+.obsidian/
+
+# graphify generated cache/metadata
+graphify-out/cache/
+graphify-out/cost.json
+graphify-out/manifest.json
+
 # generated native folders
 /ios
 /android

@@ -51,6 +51,11 @@ export const appendEvent = (
   type: string,
   payload: unknown
 ): string => {
+  const session = getSessionById(sessionId);
+  if (!session || session.status !== 'active') {
+    throw new Error('Cannot append events to an inactive session.');
+  }
+
   const eventId = uuid();
   const payloadJson = JSON.stringify(payload ?? null) ?? 'null';
   run(
@@ -79,7 +84,7 @@ export const getSessionById = (sessionId: string): SessionRow | null => {
 
 export const getSessionEvents = (sessionId: string): SessionEvent[] => {
   const rows = getAll<EventRow>(
-    'SELECT id, type, payload_json, created_at FROM events WHERE session_id = ? ORDER BY created_at ASC;',
+    'SELECT id, type, payload_json, created_at FROM events WHERE session_id = ? ORDER BY created_at ASC, rowid ASC;',
     [sessionId]
   );
   return rows.map((row) => {

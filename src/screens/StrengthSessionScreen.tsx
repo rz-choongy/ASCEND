@@ -41,7 +41,7 @@ const formatLogTime = (ms: number): string => {
 
 const formatSetLabel = (set: LoggedSet): string => {
   const weightLabel = set.weight === 0 ? 'bw' : `${set.weight}kg`;
-  return `${set.reps}×${weightLabel}`;
+  return `${set.reps}x${weightLabel}`;
 };
 
 const parseLoggedSets = (
@@ -83,6 +83,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const hasLogs = loggedSets.length > 0;
 
   const handleLogSet = () => {
+    if (session?.status !== 'active') return;
     appendEvent(sessionId, 'SET_LOGGED', {
       exerciseName: selectedExercise.name,
       reps,
@@ -93,16 +94,25 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   };
 
   const handleUndo = () => {
+    if (session?.status !== 'active') return;
     appendEvent(sessionId, 'SET_UNDONE', { at: Date.now() });
     bump();
   };
 
   const handleDone = () => {
+    if (session?.status !== 'active') {
+      navigation.navigate('Tabs');
+      return;
+    }
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');
   };
 
   const handleAbandon = () => {
+    if (session?.status !== 'active') {
+      navigation.navigate('Tabs');
+      return;
+    }
     setSessionStatus(sessionId, 'abandoned');
     navigation.navigate('Tabs');
   };
@@ -141,7 +151,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
               onPress={() => setReps((v) => Math.max(1, v - 1))}
               style={styles.stepButton}
             >
-              <Text style={styles.stepText}>−</Text>
+              <Text style={styles.stepText}>-</Text>
             </Pressable>
             <Text style={styles.stepValue}>{reps}</Text>
             <Pressable onPress={() => setReps((v) => v + 1)} style={styles.stepButton}>
@@ -157,7 +167,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
               onPress={() => setWeight((v) => Math.max(0, v - 1))}
               style={styles.stepButton}
             >
-              <Text style={styles.stepText}>−</Text>
+              <Text style={styles.stepText}>-</Text>
             </Pressable>
             <Text style={styles.stepValue}>{weight === 0 ? 'bw' : `${weight} kg`}</Text>
             <Pressable onPress={() => setWeight((v) => v + 1)} style={styles.stepButton}>

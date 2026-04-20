@@ -15,7 +15,7 @@ type LoggedSet = {
 
 type SessionDetailScreenProps = RootStackScreenProps<'SessionDetail'>;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const formatSessionType = (type: string): string =>
   type === 'climb' ? 'Climbing Session' : 'Strength Session';
@@ -26,7 +26,7 @@ const formatDateLine = (ms: number): string => {
   const day = date.getDate();
   const month = date.toLocaleDateString(undefined, { month: 'short' });
   const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `${weekday} ${day} ${month} · ${time}`;
+  return `${weekday} ${day} ${month} - ${time}`;
 };
 
 const formatDuration = (startMs: number, endMs: number): string => {
@@ -48,7 +48,7 @@ const formatLogTime = (ms: number): string => {
 
 const formatSetLabel = (set: LoggedSet): string => {
   const weightLabel = set.weight === 0 ? 'bw' : `${set.weight}${set.unit}`;
-  return `${set.reps}×${weightLabel}`;
+  return `${set.reps}x${weightLabel}`;
 };
 
 const parseLoggedSets = (
@@ -72,7 +72,7 @@ const parseLoggedSets = (
   return sets;
 };
 
-// ── Screen ────────────────────────────────────────────────────────────────────
+// Screen
 
 export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
   const { sessionId } = route.params;
@@ -110,7 +110,7 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* ── Session metadata header ── */}
+        {/* Session metadata header */}
         <View style={styles.metaBlock}>
           <Text style={styles.sessionType}>{formatSessionType(session.type)}</Text>
           <Text style={styles.metaLine}>{formatDateLine(session.started_at)}</Text>
@@ -119,7 +119,7 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
           ) : null}
         </View>
 
-        {/* ── Log list ── */}
+        {/* Log list */}
         <Text style={styles.sectionLabel}>{isClimb ? 'Sends' : 'Sets'}</Text>
         <Divider style={styles.divider} />
 
@@ -149,13 +149,13 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
           ))
         )}
 
-        {/* ── Notes ── */}
+        {/* Notes */}
         <Text style={[styles.sectionLabel, styles.notesSectionLabel]}>Notes</Text>
         <Divider style={styles.divider} />
         <TextInput
           style={styles.notesInput}
           multiline
-          placeholder="Add notes…"
+          placeholder="Add notes..."
           placeholderTextColor={colors.textMuted}
           value={notes}
           onChangeText={setNotes}
