@@ -1,9 +1,45 @@
-import { getAll, run } from './db';
+import { getAll, getFirst, run } from './db';
 
-export const migrate = (): void => {
-  run('PRAGMA journal_mode = WAL;');
-  run('PRAGMA foreign_keys = ON;');
+const now = (): number => Date.now();
 
+const DEFAULT_CLIMB_GYM_ID = 'gym-default-v-scale';
+const SELECTED_CLIMB_GYM_KEY = 'selected_climb_gym_id';
+
+const defaultGrades = [
+  { id: 'grade-default-v0', label: 'V0', grade_min: 0, grade_max: 0, color_hex: '#65A30D', sort_order: 0 },
+  { id: 'grade-default-v1', label: 'V1', grade_min: 1, grade_max: 1, color_hex: '#84CC16', sort_order: 1 },
+  { id: 'grade-default-v2', label: 'V2', grade_min: 2, grade_max: 2, color_hex: '#EAB308', sort_order: 2 },
+  { id: 'grade-default-v3', label: 'V3', grade_min: 3, grade_max: 3, color_hex: '#F97316', sort_order: 3 },
+  { id: 'grade-default-v4', label: 'V4', grade_min: 4, grade_max: 4, color_hex: '#EF4444', sort_order: 4 },
+  { id: 'grade-default-v5', label: 'V5', grade_min: 5, grade_max: 5, color_hex: '#A855F7', sort_order: 5 },
+  { id: 'grade-default-v6', label: 'V6', grade_min: 6, grade_max: 6, color_hex: '#3B82F6', sort_order: 6 },
+  { id: 'grade-default-v7-plus', label: 'V7+', grade_min: 7, grade_max: 10, color_hex: '#111827', sort_order: 7 },
+];
+
+const defaultExercises = [
+  { id: 'exercise-pullups', name: 'Pull-ups', sort_order: 0 },
+  { id: 'exercise-pushups', name: 'Push-ups', sort_order: 1 },
+  { id: 'exercise-barbell-row', name: 'Barbell Row', sort_order: 2 },
+  { id: 'exercise-hangboard', name: 'Hangboard', sort_order: 3 },
+  { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
+];
+
+const APP_SCHEMA_VERSION = 2;
+
+type Migration = {
+  version: number;
+  up: () => void;
+};
+
+const getUserVersion = (): number => {
+  return getFirst<{ user_version: number }>('PRAGMA user_version;')?.user_version ?? 0;
+};
+
+const setUserVersion = (version: number): void => {
+  run(`PRAGMA user_version = ${version};`);
+};
+
+const ensureBaseSchema = (): void => {
   run(`
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY NOT NULL,
@@ -24,14 +60,184 @@ export const migrate = (): void => {
     run('ALTER TABLE sessions ADD COLUMN gym_id TEXT;');
   }
 
+  const hasTitle = sessionColumns.some((column) => column.name === 'title');
+  if (!hasTitle) {
+    run('ALTER TABLE sessions ADD COLUMN title TEXT;');
+  }
+
+  const hasNotes = sessionColumns.some((column) => column.name === 'notes');
+  if (!hasNotes) {
+    run('ALTER TABLE sessions ADD COLUMN notes TEXT;');
+  }
+
   run(`
     CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY NOT NULL,
       session_id TEXT NOT NULL,
       type TEXT NOT NULL,
       payload_json TEXT NOT NULL,
+      schema_version INTEGER NOT NULL DEFAULT 1,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (session_id) REFERENCES sessions(id)
     );
   `);
+
+  const eventColumns = getAll<{ name: string }>('PRAGMA table_info(events);');
+  const hasSchemaVersion = eventColumns.some((column) => column.name === 'schema_version');
+  if (!hasSchemaVersion) {
+    run('ALTER TABLE events ADD COLUMN schema_version INTEGER NOT NULL DEFAULT 1;');
+  }
+
+  run(`
+    CREATE TABLE IF NOT EXISTS gyms (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      grading_type TEXT NOT NULL,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+
+  run(`
+    CREATE TABLE IF NOT EXISTS gym_grade_options (
+      id TEXT PRIMARY KEY NOT NULL,
+      gym_id TEXT NOT NULL,
+      label TEXT NOT NULL,
+      grade_min INTEGER NOT NULL,
+      grade_max INTEGER NOT NULL,
+      color_hex TEXT,
+      sort_order INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (gym_id) REFERENCES gyms(id)
+    );
+  `);
+
+  run('CREATE INDEX IF NOT EXISTS idx_gym_grade_options_gym_sort ON gym_grade_options(gym_id, sort_order);');
+
+  run(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+
+  run(`
+    CREATE TABLE IF NOT EXISTS exercises (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+
+  const seededAt = now();
+
+  run(
+    `INSERT OR IGNORE INTO gyms (
+      id,
+      name,
+      grading_type,
+      is_default,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?);`,
+    [DEFAULT_CLIMB_GYM_ID, 'Default V-Scale', 'v_scale', 1, seededAt, seededAt]
+  );
+
+  defaultGrades.forEach((grade) => {
+    run(
+      `INSERT OR IGNORE INTO gym_grade_options (
+        id,
+        gym_id,
+        label,
+        grade_min,
+        grade_max,
+        color_hex,
+        sort_order,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        grade.id,
+        DEFAULT_CLIMB_GYM_ID,
+        grade.label,
+        grade.grade_min,
+        grade.grade_max,
+        grade.color_hex,
+        grade.sort_order,
+        seededAt,
+        seededAt,
+      ]
+    );
+  });
+
+  run(
+    'INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES (?, ?, ?);',
+    [SELECTED_CLIMB_GYM_KEY, DEFAULT_CLIMB_GYM_ID, seededAt]
+  );
+
+  defaultExercises.forEach((exercise) => {
+    run(
+      `INSERT OR IGNORE INTO exercises (
+        id,
+        name,
+        sort_order,
+        active,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?);`,
+      [exercise.id, exercise.name, exercise.sort_order, 1, seededAt, seededAt]
+    );
+  });
+};
+
+const ensureBetaHardening = (): void => {
+  // Preserve the newest active session if an old dev/beta DB somehow has duplicates.
+  const activeSessions = getAll<{ id: string }>(
+    'SELECT id FROM sessions WHERE status = ? ORDER BY started_at DESC, rowid DESC;',
+    ['active']
+  );
+  activeSessions.slice(1).forEach((session) => {
+    run('UPDATE sessions SET status = ?, completed_at = NULL WHERE id = ?;', [
+      'abandoned',
+      session.id,
+    ]);
+  });
+
+  run('CREATE INDEX IF NOT EXISTS idx_events_session_created ON events(session_id, created_at);');
+  run('CREATE INDEX IF NOT EXISTS idx_sessions_status_started ON sessions(status, started_at);');
+  run(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_one_active ON sessions(status) WHERE status = 'active';"
+  );
+};
+
+const migrations: Migration[] = [
+  { version: 1, up: ensureBaseSchema },
+  { version: 2, up: ensureBetaHardening },
+];
+
+export const migrate = (): void => {
+  run('PRAGMA journal_mode = WAL;');
+  run('PRAGMA foreign_keys = ON;');
+
+  let currentVersion = getUserVersion();
+  for (const migration of migrations) {
+    if (currentVersion >= migration.version) {
+      continue;
+    }
+    migration.up();
+    setUserVersion(migration.version);
+    currentVersion = migration.version;
+  }
+
+  // Keep idempotent safety checks active for dev DBs whose user_version was touched manually.
+  if (currentVersion >= APP_SCHEMA_VERSION) {
+    ensureBaseSchema();
+    ensureBetaHardening();
+  }
 };

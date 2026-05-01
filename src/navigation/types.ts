@@ -3,9 +3,11 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export type RootStackParamList = {
   Tabs: undefined;
-  ClimbLogger: { sessionId: string };
+  ClimbLogger: { sessionId: string; gymId?: string };
   StrengthLogger: { sessionId: string };
   SessionDetail: { sessionId: string };
+  GymSelect: { returnToSessionId?: string } | undefined;
+  GymEdit: { returnToSessionId?: string; gymId?: string } | undefined;
 };
 
 export type TabParamList = {

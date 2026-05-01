@@ -1,0 +1,8 @@
+{
+  "sheetId": "1pw51EB1riTqSv4ezlN32rQzhjeMzTBaZdutg5OnmoxM",
+  "sheetName": "Sheet1",
+  "mainBranch": "main",
+  "testCommand": "",
+  "typecheckCommand": "npx tsc --noEmit",
+  "prReviewers": []
+}

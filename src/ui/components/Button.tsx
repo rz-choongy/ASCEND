@@ -19,7 +19,7 @@ const getVariantStyles = (variant: ButtonVariant) => {
     case 'secondary':
       return {
         button: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.surfaceRaised,
           borderColor: colors.borderSoft,
         },
         text: {
@@ -79,6 +79,8 @@ export const Button = ({
   textStyle,
 }: ButtonProps) => {
   const variantStyles = getVariantStyles(variant);
+  const loudLabel =
+    variant === 'primary' || variant === 'success' || variant === 'warning';
   return (
     <Pressable
       onPress={onPress}
@@ -91,15 +93,24 @@ export const Button = ({
         style,
       ]}
     >
-      <Text style={[styles.text, variantStyles.text, textStyle]}>{label}</Text>
+      <Text
+        style={[
+          styles.text,
+          loudLabel ? styles.loudText : styles.quietText,
+          variantStyles.text,
+          textStyle,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 48,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: radius.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -109,11 +120,16 @@ const styles = StyleSheet.create({
   text: {
     ...typography.body,
     fontWeight: '700',
+  },
+  loudText: {
     textTransform: 'uppercase',
     letterSpacing: 1.1,
   },
+  quietText: {
+    letterSpacing: 0.2,
+  },
   pressed: {
-    opacity: 0.9,
+    opacity: 0.86,
   },
   disabled: {
     opacity: 0.5,

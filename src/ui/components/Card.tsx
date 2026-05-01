@@ -21,7 +21,7 @@ export const Card = ({ children, tone = 'surface', style }: CardProps) => {
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -29,10 +29,10 @@ const styles = StyleSheet.create({
   surface: {},
   raised: {
     backgroundColor: colors.surfaceAlt,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowColor: '#050806',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
     elevation: 2,
   },
 });

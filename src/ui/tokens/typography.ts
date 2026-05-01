@@ -1,22 +1,34 @@
 import { colors } from './colors';
 
 export const typography = {
-  title: {
-    fontSize: 22,
-    fontWeight: '700' as const,
+  display: {
+    fontSize: 34,
+    fontWeight: '900' as const,
     color: colors.textPrimary,
-    letterSpacing: 0.3,
+    letterSpacing: -0.5,
+  },
+  title: {
+    fontSize: 23,
+    fontWeight: '800' as const,
+    color: colors.textPrimary,
+    letterSpacing: 0.1,
+  },
+  numeric: {
+    fontSize: 24,
+    fontWeight: '900' as const,
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   section: {
     fontSize: 12,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     color: colors.textMuted,
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
     textTransform: 'uppercase' as const,
   },
   body: {
     fontSize: 14,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     color: colors.textPrimary,
   },
   bodyMuted: {
@@ -26,9 +38,9 @@ export const typography = {
   },
   meta: {
     fontSize: 11,
-    fontWeight: '600' as const,
+    fontWeight: '800' as const,
     color: colors.textMuted,
-    letterSpacing: 1,
+    letterSpacing: 0.9,
     textTransform: 'uppercase' as const,
   },
 } as const;

@@ -11,6 +11,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { formatLocalDate } from '../domain/dateUtils';
+import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
 import { createSession, getActiveSession, getSessionsForDate } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
@@ -29,6 +30,11 @@ const MONTH_NAMES = [
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+type GymLike = {
+  id: string;
+  name: string;
+};
+
 function formatHeaderDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 }
@@ -41,7 +47,11 @@ function formatTime(ts: number): string {
 }
 
 function sessionTypeLabel(type: SessionType): string {
-  return type === 'climb' ? 'Climbing' : 'Gym';
+  return type === 'climb' ? 'Climbing' : 'Strength';
+}
+
+function sessionDisplayLabel(session: SessionRow): string {
+  return session.title?.trim() || sessionTypeLabel(session.type);
 }
 
 export function LogScreen() {
@@ -52,11 +62,13 @@ export function LogScreen() {
 
   const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
   const [todaySessions, setTodaySessions] = useState<SessionRow[]>([]);
+  const [selectedGym, setSelectedGym] = useState<GymLike | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       setActiveSession(getActiveSession());
       setTodaySessions(getSessionsForDate(todayStr));
+      setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
     }, [todayStr])
   );
 
@@ -80,7 +92,8 @@ export function LogScreen() {
       navigateToSession(existing.type, existing.id);
       return;
     }
-    const sessionId = createSession(type);
+    const gym = type === 'climb' ? ensureSelectedClimbGym() : null;
+    const sessionId = createSession(type, gym ? { gymId: gym.id } : undefined);
     navigateToSession(type, sessionId);
   }
 
@@ -91,7 +104,10 @@ export function LogScreen() {
       keyboardShouldPersistTaps="handled"
     >
       {/* Date header */}
-      <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
+      <View style={styles.headerBlock}>
+        <Text style={styles.screenTitle}>Today</Text>
+        <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
+      </View>
 
       {/* Active session banner */}
       {activeSession ? (
@@ -99,13 +115,13 @@ export function LogScreen() {
           <View style={styles.bannerInner}>
             <View style={styles.bannerDot} />
             <View style={styles.bannerTextCol}>
-              <Text style={styles.bannerLabel}>In progress</Text>
+              <Text style={styles.bannerLabel}>Session in progress</Text>
               <Text style={styles.bannerType}>
-                {sessionTypeLabel(activeSession.type)}
+                {sessionDisplayLabel(activeSession)}
               </Text>
             </View>
             <Button
-              label="Resume"
+              label="Resume session"
               variant="primary"
               onPress={handleResume}
               style={styles.resumeButton}
@@ -114,10 +130,48 @@ export function LogScreen() {
         </Card>
       ) : null}
 
+      {/* Quick-log CTAs */}
+      <View style={styles.ctaSection}>
+        {activeSession ? (
+          <View style={styles.activeLockBox}>
+            <Text style={styles.activeLockTitle}>Finish current session first</Text>
+            <Text style={styles.activeLockCopy}>
+              Resume the active session above before starting a new one.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.gymRow}
+              onPress={() => navigation.navigate('GymSelect')}
+              activeOpacity={0.75}
+            >
+              <View>
+                <Text style={styles.gymLabel}>Climb grades</Text>
+                <Text style={styles.gymName}>{selectedGym?.name ?? 'Default V-Scale'}</Text>
+              </View>
+              <Text style={styles.chevron}>{'>'}</Text>
+            </TouchableOpacity>
+            <Button
+              label="Start climbing"
+              variant="primary"
+              onPress={() => handleLog('climb')}
+              style={styles.ctaButton}
+            />
+            <Button
+              label="Start strength"
+              variant="secondary"
+              onPress={() => handleLog('strength')}
+              style={styles.ctaButton}
+            />
+          </>
+        )}
+      </View>
+
       {/* Today's sessions */}
       {todaySessions.length > 0 ? (
         <View style={styles.sessionSection}>
-          <Text style={styles.sectionLabel}>Today's sessions</Text>
+          <Text style={styles.sectionLabel}>Logged today</Text>
           {todaySessions.map((session) => (
             <TouchableOpacity
               key={session.id}
@@ -138,7 +192,7 @@ export function LogScreen() {
                   ]}
                 />
                 <Text style={styles.sessionTypeText}>
-                  {sessionTypeLabel(session.type)}
+                  {sessionDisplayLabel(session)}
                 </Text>
               </View>
               <View style={styles.sessionRowRight}>
@@ -151,22 +205,6 @@ export function LogScreen() {
           ))}
         </View>
       ) : null}
-
-      {/* Quick-log CTAs */}
-      <View style={styles.ctaSection}>
-        <Button
-          label="Log Climbing"
-          variant="primary"
-          onPress={() => handleLog('climb')}
-          style={styles.ctaButton}
-        />
-        <Button
-          label="Log Gym"
-          variant="secondary"
-          onPress={() => handleLog('strength')}
-          style={styles.ctaButton}
-        />
-      </View>
     </ScrollView>
   );
 }
@@ -184,9 +222,15 @@ const styles = StyleSheet.create({
   },
 
   // Date header
-  dateHeader: {
-    ...typography.section,
+  headerBlock: {
+    gap: 2,
     marginBottom: spacing.xs,
+  },
+  screenTitle: {
+    ...typography.display,
+  },
+  dateHeader: {
+    ...typography.bodyMuted,
   },
 
   // Active session banner
@@ -220,7 +264,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   resumeButton: {
-    minWidth: 90,
+    minWidth: 126,
   },
 
   // Today's sessions section
@@ -270,6 +314,42 @@ const styles = StyleSheet.create({
   ctaSection: {
     gap: spacing.sm,
     marginTop: spacing.xs,
+  },
+  activeLockBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 12,
+  },
+  activeLockTitle: {
+    ...typography.body,
+    fontWeight: '800',
+  },
+  activeLockCopy: {
+    ...typography.bodyMuted,
+    marginTop: 2,
+  },
+  gymRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 12,
+  },
+  gymLabel: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
+  gymName: {
+    ...typography.body,
+    fontWeight: '700',
+    marginTop: 2,
   },
   ctaButton: {
     width: '100%',

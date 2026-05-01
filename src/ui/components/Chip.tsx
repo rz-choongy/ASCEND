@@ -27,23 +27,23 @@ export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => 
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 40,
-    paddingHorizontal: 14,
+    minHeight: 42,
+    paddingHorizontal: 15,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   selected: {
     borderColor: colors.accent,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.accentSoft,
   },
   text: {
     color: colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   pressed: {
-    opacity: 0.9,
+    opacity: 0.86,
   },
 });

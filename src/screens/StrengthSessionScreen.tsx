@@ -1,6 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { appendEvent, getSessionById, getSessionEvents, setSessionStatus } from '../domain/sessionStore';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { getExercises, createExercise } from '../domain/exerciseStore';
+import {
+  appendEvent,
+  getSessionById,
+  getSessionEvents,
+  setSessionStatus,
+  setSessionTitle,
+} from '../domain/sessionStore';
+import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -13,6 +29,7 @@ import {
 } from '../ui';
 
 type StrengthSetPayload = {
+  exerciseId?: string;
   exerciseName: string;
   reps: number;
   weight: number;
@@ -20,17 +37,30 @@ type StrengthSetPayload = {
   createdAt?: number;
 };
 
-type LoggedSet = StrengthSetPayload & { createdAt: number };
-
 type StrengthSessionScreenProps = RootStackScreenProps<'StrengthLogger'>;
 
-const EXERCISES = [
-  { id: 'pullups', name: 'Pull-ups' },
-  { id: 'pushups', name: 'Push-ups' },
-  { id: 'row', name: 'Barbell Row' },
-  { id: 'hangboard', name: 'Hangboard' },
-  { id: 'dips', name: 'Dips' },
-];
+type ExerciseOption = {
+  id: string;
+  name: string;
+};
+
+type ExerciseState = {
+  exercises: ExerciseOption[];
+  selectedExerciseId: string | null;
+};
+
+type ExerciseInputMemory = Record<string, { reps: number; weight: number }>;
+
+const loadExerciseState = (selectedExerciseId?: string | null): ExerciseState => {
+  const exercises = getExercises();
+  const selectedExists = exercises.some((exercise) => exercise.id === selectedExerciseId);
+  return {
+    exercises,
+    selectedExerciseId: selectedExists
+      ? selectedExerciseId ?? null
+      : exercises[0]?.id ?? null,
+  };
+};
 
 const formatLogTime = (ms: number): string => {
   const date = new Date(ms);
@@ -44,52 +74,87 @@ const formatSetLabel = (set: LoggedSet): string => {
   return `${set.reps}x${weightLabel}`;
 };
 
-const parseLoggedSets = (
-  events: { type: string; payload: unknown; createdAt: number }[]
-): LoggedSet[] => {
-  const sets: LoggedSet[] = [];
-  for (const event of events) {
-    if (event.type === 'SET_LOGGED') {
-      const p = event.payload as StrengthSetPayload;
-      sets.push({ ...p, createdAt: event.createdAt });
-    }
-    if (event.type === 'SET_UNDONE') {
-      sets.pop();
-    }
-  }
-  return sets;
-};
-
 export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScreenProps) => {
   const { sessionId } = route.params;
   const session = getSessionById(sessionId);
 
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedExerciseId, setSelectedExerciseId] = useState(EXERCISES[0].id);
+  const [exerciseState, setExerciseState] = useState<ExerciseState>(() => loadExerciseState());
+  const [title, setTitle] = useState(session?.title ?? '');
+  const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState('');
   const [reps, setReps] = useState(8);
   const [weight, setWeight] = useState(20);
+  const [exerciseInputMemory, setExerciseInputMemory] = useState<ExerciseInputMemory>({});
 
   const bump = () => setRefreshKey((k) => k + 1);
+  const displayTitle = title.trim() || 'Gym Session';
 
   const events = useMemo(
     () => getSessionEvents(sessionId),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sessionId, refreshKey]
   );
-  const loggedSets = useMemo(() => parseLoggedSets(events), [events]);
+  const loggedSets = useMemo(() => applySetEvents(events), [events]);
   const recentSets = useMemo(() => loggedSets.slice().reverse(), [loggedSets]);
 
-  const selectedExercise = EXERCISES.find((e) => e.id === selectedExerciseId) ?? EXERCISES[0];
+  const selectedExercise =
+    exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId) ??
+    exerciseState.exercises[0] ??
+    null;
   const hasLogs = loggedSets.length > 0;
 
+  const handleSaveTitle = () => {
+    if (!session) return;
+    setSessionTitle(sessionId, title.trim());
+  };
+
+  const rememberCurrentInput = () => {
+    if (!exerciseState.selectedExerciseId) return;
+    setExerciseInputMemory((current) => ({
+      ...current,
+      [exerciseState.selectedExerciseId as string]: { reps, weight },
+    }));
+  };
+
+  const handleSelectExercise = (exerciseId: string) => {
+    rememberCurrentInput();
+    const savedInput = exerciseInputMemory[exerciseId];
+    if (savedInput) {
+      setReps(savedInput.reps);
+      setWeight(savedInput.weight);
+    }
+    setExerciseState((state) => ({ ...state, selectedExerciseId: exerciseId }));
+  };
+
+  const handleCreateExercise = () => {
+    const name = newExerciseName.trim();
+    if (name.length === 0) return;
+
+    const created = createExercise(name);
+    const exercises = getExercises();
+    const selectedExerciseId = created.id;
+
+    setExerciseState({ exercises, selectedExerciseId });
+    setReps(8);
+    setWeight(0);
+    setNewExerciseName('');
+    setIsAddExerciseOpen(false);
+  };
+
   const handleLogSet = () => {
-    if (session?.status !== 'active') return;
+    if (session?.status !== 'active' || !selectedExercise) return;
     appendEvent(sessionId, 'SET_LOGGED', {
+      exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
       reps,
       weight,
       unit: 'kg',
     } satisfies StrengthSetPayload);
+    setExerciseInputMemory((current) => ({
+      ...current,
+      [selectedExercise.id]: { reps, weight },
+    }));
     bump();
   };
 
@@ -104,6 +169,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       navigation.navigate('Tabs');
       return;
     }
+    setSessionTitle(sessionId, title.trim());
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');
   };
@@ -113,6 +179,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       navigation.navigate('Tabs');
       return;
     }
+    setSessionTitle(sessionId, title.trim());
     setSessionStatus(sessionId, 'abandoned');
     navigation.navigate('Tabs');
   };
@@ -127,23 +194,79 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Gym Session</Text>
-
       {/* Exercise chips */}
       <Text style={styles.sectionLabel}>Exercise</Text>
       <View style={styles.chipRow}>
-        {EXERCISES.map((exercise) => (
+        {exerciseState.exercises.map((exercise) => (
           <Chip
             key={exercise.id}
             label={exercise.name}
-            selected={exercise.id === selectedExerciseId}
-            onPress={() => setSelectedExerciseId(exercise.id)}
+            selected={exercise.id === exerciseState.selectedExerciseId}
+            onPress={() => handleSelectExercise(exercise.id)}
           />
         ))}
+        <Chip
+          label="+ Exercise"
+          selected={false}
+          onPress={() => setIsAddExerciseOpen(true)}
+          style={styles.addExerciseChip}
+        />
       </View>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isAddExerciseOpen}
+        onRequestClose={() => setIsAddExerciseOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Add exercise</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newExerciseName}
+              onChangeText={setNewExerciseName}
+              placeholder="Exercise name"
+              placeholderTextColor={colors.textMuted}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleCreateExercise}
+            />
+            <View style={styles.modalActions}>
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={() => {
+                  setNewExerciseName('');
+                  setIsAddExerciseOpen(false);
+                }}
+                style={styles.modalButton}
+              />
+              <Button
+                label="Add"
+                onPress={handleCreateExercise}
+                disabled={newExerciseName.trim().length === 0}
+                style={styles.modalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {!selectedExercise ? (
+        <View style={styles.emptyExerciseBox}>
+          <Text style={styles.emptyText}>Add an exercise to start logging sets.</Text>
+        </View>
+      ) : null}
 
       {/* Input controls */}
       <View style={styles.inputSection}>
+        <View style={styles.loggingHeader}>
+          <Text style={styles.loggingEyebrow}>Logging</Text>
+          <Text style={styles.loggingExercise}>
+            {selectedExercise?.name ?? 'Select an exercise'}
+          </Text>
+        </View>
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Reps</Text>
           <View style={styles.stepper}>
@@ -161,22 +284,50 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         </View>
 
         <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Weight</Text>
+          <Text style={styles.inputLabel}>Weight (kg)</Text>
           <View style={styles.stepper}>
             <Pressable
+              onPress={() => setWeight((v) => Math.max(0, v - 5))}
+              style={styles.stepButtonSmall}
+            >
+              <Text style={styles.stepTextSmall}>-5</Text>
+            </Pressable>
+            <Pressable
               onPress={() => setWeight((v) => Math.max(0, v - 1))}
-              style={styles.stepButton}
+              style={styles.stepButtonSmall}
             >
               <Text style={styles.stepText}>-</Text>
             </Pressable>
-            <Text style={styles.stepValue}>{weight === 0 ? 'bw' : `${weight} kg`}</Text>
-            <Pressable onPress={() => setWeight((v) => v + 1)} style={styles.stepButton}>
+            <Text style={styles.stepValue}>{weight === 0 ? 'Bodyweight' : `${weight} kg`}</Text>
+            <Pressable onPress={() => setWeight((v) => v + 1)} style={styles.stepButtonSmall}>
               <Text style={styles.stepText}>+</Text>
+            </Pressable>
+            <Pressable onPress={() => setWeight((v) => v + 5)} style={styles.stepButtonSmall}>
+              <Text style={styles.stepTextSmall}>+5</Text>
             </Pressable>
           </View>
         </View>
 
-        <Button label="Log Set" onPress={handleLogSet} style={styles.logSetButton} />
+        <Button
+          label="Log Set"
+          onPress={handleLogSet}
+          disabled={!selectedExercise}
+          style={styles.logSetButton}
+        />
+      </View>
+
+      <View style={styles.titleBlock}>
+        <Text style={styles.titleLabel}>Optional title</Text>
+        <TextInput
+          style={styles.titleInput}
+          value={title}
+          onChangeText={setTitle}
+          onBlur={handleSaveTitle}
+          onSubmitEditing={handleSaveTitle}
+          placeholder={displayTitle}
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="done"
+        />
       </View>
 
       {/* Logged sets */}
@@ -236,9 +387,29 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  title: {
-    ...typography.title,
+  titleBlock: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     marginBottom: spacing.sm,
+  },
+  titleLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  titleInput: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+    minHeight: 30,
+    padding: 0,
   },
   sectionLabel: {
     ...typography.section,
@@ -250,6 +421,54 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
+  addExerciseChip: {
+    borderColor: colors.accent,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlay,
+    padding: spacing.md,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  modalTitle: {
+    ...typography.title,
+    fontSize: 20,
+  },
+  modalInput: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+    color: colors.textPrimary,
+    fontSize: 16,
+    paddingHorizontal: spacing.sm,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  emptyExerciseBox: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+  },
   inputSection: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -258,6 +477,22 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     gap: spacing.xs,
     marginBottom: spacing.sm,
+  },
+  loggingHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  loggingEyebrow: {
+    ...typography.meta,
+    color: colors.accent,
+  },
+  loggingExercise: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: 2,
   },
   inputRow: {
     flexDirection: 'row',
@@ -270,15 +505,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    width: 60,
+    width: 82,
   },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flexShrink: 1,
   },
   stepButton: {
     width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepButtonSmall: {
+    width: 32,
     height: 44,
     borderRadius: radius.sm,
     backgroundColor: colors.surfaceRaised,
@@ -293,11 +539,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 24,
   },
+  stepTextSmall: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
   stepValue: {
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '700',
-    minWidth: 56,
+    minWidth: 70,
     textAlign: 'center',
   },
   logSetButton: {

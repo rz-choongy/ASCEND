@@ -1,19 +1,57 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { applyClimbEvents } from '../domain/climbLogUtils';
-import { getSessionById, getSessionEvents, setSessionNotes } from '../domain/sessionStore';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
+import { getGradeOptionsForGym } from '../domain/gymStore';
+import {
+  appendSessionCorrectionEvent,
+  getSessionById,
+  getSessionEvents,
+  removeSessionFromHistory,
+  setSessionNotes,
+  setSessionTitle,
+} from '../domain/sessionStore';
+import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Divider, ListRow, colors, spacing, typography } from '../ui';
-
-type LoggedSet = {
-  exerciseName: string;
-  reps: number;
-  weight: number;
-  unit: string;
-  createdAt: number;
-};
+import { Button, Divider, ListRow, colors, radius, spacing, typography } from '../ui';
 
 type SessionDetailScreenProps = RootStackScreenProps<'SessionDetail'>;
+
+type GradeOption = {
+  id?: string;
+  label: string;
+  gradeMin: number;
+  gradeMax: number;
+  colorHex?: string | null;
+};
+
+type EditingEntry =
+  | { kind: 'climb'; entry: ClimbLog }
+  | { kind: 'set'; entry: LoggedSet }
+  | null;
+
+type ClimbDraft = {
+  gradeLabel: string;
+  gradeMin: string;
+  gradeMax: string;
+  gradeColor: string | null;
+  gradeId?: string;
+  result: 'SEND' | 'FLASH';
+};
+
+type SetDraft = {
+  exerciseName: string;
+  reps: string;
+  weight: string;
+};
 
 // Helpers
 
@@ -51,34 +89,60 @@ const formatSetLabel = (set: LoggedSet): string => {
   return `${set.reps}x${weightLabel}`;
 };
 
-const parseLoggedSets = (
-  events: { type: string; payload: unknown; createdAt: number }[]
-): LoggedSet[] => {
-  const sets: LoggedSet[] = [];
-  for (const event of events) {
-    if (event.type === 'SET_LOGGED' && event.payload && typeof event.payload === 'object') {
-      const p = event.payload as Partial<LoggedSet>;
-      sets.push({
-        exerciseName: p.exerciseName ?? 'Set',
-        reps: p.reps ?? 0,
-        weight: p.weight ?? 0,
-        unit: p.unit ?? 'kg',
-        createdAt: event.createdAt,
-      });
-    } else if (event.type === 'SET_UNDONE') {
-      sets.pop();
-    }
+const toNumber = (value: string, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeGradeOption = (grade: unknown): GradeOption | null => {
+  if (!grade || typeof grade !== 'object') return null;
+  const value = grade as {
+    id?: unknown;
+    label?: unknown;
+    gradeMin?: unknown;
+    gradeMax?: unknown;
+    grade_min?: unknown;
+    grade_max?: unknown;
+    colorHex?: unknown;
+    color_hex?: unknown;
+  };
+  const min = value.gradeMin ?? value.grade_min;
+  const max = value.gradeMax ?? value.grade_max;
+  const color = value.colorHex ?? value.color_hex;
+  if (typeof value.label !== 'string' || typeof min !== 'number' || typeof max !== 'number') {
+    return null;
   }
-  return sets;
+  return {
+    id: typeof value.id === 'string' ? value.id : undefined,
+    label: value.label,
+    gradeMin: min,
+    gradeMax: max,
+    colorHex: typeof color === 'string' ? color : null,
+  };
 };
 
 // Screen
 
-export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
+export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenProps) => {
   const { sessionId } = route.params;
 
-  const session = useMemo(() => getSessionById(sessionId), [sessionId]);
-  const events = useMemo(() => getSessionEvents(sessionId), [sessionId]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [editingEntry, setEditingEntry] = useState<EditingEntry>(null);
+  const [climbDraft, setClimbDraft] = useState<ClimbDraft>({
+    gradeLabel: '',
+    gradeMin: '0',
+    gradeMax: '0',
+    gradeColor: null,
+    result: 'SEND',
+  });
+  const [setDraft, setSetDraft] = useState<SetDraft>({
+    exerciseName: '',
+    reps: '0',
+    weight: '0',
+  });
+
+  const session = useMemo(() => getSessionById(sessionId), [sessionId, refreshKey]);
+  const events = useMemo(() => getSessionEvents(sessionId), [sessionId, refreshKey]);
 
   const climbs = useMemo(
     () => (session?.type === 'climb' ? applyClimbEvents(events) : []),
@@ -86,11 +150,19 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
   );
 
   const sets = useMemo(
-    () => (session?.type === 'strength' ? parseLoggedSets(events) : []),
+    () => (session?.type === 'strength' ? applySetEvents(events) : []),
     [session, events]
   );
 
+  const gradeOptions = useMemo(() => {
+    if (!session?.gym_id) return [];
+    return getGradeOptionsForGym(session.gym_id)
+      .map(normalizeGradeOption)
+      .filter((grade): grade is GradeOption => grade !== null);
+  }, [session?.gym_id]);
+
   const [notes, setNotes] = useState(session?.notes ?? '');
+  const [title, setTitle] = useState(session?.title ?? '');
 
   if (!session) {
     return (
@@ -106,13 +178,138 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
       : null;
 
   const isClimb = session.type === 'climb';
+  const fallbackTitle = formatSessionType(session.type);
+
+  const saveTitle = () => {
+    setSessionTitle(sessionId, title);
+  };
+
+  const bump = () => setRefreshKey((key) => key + 1);
+
+  const openClimbEdit = (entry: ClimbLog) => {
+    setEditingEntry({ kind: 'climb', entry });
+    setClimbDraft({
+      gradeLabel: entry.gradeLabel,
+      gradeMin: `${entry.gradeMin}`,
+      gradeMax: `${entry.gradeMax}`,
+      gradeColor: entry.gradeColor ?? null,
+      gradeId: entry.gradeId,
+      result: entry.result,
+    });
+  };
+
+  const openSetEdit = (entry: LoggedSet) => {
+    setEditingEntry({ kind: 'set', entry });
+    setSetDraft({
+      exerciseName: entry.exerciseName,
+      reps: `${entry.reps}`,
+      weight: `${entry.weight}`,
+    });
+  };
+
+  const selectGrade = (grade: GradeOption) => {
+    setClimbDraft((draft) => ({
+      ...draft,
+      gradeLabel: grade.label,
+      gradeMin: `${grade.gradeMin}`,
+      gradeMax: `${grade.gradeMax}`,
+      gradeColor: grade.colorHex ?? null,
+      gradeId: grade.id,
+    }));
+  };
+
+  const closeEdit = () => {
+    setEditingEntry(null);
+  };
+
+  const saveEntryEdit = () => {
+    if (!editingEntry) return;
+
+    if (editingEntry.kind === 'climb') {
+      appendSessionCorrectionEvent(sessionId, 'CLIMB_EDITED', {
+        eventId: editingEntry.entry.eventId,
+        gradeLabel: climbDraft.gradeLabel.trim() || editingEntry.entry.gradeLabel,
+        gradeMin: toNumber(climbDraft.gradeMin, editingEntry.entry.gradeMin),
+        gradeMax: toNumber(climbDraft.gradeMax, editingEntry.entry.gradeMax),
+        gradeColor: climbDraft.gradeColor,
+        gradeId: climbDraft.gradeId,
+        gymId: session?.gym_id ?? editingEntry.entry.gymId,
+        result: climbDraft.result,
+      });
+      closeEdit();
+      bump();
+      return;
+    }
+
+    appendSessionCorrectionEvent(sessionId, 'SET_EDITED', {
+      eventId: editingEntry.entry.eventId,
+      exerciseName: setDraft.exerciseName.trim() || editingEntry.entry.exerciseName,
+      reps: Math.max(1, Math.round(toNumber(setDraft.reps, editingEntry.entry.reps))),
+      weight: Math.max(0, toNumber(setDraft.weight, editingEntry.entry.weight)),
+      unit: 'kg',
+    });
+    closeEdit();
+    bump();
+  };
+
+  const deleteEntry = () => {
+    if (!editingEntry) return;
+    const type = editingEntry.kind === 'climb' ? 'climb' : 'set';
+    Alert.alert(`Delete ${type}?`, "This removes it from this session's history.", [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          appendSessionCorrectionEvent(
+            sessionId,
+            editingEntry.kind === 'climb' ? 'CLIMB_DELETED' : 'SET_DELETED',
+            { eventId: editingEntry.entry.eventId }
+          );
+          closeEdit();
+          bump();
+        },
+      },
+    ]);
+  };
+
+  const handleRemoveSession = () => {
+    Alert.alert(
+      'Delete session?',
+      "This removes it from Log and Calendar. You can't undo this in the app yet.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            removeSessionFromHistory(sessionId);
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Pressable onPress={() => navigation.goBack()} style={styles.backRow} hitSlop={12}>
+          <Text style={styles.backLabel}>← Back</Text>
+        </Pressable>
         {/* Session metadata header */}
         <View style={styles.metaBlock}>
-          <Text style={styles.sessionType}>{formatSessionType(session.type)}</Text>
+          <Text style={styles.titleLabel}>Session title</Text>
+          <TextInput
+            style={styles.titleInput}
+            value={title}
+            onChangeText={setTitle}
+            onBlur={saveTitle}
+            onSubmitEditing={saveTitle}
+            returnKeyType="done"
+            placeholder={fallbackTitle}
+            placeholderTextColor={colors.textMuted}
+          />
           <Text style={styles.metaLine}>{formatDateLine(session.started_at)}</Text>
           {duration != null ? (
             <Text style={styles.metaLine}>{duration}</Text>
@@ -127,24 +324,31 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
           climbs.length === 0 ? (
             <Text style={styles.emptyText}>Nothing logged</Text>
           ) : (
-            climbs.map((climb, index) => (
+            climbs.map((climb) => (
               <ListRow
-                key={`climb-${index}`}
+                key={climb.eventId}
                 title={climb.gradeLabel}
                 subtitle={climb.result === 'FLASH' ? 'Flash' : 'Send'}
                 meta={formatLogTime(climb.createdAt)}
+                left={
+                  climb.gradeColor ? (
+                    <View style={[styles.gradeSwatch, { backgroundColor: climb.gradeColor }]} />
+                  ) : undefined
+                }
+                onPress={() => openClimbEdit(climb)}
               />
             ))
           )
         ) : sets.length === 0 ? (
           <Text style={styles.emptyText}>Nothing logged</Text>
         ) : (
-          sets.map((set, index) => (
+          sets.map((set) => (
             <ListRow
-              key={`set-${index}`}
+              key={set.eventId}
               title={set.exerciseName}
               subtitle={formatSetLabel(set)}
               meta={formatLogTime(set.createdAt)}
+              onPress={() => openSetEdit(set)}
             />
           ))
         )}
@@ -162,7 +366,155 @@ export const SessionHistoryScreen = ({ route }: SessionDetailScreenProps) => {
           onBlur={() => setSessionNotes(sessionId, notes)}
           textAlignVertical="top"
         />
+
+        {(session.status === 'completed' || session.status === 'abandoned') ? (
+          <View style={styles.dangerBlock}>
+            <Text style={styles.dangerLabel}>Correction</Text>
+            <Text style={styles.dangerCopy}>
+              Delete this session from history.
+            </Text>
+            <Button
+              label="Delete Session"
+              variant="ghost"
+              onPress={handleRemoveSession}
+              style={styles.removeButton}
+              textStyle={styles.removeButtonText}
+            />
+          </View>
+        ) : null}
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={editingEntry !== null}
+        onRequestClose={closeEdit}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {editingEntry?.kind === 'climb' ? 'Edit climb' : 'Edit set'}
+            </Text>
+
+            {editingEntry?.kind === 'climb' ? (
+              <View style={styles.modalContent}>
+                {gradeOptions.length > 0 ? (
+                  <View style={styles.gradeChipRow}>
+                    {gradeOptions.map((grade) => {
+                      const selected = climbDraft.gradeLabel === grade.label;
+                      return (
+                        <Pressable
+                          key={grade.id ?? grade.label}
+                          style={[
+                            styles.gradeChip,
+                            grade.colorHex ? { backgroundColor: grade.colorHex } : null,
+                            selected ? styles.gradeChipSelected : null,
+                          ]}
+                          onPress={() => selectGrade(grade)}
+                        >
+                          <Text style={styles.gradeChipText}>{grade.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <TextInput
+                    style={styles.modalInput}
+                    value={climbDraft.gradeLabel}
+                    onChangeText={(value) =>
+                      setClimbDraft((draft) => ({ ...draft, gradeLabel: value }))
+                    }
+                    placeholder="Grade label"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                )}
+
+                <View style={styles.modalRow}>
+                  <TextInput
+                    style={[styles.modalInput, styles.smallInput]}
+                    value={climbDraft.gradeMin}
+                    onChangeText={(value) =>
+                      setClimbDraft((draft) => ({ ...draft, gradeMin: value }))
+                    }
+                    keyboardType="number-pad"
+                    placeholder="Min"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, styles.smallInput]}
+                    value={climbDraft.gradeMax}
+                    onChangeText={(value) =>
+                      setClimbDraft((draft) => ({ ...draft, gradeMax: value }))
+                    }
+                    keyboardType="number-pad"
+                    placeholder="Max"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+
+                <View style={styles.resultRow}>
+                  {(['FLASH', 'SEND'] as const).map((result) => {
+                    const selected = climbDraft.result === result;
+                    return (
+                      <Pressable
+                        key={result}
+                        style={[styles.resultChip, selected ? styles.resultChipSelected : null]}
+                        onPress={() => setClimbDraft((draft) => ({ ...draft, result }))}
+                      >
+                        <Text style={[styles.resultText, selected ? styles.resultTextSelected : null]}>
+                          {result}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.modalContent}>
+                <TextInput
+                  style={styles.modalInput}
+                  value={setDraft.exerciseName}
+                  onChangeText={(value) =>
+                    setSetDraft((draft) => ({ ...draft, exerciseName: value }))
+                  }
+                  placeholder="Exercise"
+                  placeholderTextColor={colors.textMuted}
+                />
+                <View style={styles.modalRow}>
+                  <TextInput
+                    style={[styles.modalInput, styles.smallInput]}
+                    value={setDraft.reps}
+                    onChangeText={(value) => setSetDraft((draft) => ({ ...draft, reps: value }))}
+                    keyboardType="number-pad"
+                    placeholder="Reps"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, styles.smallInput]}
+                    value={setDraft.weight}
+                    onChangeText={(value) => setSetDraft((draft) => ({ ...draft, weight: value }))}
+                    keyboardType="number-pad"
+                    placeholder="Weight"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={styles.modalActions}>
+              <Button
+                label="Delete"
+                variant="ghost"
+                onPress={deleteEntry}
+                style={styles.deleteEntryButton}
+                textStyle={styles.removeButtonText}
+              />
+              <Button label="Cancel" variant="ghost" onPress={closeEdit} style={styles.modalButton} />
+              <Button label="Save" onPress={saveEntryEdit} style={styles.modalButton} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -176,12 +528,33 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     paddingBottom: spacing.xxl,
   },
+  backRow: {
+    marginBottom: spacing.xs,
+  },
+  backLabel: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   metaBlock: {
     marginBottom: spacing.md,
     gap: 4,
   },
-  sessionType: {
+  titleLabel: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
+  titleInput: {
     ...typography.title,
+    minHeight: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    marginTop: 4,
     marginBottom: 2,
   },
   metaLine: {
@@ -203,6 +576,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: spacing.xs,
   },
+  gradeSwatch: {
+    width: 10,
+    height: 36,
+    borderRadius: 5,
+  },
   notesInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -212,5 +590,133 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: spacing.sm,
     minHeight: 100,
+  },
+  dangerBlock: {
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceRaised,
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  dangerLabel: {
+    ...typography.meta,
+    color: colors.danger,
+  },
+  dangerCopy: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  removeButton: {
+    borderColor: colors.danger,
+    marginTop: 4,
+  },
+  removeButtonText: {
+    color: colors.danger,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlay,
+    padding: spacing.md,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  modalTitle: {
+    ...typography.title,
+    fontSize: 20,
+  },
+  modalContent: {
+    gap: spacing.xs,
+  },
+  modalInput: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingHorizontal: spacing.sm,
+  },
+  modalRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  smallInput: {
+    flex: 1,
+  },
+  gradeChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  gradeChip: {
+    minHeight: 42,
+    minWidth: 64,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+    backgroundColor: colors.surfaceRaised,
+  },
+  gradeChipSelected: {
+    borderColor: colors.textPrimary,
+  },
+  gradeChipText: {
+    color: colors.textInverse,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  resultRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  resultChip: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultChipSelected: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentMuted,
+  },
+  resultText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  resultTextSelected: {
+    color: colors.textPrimary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  modalButton: {
+    flex: 1,
+  },
+  deleteEntryButton: {
+    flex: 1,
+    borderColor: colors.danger,
   },
 });

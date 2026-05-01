@@ -3,11 +3,14 @@ import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { ClimbSessionScreen } from './src/screens/ClimbSessionScreen';
+import { GymEditScreen } from './src/screens/GymEditScreen';
+import { GymSelectScreen } from './src/screens/GymSelectScreen';
 import { LogScreen } from './src/screens/LogScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
@@ -16,10 +19,49 @@ import { colors } from './src/ui';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+type TabIconProps = {
+  name: keyof TabParamList;
+  color: string;
+  focused: boolean;
+};
+
+const TabIcon = ({ name, color, focused }: TabIconProps) => {
+  if (name === 'Calendar') {
+    return (
+      <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
+        <View style={[styles.calendarTop, { backgroundColor: color }]} />
+        <View style={styles.calendarGrid}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.calendarDot,
+                {
+                  backgroundColor: index === 1 || index === 4 ? color : colors.borderSoft,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
+      <View style={[styles.logCardBack, { borderColor: color }]} />
+      <View style={[styles.logCardFront, { borderColor: color }]}>
+        <View style={[styles.logLine, { backgroundColor: color }]} />
+        <View style={[styles.logLineShort, { backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+};
+
 function TabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.background,
@@ -33,7 +75,10 @@ function TabNavigator() {
           fontWeight: '600',
           letterSpacing: 0.5,
         },
-      }}
+        tabBarIcon: ({ color, focused }) => (
+          <TabIcon name={route.name} color={color} focused={focused} />
+        ),
+      })}
     >
       <Tab.Screen name="Log" component={LogScreen} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
@@ -43,23 +88,40 @@ function TabNavigator() {
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    migrate();
-    setIsReady(true);
+    try {
+      migrate();
+      setIsReady(true);
+    } catch (e) {
+      setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');
+    }
   }, []);
+
+  if (initError) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ color: colors.danger, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Something went wrong</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center' }}>{initError}</Text>
+        </View>
+        <StatusBar style="light" />
+      </SafeAreaProvider>
+    );
+  }
 
   if (!isReady) {
     return (
-      <>
+      <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: colors.background }} />
         <StatusBar style="light" />
-      </>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Tabs" component={TabNavigator} />
@@ -73,10 +135,89 @@ export default function App() {
             component={StrengthSessionScreen}
             options={{ presentation: 'fullScreenModal' }}
           />
+          <Stack.Screen
+            name="GymSelect"
+            component={GymSelectScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="GymEdit"
+            component={GymEditScreen}
+            options={{ presentation: 'modal' }}
+          />
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="light" />
-    </>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabIconFrame: {
+    width: 30,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+  },
+  tabIconFocused: {
+    backgroundColor: colors.accentMuted,
+  },
+  logCardBack: {
+    position: 'absolute',
+    width: 15,
+    height: 17,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    opacity: 0.45,
+    transform: [{ translateX: -3 }, { translateY: -2 }],
+  },
+  logCardFront: {
+    width: 16,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    backgroundColor: colors.background,
+    paddingHorizontal: 3,
+    justifyContent: 'center',
+    gap: 3,
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+  },
+  logLine: {
+    width: '100%',
+    height: 2,
+    borderRadius: 1,
+  },
+  logLineShort: {
+    width: '65%',
+    height: 2,
+    borderRadius: 1,
+  },
+  calendarTop: {
+    width: 17,
+    height: 4,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  calendarGrid: {
+    width: 17,
+    height: 15,
+    borderWidth: 1.5,
+    borderTopWidth: 0,
+    borderColor: colors.borderSoft,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignContent: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingTop: 2,
+  },
+  calendarDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
+});

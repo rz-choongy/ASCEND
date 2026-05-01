@@ -10,6 +10,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {
+  buildDayDots,
+  buildSessionReplayMap,
+} from '../domain/calendarInsights';
 import { formatLocalDate } from '../domain/dateUtils';
 import { getSessionsForMonth } from '../domain/sessionStore';
 import type { SessionRow } from '../domain/types';
@@ -80,18 +84,10 @@ export function CalendarScreen() {
     }, [])
   );
 
-  // Soft limits: 3 months ago to 1 month into the future
-  const minMonth = firstOfMonth(
-    new Date(today.getFullYear(), today.getMonth() - 3, 1)
-  );
-  const maxMonth = firstOfMonth(
-    new Date(today.getFullYear(), today.getMonth() + 1, 1)
-  );
+  const canGoPrev = true;
+  const canGoNext = true;
 
-  const canGoPrev = currentMonth > minMonth;
-  const canGoNext = currentMonth < maxMonth;
-
-  const sessions = useMemo(() => {
+  const monthSessions = useMemo(() => {
     // refreshKey intentionally used to bust memo on focus
     void refreshKey;
     return getSessionsForMonth(
@@ -100,17 +96,31 @@ export function CalendarScreen() {
     );
   }, [currentMonth, refreshKey]);
 
+  const sessionReplayById = useMemo(() => {
+    return buildSessionReplayMap(monthSessions, {
+      climb: DOT_CLIMB,
+      strength: DOT_STRENGTH,
+    });
+  }, [monthSessions]);
+
   /** Map of 'YYYY-MM-DD' -> SessionRow[] */
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, SessionRow[]>();
-    for (const s of sessions) {
+    for (const s of monthSessions) {
       const key = formatLocalDate(new Date(s.started_at));
       const existing = map.get(key) ?? [];
       existing.push(s);
       map.set(key, existing);
     }
     return map;
-  }, [sessions]);
+  }, [monthSessions]);
+
+  const dotsByDate = useMemo(() => {
+    return buildDayDots(sessionsByDate, sessionReplayById, {
+      climb: DOT_CLIMB,
+      strength: DOT_STRENGTH,
+    });
+  }, [sessionReplayById, sessionsByDate]);
 
   const grid = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
 
@@ -148,6 +158,10 @@ export function CalendarScreen() {
     const h = `${d.getHours()}`.padStart(2, '0');
     const min = `${d.getMinutes()}`.padStart(2, '0');
     return `${h}:${min}`;
+  }
+
+  function formatSessionTitle(session: SessionRow): string {
+    return session.title?.trim() || (session.type === 'climb' ? 'Climbing' : 'Strength');
   }
 
   return (
@@ -199,6 +213,7 @@ export function CalendarScreen() {
 
           const key = formatLocalDate(day);
           const daySessions = sessionsByDate.get(key) ?? [];
+          const dayDots = dotsByDate.get(key);
           const isToday =
             day.getFullYear() === today.getFullYear() &&
             day.getMonth() === today.getMonth() &&
@@ -207,9 +222,6 @@ export function CalendarScreen() {
             day.getFullYear() === selectedDate.getFullYear() &&
             day.getMonth() === selectedDate.getMonth() &&
             day.getDate() === selectedDate.getDate();
-
-          const hasClimb = daySessions.some((s) => s.type === 'climb');
-          const hasStrength = daySessions.some((s) => s.type === 'strength');
 
           return (
             <TouchableOpacity
@@ -236,11 +248,11 @@ export function CalendarScreen() {
                 </Text>
               </View>
               <View style={styles.dotsRow}>
-                {hasClimb && (
-                  <View style={[styles.dot, { backgroundColor: DOT_CLIMB }]} />
+                {dayDots?.climbColor && (
+                  <View style={[styles.dot, { backgroundColor: dayDots.climbColor }]} />
                 )}
-                {hasStrength && (
-                  <View style={[styles.dot, { backgroundColor: DOT_STRENGTH }]} />
+                {dayDots?.strengthColor && (
+                  <View style={[styles.dot, { backgroundColor: dayDots.strengthColor }]} />
                 )}
               </View>
             </TouchableOpacity>
@@ -263,39 +275,42 @@ export function CalendarScreen() {
         </Text>
 
         {selectedSessions.length === 0 ? (
-          <Text style={styles.noSessions}>No sessions</Text>
+          <Text style={styles.noSessions}>No sessions on this day</Text>
         ) : (
-          selectedSessions.map((session) => (
-            <TouchableOpacity
-              key={session.id}
-              style={styles.sessionRow}
-              onPress={() =>
-                navigation.navigate('SessionDetail', { sessionId: session.id })
-              }
-              activeOpacity={0.75}
-            >
-              <View style={styles.sessionRowLeft}>
-                <View
-                  style={[
-                    styles.sessionTypeDot,
-                    {
-                      backgroundColor:
-                        session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH,
-                    },
-                  ]}
-                />
-                <Text style={styles.sessionTypeLabel}>
-                  {session.type === 'climb' ? 'Climbing' : 'Gym'}
-                </Text>
-              </View>
-              <View style={styles.sessionRowRight}>
-                <Text style={styles.sessionTime}>
-                  {formatTime(session.started_at)}
-                </Text>
-                <Text style={styles.sessionChevron}>{'>'}</Text>
-              </View>
-            </TouchableOpacity>
-          ))
+          <View style={styles.selectedSessionsBlock}>
+            {selectedSessions.map((session) => (
+              <TouchableOpacity
+                key={session.id}
+                style={styles.sessionRow}
+                onPress={() =>
+                  navigation.navigate('SessionDetail', { sessionId: session.id })
+                }
+                activeOpacity={0.75}
+              >
+                <View style={styles.sessionRowLeft}>
+                  <View
+                    style={[
+                      styles.sessionTypeDot,
+                      {
+                        backgroundColor:
+                          sessionReplayById.get(session.id)?.dotColor ??
+                          (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH),
+                      },
+                    ]}
+                  />
+                  <Text style={styles.sessionTypeLabel}>
+                    {formatSessionTitle(session)}
+                  </Text>
+                </View>
+                <View style={styles.sessionRowRight}>
+                  <Text style={styles.sessionTime}>
+                    {formatTime(session.started_at)}
+                  </Text>
+                  <Text style={styles.sessionChevron}>{'>'}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
       </ScrollView>
     </View>
@@ -426,7 +441,11 @@ const styles = StyleSheet.create({
   noSessions: {
     ...typography.bodyMuted,
     color: colors.textMuted,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  selectedSessionsBlock: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   sessionRow: {
     flexDirection: 'row',
