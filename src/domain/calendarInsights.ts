@@ -3,7 +3,7 @@ import { getSessionEvents } from './sessionStore';
 import { applySetEvents, type LoggedSet } from './strengthLogUtils';
 import type { SessionRow } from './types';
 
-export type CalendarInsightColors = {
+type CalendarInsightColors = {
   climb: string;
   strength: string;
 };
