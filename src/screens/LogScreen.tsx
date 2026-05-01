@@ -66,10 +66,11 @@ export function LogScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      const todayStr = formatLocalDate(new Date());
       setActiveSession(getActiveSession());
       setTodaySessions(getSessionsForDate(todayStr));
       setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
-    }, [todayStr])
+    }, [])
   );
 
   function navigateToSession(type: SessionType, sessionId: string) {
