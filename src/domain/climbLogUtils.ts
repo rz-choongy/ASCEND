@@ -3,7 +3,7 @@ export type ClimbLog = {
   gradeLabel: string;
   gradeMin: number;
   gradeMax: number;
-  result: 'SEND' | 'FLASH';
+  result: 'SEND' | 'FLASH' | 'TRIED';
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
@@ -24,7 +24,7 @@ type ClimbEditPayload = {
   gradeLabel: string;
   gradeMin: number;
   gradeMax: number;
-  result: 'SEND' | 'FLASH';
+  result: 'SEND' | 'FLASH' | 'TRIED';
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
@@ -58,7 +58,7 @@ const isClimbPayload = (payload: unknown): payload is ClimbLogPayload => {
     typeof maybe.gradeLabel === 'string' &&
     typeof maybe.gradeMin === 'number' &&
     typeof maybe.gradeMax === 'number' &&
-    (maybe.result === 'SEND' || maybe.result === 'FLASH')
+    (maybe.result === 'SEND' || maybe.result === 'FLASH' || maybe.result === 'TRIED')
   );
 };
 
@@ -81,7 +81,7 @@ const isEditPayload = (payload: unknown): payload is ClimbEditPayload => {
     typeof maybe.gradeLabel === 'string' &&
     typeof maybe.gradeMin === 'number' &&
     typeof maybe.gradeMax === 'number' &&
-    (maybe.result === 'SEND' || maybe.result === 'FLASH')
+    (maybe.result === 'SEND' || maybe.result === 'FLASH' || maybe.result === 'TRIED')
   );
 };
 

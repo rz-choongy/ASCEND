@@ -54,11 +54,13 @@ export type ExerciseRow = {
   updated_at: number;
 };
 
+export type ClimbResult = 'SEND' | 'FLASH' | 'TRIED';
+
 export type ClimbLogPayload = {
   gradeLabel: string;
   gradeMin: number;
   gradeMax: number;
-  result: 'SEND' | 'FLASH';
+  result: ClimbResult;
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;

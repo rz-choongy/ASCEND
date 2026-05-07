@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ensureSelectedClimbGym,
@@ -92,8 +93,8 @@ const formatLogTime = (ms: number): string => {
 
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
   const { sessionId } = route.params;
-  const session = getSessionById(sessionId);
 
+  const [session, setSession] = useState(() => getSessionById(sessionId));
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentGym, setCurrentGym] = useState<GymLike | null>(null);
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
@@ -104,8 +105,10 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   useFocusEffect(
     useCallback(() => {
+      const refreshedSession = getSessionById(sessionId);
+      setSession(refreshedSession);
       const routeGymId = route.params.gymId;
-      const sessionGymId = session?.gym_id ?? null;
+      const sessionGymId = refreshedSession?.gym_id ?? null;
       const selected = normalizeGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
       const gyms = getGyms().map(normalizeGym).filter((gym): gym is GymLike => gym !== null);
       const gym =
@@ -123,13 +126,14 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           GRADE_OPTIONS[0]
         );
       });
-    }, [route.params.gymId, session?.gym_id])
+    }, [route.params.gymId, sessionId])
   );
 
   const bump = () => setRefreshKey((k) => k + 1);
 
-  const handleLog = (result: 'SEND' | 'FLASH') => {
+  const handleLog = (result: 'SEND' | 'FLASH' | 'TRIED') => {
     if (session?.status !== 'active') return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeId: selectedGrade.id,
       gradeLabel: selectedGrade.label,
@@ -153,6 +157,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       navigation.navigate('Tabs');
       return;
     }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');
   };
@@ -204,7 +209,10 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                 { backgroundColor: color },
                 active ? styles.gradeTileActive : null,
               ]}
-              onPress={() => setSelectedGrade(grade)}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setSelectedGrade(grade);
+              }}
             >
               <Text style={styles.gradeText}>{grade.label}</Text>
             </Pressable>
@@ -215,6 +223,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       <View style={styles.actionRow}>
         <Button label="Send" variant="success" onPress={() => handleLog('SEND')} style={styles.actionButton} />
         <Button label="Flash" variant="warning" onPress={() => handleLog('FLASH')} style={styles.actionButton} />
+        <Button label="Tried" variant="ghost" onPress={() => handleLog('TRIED')} style={styles.actionButton} />
       </View>
 
       <View style={styles.logHeaderRow}>
@@ -244,7 +253,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
               <View
                 style={[
                   styles.logAccent,
-                  log.result === 'SEND' ? styles.logAccentSend : styles.logAccentFlash,
+                  log.result === 'SEND'
+                    ? styles.logAccentSend
+                    : log.result === 'FLASH'
+                    ? styles.logAccentFlash
+                    : styles.logAccentTried,
                   gradeColor ? { backgroundColor: gradeColor } : null,
                 ]}
               />
@@ -253,7 +266,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                 <Text
                   style={[
                     styles.logResult,
-                    log.result === 'SEND' ? styles.logResultSend : styles.logResultFlash,
+                    log.result === 'SEND'
+                      ? styles.logResultSend
+                      : log.result === 'FLASH'
+                      ? styles.logResultFlash
+                      : styles.logResultTried,
                   ]}
                 >
                   {log.result}
@@ -396,6 +413,9 @@ const styles = StyleSheet.create({
   logAccentFlash: {
     backgroundColor: colors.warning,
   },
+  logAccentTried: {
+    backgroundColor: colors.textMuted,
+  },
   logBody: {
     flex: 1,
   },
@@ -416,6 +436,9 @@ const styles = StyleSheet.create({
   },
   logResultFlash: {
     color: colors.warning,
+  },
+  logResultTried: {
+    color: colors.textMuted,
   },
   logTime: {
     color: colors.textMuted,

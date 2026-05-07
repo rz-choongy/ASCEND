@@ -313,6 +313,12 @@ export const getGradeOptionsForGym = (gymId: string): GymGradeOptionRow[] => {
   );
 };
 
+const doReplaceGymGradeOptions = (gymId: string, options: GymGradeOptionInput[]): void => {
+  run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
+  insertGradeOptions(gymId, options);
+  run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [Date.now(), gymId]);
+};
+
 export const replaceGymGradeOptions = (
   gymId: string,
   options: GymGradeOptionInput[]
@@ -325,11 +331,7 @@ export const replaceGymGradeOptions = (
     throw new Error('A gym needs at least one grade option.');
   }
 
-  runInTransaction(() => {
-    run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
-    insertGradeOptions(gymId, options);
-    run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [Date.now(), gymId]);
-  });
+  runInTransaction(() => doReplaceGymGradeOptions(gymId, options));
 
   return getGradeOptionsForGym(gymId);
 };
@@ -339,14 +341,19 @@ export const updateGym = (input: UpdateGymInput): GymRow => {
   if (!existing) {
     throw new Error('Cannot update a missing gym.');
   }
+  if (input.gradeOptions.length === 0) {
+    throw new Error('A gym needs at least one grade option.');
+  }
 
-  run('UPDATE gyms SET name = ?, grading_type = ?, updated_at = ? WHERE id = ?;', [
-    normalizeName(input.name),
-    input.gradingType,
-    Date.now(),
-    input.id,
-  ]);
-  replaceGymGradeOptions(input.id, input.gradeOptions);
+  runInTransaction(() => {
+    run('UPDATE gyms SET name = ?, grading_type = ?, updated_at = ? WHERE id = ?;', [
+      normalizeName(input.name),
+      input.gradingType,
+      Date.now(),
+      input.id,
+    ]);
+    doReplaceGymGradeOptions(input.id, input.gradeOptions);
+  });
 
   const updated = getGymById(input.id);
   if (!updated) {
