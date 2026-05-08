@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
+import { formatDuration } from '../domain/dateUtils';
 import { getGradeOptionsForGym } from '../domain/gymStore';
 import {
   appendSessionCorrectionEvent,
@@ -65,16 +66,6 @@ const formatDateLine = (ms: number): string => {
   const month = date.toLocaleDateString(undefined, { month: 'short' });
   const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   return `${weekday} ${day} ${month} - ${time}`;
-};
-
-const formatDuration = (startMs: number, endMs: number): string => {
-  const totalMin = Math.round((endMs - startMs) / 60_000);
-  if (totalMin < 60) {
-    return `${totalMin} min`;
-  }
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 
 const formatLogTime = (ms: number): string => {
@@ -160,6 +151,25 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
       .map(normalizeGradeOption)
       .filter((grade): grade is GradeOption => grade !== null);
   }, [session?.gym_id]);
+
+  const climbStats = useMemo(() => {
+    if (session?.type !== 'climb' || climbs.length === 0) return null;
+    const sends = climbs.filter((c) => c.result === 'SEND').length;
+    const flashes = climbs.filter((c) => c.result === 'FLASH').length;
+    const flashRate = climbs.length > 0 ? Math.round((flashes / climbs.length) * 100) : 0;
+    return { total: climbs.length, sends, flashes, flashRate };
+  }, [climbs, session?.type]);
+
+  const strengthStats = useMemo(() => {
+    if (session?.type !== 'strength' || sets.length === 0) return null;
+    const totalSets = sets.length;
+    const totalVolume = sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
+    const exerciseCounts = sets.reduce<Record<string, number>>((acc, s) => {
+      acc[s.exerciseName] = (acc[s.exerciseName] ?? 0) + 1;
+      return acc;
+    }, {});
+    return { totalSets, totalVolume, exerciseCounts };
+  }, [sets, session?.type]);
 
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [title, setTitle] = useState(session?.title ?? '');
@@ -315,6 +325,54 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
             <Text style={styles.metaLine}>{duration}</Text>
           ) : null}
         </View>
+
+        {/* Stats strip */}
+        {climbStats ? (
+          <View style={styles.statsStrip}>
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>{climbStats.total}</Text>
+              <Text style={styles.statLabel}>Climbs</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>{climbStats.sends}</Text>
+              <Text style={styles.statLabel}>Sends</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>{climbStats.flashes}</Text>
+              <Text style={styles.statLabel}>Flashes</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>{climbStats.flashRate}%</Text>
+              <Text style={styles.statLabel}>Flash rate</Text>
+            </View>
+          </View>
+        ) : null}
+
+        {strengthStats ? (
+          <View style={styles.statsStrip}>
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>{strengthStats.totalSets}</Text>
+              <Text style={styles.statLabel}>Sets</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>
+                {strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}kg` : 'bw'}
+              </Text>
+              <Text style={styles.statLabel}>Volume</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCell}>
+              <Text style={styles.statValue}>
+                {Object.keys(strengthStats.exerciseCounts).length}
+              </Text>
+              <Text style={styles.statLabel}>Exercises</Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* Log list */}
         <Text style={styles.sectionLabel}>{isClimb ? 'Sends' : 'Sets'}</Text>
@@ -718,5 +776,34 @@ const styles = StyleSheet.create({
   deleteEntryButton: {
     flex: 1,
     borderColor: colors.danger,
+  },
+
+  statsStrip: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  statValue: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statLabel: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: 4,
   },
 });

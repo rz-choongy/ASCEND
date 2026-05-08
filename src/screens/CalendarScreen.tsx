@@ -14,11 +14,11 @@ import {
   buildDayDots,
   buildSessionReplayMap,
 } from '../domain/calendarInsights';
-import { formatLocalDate } from '../domain/dateUtils';
+import { formatDuration, formatLocalDate } from '../domain/dateUtils';
 import { getSessionsForMonth } from '../domain/sessionStore';
-import type { SessionRow } from '../domain/types';
+import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors, spacing } from '../ui';
+import { Chip, colors, spacing } from '../ui';
 import { typography } from '../ui/tokens/typography';
 
 type CalendarNavProp = CompositeNavigationProp<
@@ -75,6 +75,7 @@ export function CalendarScreen() {
     firstOfMonth(today)
   );
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [typeFilter, setTypeFilter] = useState<SessionType | null>(null);
   // Trigger to force refresh when screen re-focuses
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -151,7 +152,10 @@ export function CalendarScreen() {
   }
 
   const selectedKey = formatLocalDate(selectedDate);
-  const selectedSessions = sessionsByDate.get(selectedKey) ?? [];
+  const selectedSessions = useMemo(() => {
+    const all = sessionsByDate.get(selectedKey) ?? [];
+    return typeFilter ? all.filter((s) => s.type === typeFilter) : all;
+  }, [sessionsByDate, selectedKey, typeFilter]);
 
   function formatTime(ts: number): string {
     const d = new Date(ts);
@@ -268,11 +272,18 @@ export function CalendarScreen() {
         style={styles.sessionPanel}
         contentContainerStyle={styles.sessionPanelContent}
       >
-        <Text style={styles.panelDateLabel}>
-          {selectedDate.getDate()}{' '}
-          {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
-          {selectedDate.getFullYear()}
-        </Text>
+        <View style={styles.panelHeader}>
+          <Text style={styles.panelDateLabel}>
+            {selectedDate.getDate()}{' '}
+            {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
+            {selectedDate.getFullYear()}
+          </Text>
+          <View style={styles.filterChips}>
+            <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
+            <Chip label="Climb" selected={typeFilter === 'climb'} onPress={() => setTypeFilter('climb')} />
+            <Chip label="Strength" selected={typeFilter === 'strength'} onPress={() => setTypeFilter('strength')} />
+          </View>
+        </View>
 
         {selectedSessions.length === 0 ? (
           <Text style={styles.noSessions}>No sessions on this day</Text>
@@ -306,6 +317,11 @@ export function CalendarScreen() {
                   <Text style={styles.sessionTime}>
                     {formatTime(session.started_at)}
                   </Text>
+                  {session.completed_at != null ? (
+                    <Text style={styles.sessionDuration}>
+                      {formatDuration(session.started_at, session.completed_at)}
+                    </Text>
+                  ) : null}
                   <Text style={styles.sessionChevron}>{'>'}</Text>
                 </View>
               </TouchableOpacity>
@@ -434,9 +450,16 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
     paddingBottom: spacing.md,
   },
+  panelHeader: {
+    marginBottom: spacing.xs,
+    gap: spacing.xs,
+  },
   panelDateLabel: {
     ...typography.section,
-    marginBottom: spacing.xs,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   noSessions: {
     ...typography.bodyMuted,
@@ -476,6 +499,10 @@ const styles = StyleSheet.create({
   },
   sessionTime: {
     ...typography.bodyMuted,
+  },
+  sessionDuration: {
+    ...typography.meta,
+    color: colors.textMuted,
   },
   sessionChevron: {
     color: colors.textMuted,

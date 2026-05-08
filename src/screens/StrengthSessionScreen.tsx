@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   Modal,
   Pressable,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getExercises, createExercise } from '../domain/exerciseStore';
 import {
   appendEvent,
@@ -76,8 +78,8 @@ const formatSetLabel = (set: LoggedSet): string => {
 
 export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScreenProps) => {
   const { sessionId } = route.params;
-  const session = getSessionById(sessionId);
 
+  const [session, setSession] = useState(() => getSessionById(sessionId));
   const [refreshKey, setRefreshKey] = useState(0);
   const [exerciseState, setExerciseState] = useState<ExerciseState>(() => loadExerciseState());
   const [title, setTitle] = useState(session?.title ?? '');
@@ -86,6 +88,12 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const [reps, setReps] = useState(8);
   const [weight, setWeight] = useState(20);
   const [exerciseInputMemory, setExerciseInputMemory] = useState<ExerciseInputMemory>({});
+
+  useFocusEffect(
+    useCallback(() => {
+      setSession(getSessionById(sessionId));
+    }, [sessionId])
+  );
 
   const bump = () => setRefreshKey((k) => k + 1);
   const displayTitle = title.trim() || 'Gym Session';
@@ -144,6 +152,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const handleLogSet = () => {
     if (session?.status !== 'active' || !selectedExercise) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'SET_LOGGED', {
       exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
@@ -169,6 +178,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       navigation.navigate('Tabs');
       return;
     }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSessionTitle(sessionId, title.trim());
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');

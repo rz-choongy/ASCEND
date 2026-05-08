@@ -10,9 +10,9 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { formatLocalDate } from '../domain/dateUtils';
+import { formatDuration, formatLocalDate } from '../domain/dateUtils';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
-import { createSession, getActiveSession, getSessionsForDate } from '../domain/sessionStore';
+import { createSession, getActiveSession, getSessionStreak, getSessionsForDate, getAllCompletedSessionCount } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { Button, Card, colors, spacing } from '../ui';
@@ -58,18 +58,22 @@ export function LogScreen() {
   const navigation = useNavigation<LogNavProp>();
 
   const today = new Date();
-  const todayStr = formatLocalDate(today);
 
   const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
   const [todaySessions, setTodaySessions] = useState<SessionRow[]>([]);
   const [selectedGym, setSelectedGym] = useState<GymLike | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [hasEverLogged, setHasEverLogged] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       const todayStr = formatLocalDate(new Date());
-      setActiveSession(getActiveSession());
+      const active = getActiveSession();
+      setActiveSession(active);
       setTodaySessions(getSessionsForDate(todayStr));
       setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
+      setStreak(getSessionStreak());
+      setHasEverLogged(getAllCompletedSessionCount() > 0 || active !== null);
     }, [])
   );
 
@@ -106,7 +110,14 @@ export function LogScreen() {
     >
       {/* Date header */}
       <View style={styles.headerBlock}>
-        <Text style={styles.screenTitle}>Today</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.screenTitle}>Today</Text>
+          {streak > 0 ? (
+            <View style={styles.streakPill}>
+              <Text style={styles.streakText}>{streak} day streak</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
       </View>
 
@@ -169,6 +180,16 @@ export function LogScreen() {
         )}
       </View>
 
+      {/* First-time empty state */}
+      {!hasEverLogged && !activeSession ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateTitle}>Start your first session</Text>
+          <Text style={styles.emptyStateCopy}>
+            Tap "Start climbing" or "Start strength" above to log your first session. It'll show up here.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Today's sessions */}
       {todaySessions.length > 0 ? (
         <View style={styles.sessionSection}>
@@ -200,6 +221,11 @@ export function LogScreen() {
                 <Text style={styles.sessionTime}>
                   {formatTime(session.started_at)}
                 </Text>
+                {session.completed_at != null ? (
+                  <Text style={styles.sessionDuration}>
+                    {formatDuration(session.started_at, session.completed_at)}
+                  </Text>
+                ) : null}
                 <Text style={styles.chevron}>{'>'}</Text>
               </View>
             </TouchableOpacity>
@@ -227,11 +253,29 @@ const styles = StyleSheet.create({
     gap: 2,
     marginBottom: spacing.xs,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   screenTitle: {
     ...typography.display,
   },
   dateHeader: {
     ...typography.bodyMuted,
+  },
+  streakPill: {
+    backgroundColor: colors.accentMuted,
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  streakText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   // Active session banner
@@ -306,6 +350,10 @@ const styles = StyleSheet.create({
   sessionTime: {
     ...typography.bodyMuted,
   },
+  sessionDuration: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
   chevron: {
     color: colors.textMuted,
     fontSize: 14,
@@ -354,5 +402,25 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: '100%',
+  },
+
+  emptyState: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  emptyStateTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptyStateCopy: {
+    ...typography.bodyMuted,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

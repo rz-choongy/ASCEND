@@ -24,7 +24,7 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 2;
+const APP_SCHEMA_VERSION = 3;
 
 type Migration = {
   version: number;
@@ -94,10 +94,17 @@ const ensureBaseSchema = (): void => {
       name TEXT NOT NULL,
       grading_type TEXT NOT NULL,
       is_default INTEGER NOT NULL DEFAULT 0,
+      parent_id TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
   `);
+
+  const gymColumns = getAll<{ name: string }>('PRAGMA table_info(gyms);');
+  const hasParentId = gymColumns.some((col) => col.name === 'parent_id');
+  if (!hasParentId) {
+    run('ALTER TABLE gyms ADD COLUMN parent_id TEXT;');
+  }
 
   run(`
     CREATE TABLE IF NOT EXISTS gym_grade_options (
@@ -216,9 +223,18 @@ const ensureBetaHardening = (): void => {
   );
 };
 
+const addGymParentIdColumn = (): void => {
+  const gymColumns = getAll<{ name: string }>('PRAGMA table_info(gyms);');
+  const hasParentId = gymColumns.some((col) => col.name === 'parent_id');
+  if (!hasParentId) {
+    run('ALTER TABLE gyms ADD COLUMN parent_id TEXT;');
+  }
+};
+
 const migrations: Migration[] = [
   { version: 1, up: ensureBaseSchema },
   { version: 2, up: ensureBetaHardening },
+  { version: 3, up: addGymParentIdColumn },
 ];
 
 export const migrate = (): void => {

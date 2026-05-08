@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ensureSelectedClimbGym,
@@ -7,10 +8,10 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
-import { appendEvent, getSessionById, setSessionStatus } from '../domain/sessionStore';
+import { appendEvent, getSessionById, setSessionStatus, setSessionTitle } from '../domain/sessionStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Divider, colors, radius, spacing, typography } from '../ui';
+import { Button, Divider, colors, getContrastText, radius, spacing, typography } from '../ui';
 
 type GradeOption = {
   id?: string;
@@ -92,20 +93,24 @@ const formatLogTime = (ms: number): string => {
 
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
   const { sessionId } = route.params;
-  const session = getSessionById(sessionId);
 
+  const [session, setSession] = useState(() => getSessionById(sessionId));
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentGym, setCurrentGym] = useState<GymLike | null>(null);
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[0]);
+  const [title, setTitle] = useState('');
 
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
 
   useFocusEffect(
     useCallback(() => {
+      const refreshedSession = getSessionById(sessionId);
+      setSession(refreshedSession);
+      setTitle((prev) => prev || refreshedSession?.title || '');
       const routeGymId = route.params.gymId;
-      const sessionGymId = session?.gym_id ?? null;
+      const sessionGymId = refreshedSession?.gym_id ?? null;
       const selected = normalizeGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
       const gyms = getGyms().map(normalizeGym).filter((gym): gym is GymLike => gym !== null);
       const gym =
@@ -123,13 +128,18 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           GRADE_OPTIONS[0]
         );
       });
-    }, [route.params.gymId, session?.gym_id])
+    }, [route.params.gymId, sessionId])
   );
 
   const bump = () => setRefreshKey((k) => k + 1);
 
+  const handleSaveTitle = () => {
+    setSessionTitle(sessionId, title.trim());
+  };
+
   const handleLog = (result: 'SEND' | 'FLASH') => {
     if (session?.status !== 'active') return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeId: selectedGrade.id,
       gradeLabel: selectedGrade.label,
@@ -153,6 +163,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       navigation.navigate('Tabs');
       return;
     }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSessionTitle(sessionId, title.trim());
     setSessionStatus(sessionId, 'completed');
     navigation.navigate('Tabs');
   };
@@ -180,6 +192,20 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     <View style={styles.screen}>
       <Text style={styles.title}>Log climb</Text>
 
+      <View style={styles.titleBlock}>
+        <Text style={styles.titleLabel}>Session name</Text>
+        <TextInput
+          style={styles.titleInput}
+          value={title}
+          onChangeText={setTitle}
+          onBlur={handleSaveTitle}
+          onSubmitEditing={handleSaveTitle}
+          placeholder="Climbing session"
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="done"
+        />
+      </View>
+
       <Pressable
         style={styles.gymSelector}
         onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
@@ -204,9 +230,12 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                 { backgroundColor: color },
                 active ? styles.gradeTileActive : null,
               ]}
-              onPress={() => setSelectedGrade(grade)}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setSelectedGrade(grade);
+              }}
             >
-              <Text style={styles.gradeText}>{grade.label}</Text>
+              <Text style={[styles.gradeText, { color: getContrastText(color) }]}>{grade.label}</Text>
             </Pressable>
           );
         })}
@@ -288,6 +317,30 @@ const styles = StyleSheet.create({
     ...typography.title,
     marginBottom: spacing.sm,
   },
+  titleBlock: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  titleLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  titleInput: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+    minHeight: 30,
+    padding: 0,
+  },
   gymSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -339,7 +392,6 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   gradeText: {
-    color: colors.textInverse,
     fontSize: 15,
     fontWeight: '700',
   },

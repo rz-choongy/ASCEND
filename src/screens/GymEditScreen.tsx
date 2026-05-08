@@ -11,6 +11,7 @@ import {
 import {
   createGym,
   getGradeOptionsForGym,
+  getGymById,
   getGyms,
   setSelectedClimbGym,
   updateGym,
@@ -160,10 +161,22 @@ const rowsMatchSeed = (rows: EditableGradeRow[], type: GradingType): boolean => 
 export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const returnToSessionId = route.params?.returnToSessionId;
   const editingGymId = route.params?.gymId;
+  const parentId = route.params?.parentId ?? null;
+
   const editingGym = useMemo(() => {
     if (!editingGymId) return null;
     return getGyms().find((gym) => gym.id === editingGymId) ?? null;
   }, [editingGymId]);
+
+  /** Resolved parent gym — either from route param (new branch) or editing gym's parent */
+  const parentGym = useMemo(() => {
+    const resolvedParentId = parentId ?? editingGym?.parent_id ?? null;
+    if (!resolvedParentId) return null;
+    return getGymById(resolvedParentId) ?? null;
+  }, [parentId, editingGym]);
+
+  /** True when this screen is in branch mode (creating or editing a branch) */
+  const isBranchMode = parentGym !== null;
   const [name, setName] = useState('');
   const [gradingType, setGradingType] = useState<GradingType>('v_scale');
   const [rows, setRows] = useState<EditableGradeRow[]>(seedRowsForType('v_scale'));
@@ -220,10 +233,47 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     ]);
   };
 
+  const navigateAfterSave = (gymId: string) => {
+    setSelectedClimbGym(gymId);
+    if (returnToSessionId) {
+      const changed = setSessionGymId(returnToSessionId, gymId);
+      if (!changed) {
+        Alert.alert(
+          'Gym locked for this session',
+          'Finish this climbing session before switching gyms. Your changes were saved.'
+        );
+        navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
+        return;
+      }
+      navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
+      return;
+    }
+    navigation.navigate('GymSelect');
+  };
+
   const handleSave = () => {
     const trimmedName = name.trim();
-    if (!trimmedName && !editingGymId) return;
+    if (!trimmedName) return;
 
+    // ── Branch mode: name-only save ────────────────────────────────────────
+    if (isBranchMode) {
+      if (editingGymId) {
+        // Rename existing branch — updateGym skips grade changes for branches
+        updateGym({ id: editingGymId, name: trimmedName, gradingType, gradeOptions: [] });
+        navigation.navigate('GymSelect');
+        return;
+      }
+      // Create new branch
+      const resolvedParentId = parentId ?? editingGym?.parent_id ?? null;
+      if (!resolvedParentId) return;
+      const created = createGym({ name: trimmedName, parentId: resolvedParentId, makeSelected: true });
+      const gymId = getCreatedGymId(created);
+      if (!gymId) return;
+      navigateAfterSave(gymId);
+      return;
+    }
+
+    // ── Full gym mode: validate grades ─────────────────────────────────────
     const gradeOptions = rows
       .map((row, index) => ({
         label: row.label.trim(),
@@ -246,45 +296,71 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         gradingType,
         gradeOptions,
       });
-      setSelectedClimbGym(editingGymId);
-      if (returnToSessionId) {
-        const changed = setSessionGymId(returnToSessionId, editingGymId);
-        if (!changed) {
-          Alert.alert(
-            'Gym locked for this session',
-            'Finish this climbing session before switching gyms. Your grade edits were saved.'
-          );
-          navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
-          return;
-        }
-        navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId: editingGymId });
-        return;
-      }
-      navigation.navigate('GymSelect');
+      navigateAfterSave(editingGymId);
       return;
     }
 
     const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true });
     const gymId = getCreatedGymId(created);
     if (!gymId) return;
-    setSelectedClimbGym(gymId);
-
-    if (returnToSessionId) {
-      const changed = setSessionGymId(returnToSessionId, gymId);
-      if (!changed) {
-        Alert.alert(
-          'Gym locked for this session',
-          'Finish this climbing session before switching gyms. The new gym was saved.'
-        );
-        navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
-        return;
-      }
-      navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
-      return;
-    }
-    navigation.navigate('GymSelect');
+    navigateAfterSave(gymId);
   };
 
+  // ─── Branch mode: name-only UI ─────────────────────────────────────────────
+  if (isBranchMode) {
+    const eyebrow = parentGym?.name ?? 'Company';
+    const title = editingGym ? 'Rename branch' : 'New branch';
+    return (
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.eyebrow}>{eyebrow}</Text>
+            <Text style={styles.title}>{title}</Text>
+          </View>
+          <Button
+            label="Close"
+            variant="ghost"
+            onPress={() => navigation.goBack()}
+            style={styles.closeButton}
+            textStyle={styles.closeText}
+          />
+        </View>
+
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text style={styles.label}>Branch name</Text>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="City Road"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+            autoFocus
+          />
+
+          <View style={styles.inheritedNotice}>
+            <Text style={styles.inheritedIcon}>↗</Text>
+            <View style={styles.inheritedText}>
+              <Text style={styles.inheritedTitle}>Grade system inherited</Text>
+              <Text style={styles.inheritedBody}>
+                This branch uses the grades defined on {parentGym?.name ?? 'the parent gym'}.
+                To change grades, edit the parent gym.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            label={editingGym ? 'Save branch' : 'Add branch'}
+            onPress={handleSave}
+            disabled={!name.trim()}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  // ─── Full gym edit / create mode ──────────────────────────────────────────
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
@@ -553,5 +629,35 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: spacing.xs,
+  },
+  inheritedNotice: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  inheritedIcon: {
+    color: colors.accent,
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  inheritedText: {
+    flex: 1,
+    gap: 4,
+  },
+  inheritedTitle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  inheritedBody: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

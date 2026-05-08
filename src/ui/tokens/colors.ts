@@ -1,3 +1,17 @@
+/**
+ * Returns a readable text color for a given background hex.
+ * Uses perceived luminance so dark tiles get white text and light tiles get dark text.
+ */
+export const getContrastText = (hex: string): string => {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return '#f2eadc';
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.45 ? '#0b1110' : '#f2eadc';
+};
+
 export const colors = {
   background: '#0b1110',
   backgroundWarm: '#10150f',

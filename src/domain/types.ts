@@ -29,6 +29,7 @@ export type GymRow = {
   name: string;
   grading_type: GymGradingType;
   is_default: number;
+  parent_id: string | null;
   created_at: number;
   updated_at: number;
 };
@@ -54,11 +55,13 @@ export type ExerciseRow = {
   updated_at: number;
 };
 
+export type ClimbResult = 'SEND' | 'FLASH';
+
 export type ClimbLogPayload = {
   gradeLabel: string;
   gradeMin: number;
   gradeMax: number;
-  result: 'SEND' | 'FLASH';
+  result: ClimbResult;
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
