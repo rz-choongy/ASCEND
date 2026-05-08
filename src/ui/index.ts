@@ -1,4 +1,4 @@
-export { colors } from './tokens/colors';
+export { colors, getContrastText } from './tokens/colors';
 export { spacing } from './tokens/spacing';
 export { radius } from './tokens/radius';
 export { typography } from './tokens/typography';

@@ -45,7 +45,7 @@ type ClimbDraft = {
   gradeMax: string;
   gradeColor: string | null;
   gradeId?: string;
-  result: 'SEND' | 'FLASH' | 'TRIED';
+  result: 'SEND' | 'FLASH';
 };
 
 type SetDraft = {
@@ -156,10 +156,8 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     if (session?.type !== 'climb' || climbs.length === 0) return null;
     const sends = climbs.filter((c) => c.result === 'SEND').length;
     const flashes = climbs.filter((c) => c.result === 'FLASH').length;
-    const tried = climbs.filter((c) => c.result === 'TRIED').length;
-    const topped = sends + flashes;
-    const flashRate = topped > 0 ? Math.round((flashes / topped) * 100) : 0;
-    return { total: climbs.length, sends, flashes, tried, flashRate };
+    const flashRate = climbs.length > 0 ? Math.round((flashes / climbs.length) * 100) : 0;
+    return { total: climbs.length, sends, flashes, flashRate };
   }, [climbs, session?.type]);
 
   const strengthStats = useMemo(() => {
@@ -333,7 +331,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           <View style={styles.statsStrip}>
             <View style={styles.statCell}>
               <Text style={styles.statValue}>{climbStats.total}</Text>
-              <Text style={styles.statLabel}>Total</Text>
+              <Text style={styles.statLabel}>Climbs</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statCell}>
@@ -347,8 +345,8 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statCell}>
-              <Text style={styles.statValue}>{climbStats.tried}</Text>
-              <Text style={styles.statLabel}>Tried</Text>
+              <Text style={styles.statValue}>{climbStats.flashRate}%</Text>
+              <Text style={styles.statLabel}>Flash rate</Text>
             </View>
           </View>
         ) : null}
@@ -388,7 +386,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               <ListRow
                 key={climb.eventId}
                 title={climb.gradeLabel}
-                subtitle={climb.result === 'FLASH' ? 'Flash' : climb.result === 'TRIED' ? 'Tried' : 'Send'}
+                subtitle={climb.result === 'FLASH' ? 'Flash' : 'Send'}
                 meta={formatLogTime(climb.createdAt)}
                 left={
                   climb.gradeColor ? (
@@ -513,7 +511,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                 </View>
 
                 <View style={styles.resultRow}>
-                  {(['FLASH', 'SEND', 'TRIED'] as const).map((result) => {
+                  {(['FLASH', 'SEND'] as const).map((result) => {
                     const selected = climbDraft.result === result;
                     return (
                       <Pressable

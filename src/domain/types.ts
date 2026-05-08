@@ -54,7 +54,7 @@ export type ExerciseRow = {
   updated_at: number;
 };
 
-export type ClimbResult = 'SEND' | 'FLASH' | 'TRIED';
+export type ClimbResult = 'SEND' | 'FLASH';
 
 export type ClimbLogPayload = {
   gradeLabel: string;
