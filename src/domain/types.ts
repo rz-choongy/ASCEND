@@ -29,6 +29,7 @@ export type GymRow = {
   name: string;
   grading_type: GymGradingType;
   is_default: number;
+  parent_id: string | null;
   created_at: number;
   updated_at: number;
 };
