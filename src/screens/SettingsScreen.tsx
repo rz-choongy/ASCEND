@@ -90,7 +90,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
                 value={timerEnabled}
                 onValueChange={handleToggleTimer}
                 trackColor={{ false: colors.borderSoft, true: colors.accent }}
-                thumbColor={colors.textInverse}
+                thumbColor="#ffffff"
               />
             }
           />
