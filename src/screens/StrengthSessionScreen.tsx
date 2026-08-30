@@ -1,14 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { getExercises, createExercise } from '../domain/exerciseStore';
 import {
@@ -22,13 +22,17 @@ import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
+  Card,
   Chip,
   Divider,
-  colors,
+  ScreenHeader,
+  Stepper,
   radius,
   spacing,
-  typography,
+  useTheme,
 } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type StrengthSetPayload = {
   exerciseId?: string;
@@ -77,6 +81,8 @@ const formatSetLabel = (set: LoggedSet): string => {
 };
 
 export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScreenProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { sessionId } = route.params;
 
   const [session, setSession] = useState(() => getSessionById(sessionId));
@@ -94,6 +100,18 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       setSession(getSessionById(sessionId));
     }, [sessionId])
   );
+
+  // See ClimbSessionScreen for why this listener exists: any exit path (header back,
+  // hardware back, swipe, or Done) must never leave a session stuck 'active' forever.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      const current = getSessionById(sessionId);
+      if (current?.status === 'active') {
+        setSessionStatus(sessionId, 'abandoned');
+      }
+    });
+    return unsubscribe;
+  }, [navigation, sessionId]);
 
   const bump = () => setRefreshKey((k) => k + 1);
   const displayTitle = title.trim() || 'Gym Session';
@@ -184,26 +202,18 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     navigation.navigate('Tabs');
   };
 
-  const handleAbandon = () => {
-    if (session?.status !== 'active') {
-      navigation.navigate('Tabs');
-      return;
-    }
-    setSessionTitle(sessionId, title.trim());
-    setSessionStatus(sessionId, 'abandoned');
-    navigation.navigate('Tabs');
-  };
-
   if (!session) {
     return (
-      <View style={styles.screen}>
+      <SafeAreaView edges={['top']} style={styles.screen}>
         <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <ScreenHeader title="Log strength" onClose={() => navigation.navigate('Tabs')} />
+
       {/* Exercise chips */}
       <Text style={styles.sectionLabel}>Exercise</Text>
       <View style={styles.chipRow}>
@@ -270,7 +280,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       ) : null}
 
       {/* Input controls */}
-      <View style={styles.inputSection}>
+      <Card accentColor={colors.accent} style={styles.inputSection}>
         <View style={styles.loggingHeader}>
           <Text style={styles.loggingEyebrow}>Logging</Text>
           <Text style={styles.loggingExercise}>
@@ -279,43 +289,24 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         </View>
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Reps</Text>
-          <View style={styles.stepper}>
-            <Pressable
-              onPress={() => setReps((v) => Math.max(1, v - 1))}
-              style={styles.stepButton}
-            >
-              <Text style={styles.stepText}>-</Text>
-            </Pressable>
-            <Text style={styles.stepValue}>{reps}</Text>
-            <Pressable onPress={() => setReps((v) => v + 1)} style={styles.stepButton}>
-              <Text style={styles.stepText}>+</Text>
-            </Pressable>
-          </View>
+          <Stepper
+            value={`${reps}`}
+            onDecrement={() => setReps((v) => Math.max(1, v - 1))}
+            onIncrement={() => setReps((v) => v + 1)}
+          />
         </View>
 
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Weight (kg)</Text>
-          <View style={styles.stepper}>
-            <Pressable
-              onPress={() => setWeight((v) => Math.max(0, v - 5))}
-              style={styles.stepButtonSmall}
-            >
-              <Text style={styles.stepTextSmall}>-5</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setWeight((v) => Math.max(0, v - 1))}
-              style={styles.stepButtonSmall}
-            >
-              <Text style={styles.stepText}>-</Text>
-            </Pressable>
-            <Text style={styles.stepValue}>{weight === 0 ? 'Bodyweight' : `${weight} kg`}</Text>
-            <Pressable onPress={() => setWeight((v) => v + 1)} style={styles.stepButtonSmall}>
-              <Text style={styles.stepText}>+</Text>
-            </Pressable>
-            <Pressable onPress={() => setWeight((v) => v + 5)} style={styles.stepButtonSmall}>
-              <Text style={styles.stepTextSmall}>+5</Text>
-            </Pressable>
-          </View>
+          <Stepper
+            compact
+            value={weight === 0 ? 'Bodyweight' : `${weight} kg`}
+            onDecrement={() => setWeight((v) => Math.max(0, v - 1))}
+            onIncrement={() => setWeight((v) => v + 1)}
+            onBigDecrement={() => setWeight((v) => Math.max(0, v - 5))}
+            onBigIncrement={() => setWeight((v) => v + 5)}
+            bigStepLabel="5"
+          />
         </View>
 
         <Button
@@ -324,7 +315,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           disabled={!selectedExercise}
           style={styles.logSetButton}
         />
-      </View>
+      </Card>
 
       <View style={styles.titleBlock}>
         <Text style={styles.titleLabel}>Optional title</Text>
@@ -363,6 +354,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         ) : null}
         {recentSets.map((set, index) => (
           <View key={`${set.exerciseName}-${set.createdAt}-${index}`} style={styles.logRow}>
+            <View style={styles.logAccent} />
             <View style={styles.logBody}>
               <Text style={styles.logExercise}>{set.exerciseName}</Text>
               <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
@@ -373,23 +365,17 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       </ScrollView>
 
       {/* Bottom action */}
-      <View style={styles.finishBar}>
-        {hasLogs ? (
+      {hasLogs ? (
+        <View style={styles.finishBar}>
           <Button label="Done" onPress={handleDone} style={styles.finishButton} />
-        ) : (
-          <Button
-            label="Abandon Session"
-            variant="ghost"
-            onPress={handleAbandon}
-            style={styles.finishButton}
-          />
-        )}
-      </View>
-    </View>
+        </View>
+      ) : null}
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
@@ -480,11 +466,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   inputSection: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.sm,
+    paddingLeft: spacing.sm + 6,
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
@@ -516,50 +499,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     width: 82,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flexShrink: 1,
-  },
-  stepButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepButtonSmall: {
-    width: 32,
-    height: 44,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepText: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-  },
-  stepTextSmall: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  stepValue: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    minWidth: 70,
-    textAlign: 'center',
   },
   logSetButton: {
     marginTop: spacing.xs,
@@ -597,6 +536,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     marginBottom: spacing.xs,
   },
+  logAccent: {
+    width: 4,
+    height: '70%',
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    marginRight: 12,
+  },
   logBody: {
     flex: 1,
   },
@@ -606,9 +552,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   logDetail: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.numeric,
+    fontSize: 15,
     marginTop: 2,
   },
   logTime: {

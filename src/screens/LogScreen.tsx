@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -15,8 +16,9 @@ import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore'
 import { createSession, getActiveSession, getSessionStreak, getSessionsForDate, getAllCompletedSessionCount } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Button, Card, colors, spacing } from '../ui';
-import { typography } from '../ui/tokens/typography';
+import { Button, Card, PressableScale, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type LogNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Log'>,
@@ -54,8 +56,32 @@ function sessionDisplayLabel(session: SessionRow): string {
   return session.title?.trim() || sessionTypeLabel(session.type);
 }
 
+const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnType<typeof createStyles> }) => {
+  const { mode, setMode } = useTheme();
+  const isDark = mode === 'dark';
+  return (
+    <PressableScale
+      onPress={() => setMode(isDark ? 'light' : 'dark')}
+      scaleTo={0.88}
+      style={styles.themeToggle}
+      accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? (
+        <View style={styles.moonWrap}>
+          <View style={[styles.moonBase, { backgroundColor: colors.textPrimary }]} />
+          <View style={[styles.moonCutout, { backgroundColor: colors.surfaceRaised }]} />
+        </View>
+      ) : (
+        <View style={[styles.sunDot, { backgroundColor: colors.warning }]} />
+      )}
+    </PressableScale>
+  );
+};
+
 export function LogScreen() {
   const navigation = useNavigation<LogNavProp>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
   const today = new Date();
 
@@ -103,20 +129,24 @@ export function LogScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
+    <SafeAreaView edges={['top']} style={styles.root}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
       {/* Date header */}
       <View style={styles.headerBlock}>
         <View style={styles.headerRow}>
           <Text style={styles.screenTitle}>Today</Text>
-          {streak > 0 ? (
-            <View style={styles.streakPill}>
-              <Text style={styles.streakText}>{streak} day streak</Text>
-            </View>
-          ) : null}
+          <View style={styles.headerRight}>
+            {streak > 0 ? (
+              <View style={styles.streakPill}>
+                <Text style={styles.streakText}>{streak} day streak</Text>
+              </View>
+            ) : null}
+            <ThemeToggle colors={colors} styles={styles} />
+          </View>
         </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
       </View>
@@ -232,14 +262,19 @@ export function LogScreen() {
           ))}
         </View>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: spacing.md,
@@ -257,6 +292,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   screenTitle: {
     ...typography.display,
@@ -276,6 +316,39 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
+  },
+  themeToggle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moonWrap: {
+    width: 14,
+    height: 14,
+  },
+  moonBase: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  moonCutout: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    top: -3,
+    left: 5,
+  },
+  sunDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
 
   // Active session banner
@@ -423,4 +496,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-});
+  });

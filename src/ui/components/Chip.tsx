@@ -1,6 +1,9 @@
-import { Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
-import { colors } from '../tokens/colors';
+import { useMemo } from 'react';
+import { StyleSheet, Text, type ViewStyle } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
+import { PressableScale } from './PressableScale';
 
 type ChipProps = {
   label: string;
@@ -10,47 +13,43 @@ type ChipProps = {
 };
 
 export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.base,
-        selected ? styles.selected : null,
-        pressed ? styles.pressed : null,
-        style,
-      ]}
+      scaleTo={0.94}
+      style={[styles.base, selected ? styles.selected : null, style]}
     >
       <Text style={[styles.text, selected ? styles.textSelected : null]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 };
 
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 42,
-    paddingHorizontal: 15,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
-  },
-  text: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  textSelected: {
-    color: colors.textPrimary,
-  },
-  pressed: {
-    opacity: 0.86,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    base: {
+      minHeight: 42,
+      paddingHorizontal: 15,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: colors.borderSoft,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    selected: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accentSoft,
+    },
+    text: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '800',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    textSelected: {
+      color: colors.textPrimary,
+    },
+  });

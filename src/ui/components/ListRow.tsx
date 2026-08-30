@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../tokens/colors';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 
 type ListRowProps = {
@@ -13,6 +15,8 @@ type ListRowProps = {
 };
 
 export const ListRow = ({ title, subtitle, meta, left, right, onPress }: ListRowProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const Container = onPress ? Pressable : View;
   return (
     <Container style={styles.row} onPress={onPress}>
@@ -29,44 +33,45 @@ export const ListRow = ({ title, subtitle, meta, left, right, onPress }: ListRow
   );
 };
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    marginBottom: 8,
-  },
-  left: {
-    marginRight: 12,
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  metaCol: {
-    alignItems: 'flex-end',
-    marginLeft: 12,
-  },
-  meta: {
-    color: colors.textMuted,
-    fontSize: 11,
-    textTransform: 'uppercase',
-  },
-  right: {
-    marginTop: 4,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      marginBottom: 8,
+    },
+    left: {
+      marginRight: 12,
+    },
+    content: {
+      flex: 1,
+    },
+    title: {
+      color: colors.textPrimary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 4,
+    },
+    metaCol: {
+      alignItems: 'flex-end',
+      marginLeft: 12,
+    },
+    meta: {
+      color: colors.textMuted,
+      fontSize: 11,
+      textTransform: 'uppercase',
+    },
+    right: {
+      marginTop: 4,
+    },
+  });

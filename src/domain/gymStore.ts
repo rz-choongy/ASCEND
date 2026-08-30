@@ -53,14 +53,18 @@ type NormalizedGymGradeOption = {
 const uuid = (): string => Crypto.randomUUID();
 
 const defaultVScaleGrades: GymGradeOptionInput[] = [
-  { id: 'grade-default-v0', label: 'V0', gradeMin: 0, gradeMax: 0, colorHex: '#65A30D', sortOrder: 0 },
+  { id: 'grade-default-v0', label: 'V0', gradeMin: 0, gradeMax: 0, colorHex: '#22C55E', sortOrder: 0 },
   { id: 'grade-default-v1', label: 'V1', gradeMin: 1, gradeMax: 1, colorHex: '#84CC16', sortOrder: 1 },
   { id: 'grade-default-v2', label: 'V2', gradeMin: 2, gradeMax: 2, colorHex: '#EAB308', sortOrder: 2 },
-  { id: 'grade-default-v3', label: 'V3', gradeMin: 3, gradeMax: 3, colorHex: '#F97316', sortOrder: 3 },
-  { id: 'grade-default-v4', label: 'V4', gradeMin: 4, gradeMax: 4, colorHex: '#EF4444', sortOrder: 4 },
-  { id: 'grade-default-v5', label: 'V5', gradeMin: 5, gradeMax: 5, colorHex: '#A855F7', sortOrder: 5 },
-  { id: 'grade-default-v6', label: 'V6', gradeMin: 6, gradeMax: 6, colorHex: '#3B82F6', sortOrder: 6 },
-  { id: 'grade-default-v7-plus', label: 'V7+', gradeMin: 7, gradeMax: 10, colorHex: '#111827', sortOrder: 7 },
+  { id: 'grade-default-v3', label: 'V3', gradeMin: 3, gradeMax: 3, colorHex: '#F59E0B', sortOrder: 3 },
+  { id: 'grade-default-v4', label: 'V4', gradeMin: 4, gradeMax: 4, colorHex: '#F97316', sortOrder: 4 },
+  { id: 'grade-default-v5', label: 'V5', gradeMin: 5, gradeMax: 5, colorHex: '#EF4444', sortOrder: 5 },
+  { id: 'grade-default-v6', label: 'V6', gradeMin: 6, gradeMax: 6, colorHex: '#EC4899', sortOrder: 6 },
+  { id: 'grade-default-v7', label: 'V7', gradeMin: 7, gradeMax: 7, colorHex: '#D946EF', sortOrder: 7 },
+  { id: 'grade-default-v8', label: 'V8', gradeMin: 8, gradeMax: 8, colorHex: '#A855F7', sortOrder: 8 },
+  { id: 'grade-default-v9', label: 'V9', gradeMin: 9, gradeMax: 9, colorHex: '#6366F1', sortOrder: 9 },
+  { id: 'grade-default-v10', label: 'V10', gradeMin: 10, gradeMax: 10, colorHex: '#3B82F6', sortOrder: 10 },
+  { id: 'grade-default-v11-plus', label: 'V11+', gradeMin: 11, gradeMax: 17, colorHex: '#111827', sortOrder: 11 },
 ];
 
 const defaultNumericGrades: GymGradeOptionInput[] = Array.from({ length: 10 }, (_, index) => ({
@@ -80,7 +84,7 @@ const defaultColorGrades: GymGradeOptionInput[] = [
   { label: 'Black', gradeMin: 8, gradeMax: 10, colorHex: '#111827', sortOrder: 5 },
 ];
 
-const defaultOptionsForType = (gradingType: GymGradingType): GymGradeOptionInput[] => {
+export const defaultOptionsForType = (gradingType: GymGradingType): GymGradeOptionInput[] => {
   if (gradingType === 'numeric') {
     return defaultNumericGrades;
   }
@@ -189,6 +193,10 @@ const ensureDefaultClimbGymSeeded = (): void => {
     ) VALUES (?, ?, ?, ?, ?, ?);`,
     [DEFAULT_CLIMB_GYM_ID, 'Default V-Scale', 'v_scale', 1, timestamp, timestamp]
   );
+
+  // Superseded by explicit V7-V10 + V11+ rows below; old DBs seeded before that change still have it.
+  run("DELETE FROM gym_grade_options WHERE id = 'grade-default-v7-plus';");
+
   defaultVScaleGrades.forEach((option) => {
     const normalized = normalizeGradeOption(option, option.sortOrder ?? 0);
     run(

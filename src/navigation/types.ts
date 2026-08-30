@@ -13,6 +13,7 @@ export type RootStackParamList = {
 export type TabParamList = {
   Log: undefined;
   Calendar: undefined;
+  Progress: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

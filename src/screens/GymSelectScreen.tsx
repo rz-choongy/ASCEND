@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ensureSelectedClimbGym,
@@ -10,7 +11,8 @@ import {
 import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, colors, radius, spacing, typography } from '../ui';
+import { Button, ScreenHeader, radius, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
 
 type GymSelectScreenProps = RootStackScreenProps<'GymSelect'>;
 
@@ -27,6 +29,8 @@ const gradingTypeLabel = (gradingType: string): string => {
 };
 
 export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const returnToSessionId = route.params?.returnToSessionId;
   const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
@@ -87,24 +91,18 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   // ─── Level 2: inside a company ────────────────────────────────────────────
   if (drillParentId) {
     return (
-      <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+      <SafeAreaView edges={['top']} style={styles.screen}>
+        <ScreenHeader
+          eyebrow={drillParent?.name ?? 'Company'}
+          title="Select branch"
+          onClose={() => navigation.goBack()}
+          left={
             <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
               <Text style={styles.backChevron}>‹</Text>
               <Text style={styles.backLabel}>All gyms</Text>
             </Pressable>
-            <Text style={styles.eyebrow}>{drillParent?.name ?? 'Company'}</Text>
-            <Text style={styles.title}>Select branch</Text>
-          </View>
-          <Button
-            label="Close"
-            variant="ghost"
-            onPress={() => navigation.goBack()}
-            style={styles.closeButton}
-            textStyle={styles.closeText}
-          />
-        </View>
+          }
+        />
 
         <ScrollView contentContainerStyle={styles.content}>
           {branches.length === 0 ? (
@@ -159,28 +157,27 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
             }
           />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // ─── Level 1: root gyms ───────────────────────────────────────────────────
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>Climbing grades</Text>
-          <Text style={styles.title}>Choose gym</Text>
-        </View>
-        <Button
-          label="Close"
-          variant="ghost"
-          onPress={() => navigation.goBack()}
-          style={styles.closeButton}
-          textStyle={styles.closeText}
-        />
-      </View>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <ScreenHeader
+        eyebrow="Climbing grades"
+        title="Choose gym"
+        onClose={() => navigation.goBack()}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
+        {rootGyms.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No gyms yet — tap Add Gym to create your first.
+            </Text>
+          </View>
+        )}
         {rootGyms.map((gym) => {
           const count = branchCount(gym.id);
           const selected = gym.id === selectedGymId;
@@ -232,27 +229,18 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           onPress={() => navigation.navigate('GymEdit', { returnToSessionId })}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  headerLeft: {
-    flex: 1,
   },
   backButton: {
     flexDirection: 'row',
@@ -272,21 +260,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
-  },
-  eyebrow: {
-    ...typography.meta,
-    color: colors.accent,
-  },
-  title: {
-    ...typography.title,
-    marginTop: 2,
-  },
-  closeButton: {
-    minHeight: 38,
-    paddingHorizontal: 12,
-  },
-  closeText: {
-    fontSize: 10,
   },
   content: {
     gap: spacing.xs,
@@ -365,5 +338,17 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: spacing.xs,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyStateText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

@@ -12,33 +12,61 @@ export const getContrastText = (hex: string): string => {
   return luminance > 0.45 ? '#0b1110' : '#f2eadc';
 };
 
-export const colors = {
-  background: '#0b1110',
-  backgroundWarm: '#10150f',
-  surface: '#151b18',
-  surfaceAlt: '#1b241d',
-  surfaceRaised: '#202a21',
-  border: '#2b352d',
-  borderSoft: '#3a463b',
-  textPrimary: '#f2eadc',
-  textSecondary: '#cfc5b3',
-  textMuted: '#918a7d',
-  textInverse: '#0b1110',
-  accent: '#d8a448',
-  accentMuted: '#332817',
-  accentSoft: '#4a371a',
-  success: '#7dbb6d',
+const gradePalette = [
+  '#e9dfc7',
+  '#d8a448',
+  '#9db56f',
+  '#4f8f7a',
+  '#486f9f',
+  '#9a6fb0',
+  '#d76f45',
+  '#3f473f',
+];
+
+export const darkColors = {
+  background: '#0a0e14',
+  backgroundWarm: '#0d1219',
+  surface: '#131820',
+  surfaceAlt: '#171d27',
+  surfaceRaised: '#1c2430',
+  border: '#242c38',
+  borderSoft: '#333d4c',
+  textPrimary: '#f5f7fa',
+  textSecondary: '#a9b2c3',
+  textMuted: '#6b7484',
+  textInverse: '#05080d',
+  accent: '#2f8fff',
+  accentMuted: '#152238',
+  accentSoft: '#1d3a5c',
+  success: '#3ecf6e',
   warning: '#f2c45f',
-  danger: '#e0644f',
-  overlay: 'rgba(6, 10, 8, 0.74)',
-  gradePalette: [
-    '#e9dfc7',
-    '#d8a448',
-    '#9db56f',
-    '#4f8f7a',
-    '#486f9f',
-    '#9a6fb0',
-    '#d76f45',
-    '#3f473f',
-  ],
+  danger: '#f2564a',
+  overlay: 'rgba(4, 6, 10, 0.78)',
+  gradePalette,
 };
+
+/** GoClimbr-inspired: warm off-white background, white cards, near-black text. */
+export const lightColors = {
+  background: '#f7f4ee',
+  backgroundWarm: '#f2ede2',
+  surface: '#ffffff',
+  surfaceAlt: '#f4f1ea',
+  surfaceRaised: '#ffffff',
+  border: '#e6e1d5',
+  borderSoft: '#d6cfc0',
+  textPrimary: '#17181c',
+  textSecondary: '#5b5d66',
+  textMuted: '#8b8d94',
+  textInverse: '#ffffff',
+  accent: '#2f8fff',
+  accentMuted: '#e7f1ff',
+  accentSoft: '#cee3ff',
+  success: '#1f9d55',
+  warning: '#b7791f',
+  danger: '#d64545',
+  overlay: 'rgba(23, 20, 14, 0.45)',
+  gradePalette,
+};
+
+export type ThemeColors = typeof darkColors;
+export type ThemeMode = 'light' | 'dark';

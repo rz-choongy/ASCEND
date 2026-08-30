@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
 import { formatDuration } from '../domain/dateUtils';
 import { getGradeOptionsForGym } from '../domain/gymStore';
@@ -22,7 +23,9 @@ import {
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Divider, ListRow, colors, radius, spacing, typography } from '../ui';
+import { Button, Divider, ListRow, StatRow, radius, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type SessionDetailScreenProps = RootStackScreenProps<'SessionDetail'>;
 
@@ -115,6 +118,8 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
 // Screen
 
 export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { sessionId } = route.params;
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -176,9 +181,9 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
   if (!session) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={styles.container}>
         <Text style={styles.emptyText}>Session not found.</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -302,7 +307,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => navigation.goBack()} style={styles.backRow} hitSlop={12}>
           <Text style={styles.backLabel}>← Back</Text>
@@ -328,50 +333,29 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
         {/* Stats strip */}
         {climbStats ? (
-          <View style={styles.statsStrip}>
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>{climbStats.total}</Text>
-              <Text style={styles.statLabel}>Climbs</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>{climbStats.sends}</Text>
-              <Text style={styles.statLabel}>Sends</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>{climbStats.flashes}</Text>
-              <Text style={styles.statLabel}>Flashes</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>{climbStats.flashRate}%</Text>
-              <Text style={styles.statLabel}>Flash rate</Text>
-            </View>
-          </View>
+          <StatRow
+            style={styles.statsRow}
+            items={[
+              { value: `${climbStats.total}`, label: 'Climbs' },
+              { value: `${climbStats.sends}`, label: 'Sends' },
+              { value: `${climbStats.flashes}`, label: 'Flashes' },
+              { value: `${climbStats.flashRate}%`, label: 'Flash rate' },
+            ]}
+          />
         ) : null}
 
         {strengthStats ? (
-          <View style={styles.statsStrip}>
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>{strengthStats.totalSets}</Text>
-              <Text style={styles.statLabel}>Sets</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>
-                {strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}kg` : 'bw'}
-              </Text>
-              <Text style={styles.statLabel}>Volume</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCell}>
-              <Text style={styles.statValue}>
-                {Object.keys(strengthStats.exerciseCounts).length}
-              </Text>
-              <Text style={styles.statLabel}>Exercises</Text>
-            </View>
-          </View>
+          <StatRow
+            style={styles.statsRow}
+            items={[
+              { value: `${strengthStats.totalSets}`, label: 'Sets' },
+              {
+                value: strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}kg` : 'bw',
+                label: 'Volume',
+              },
+              { value: `${Object.keys(strengthStats.exerciseCounts).length}`, label: 'Exercises' },
+            ]}
+          />
         ) : null}
 
         {/* Log list */}
@@ -487,28 +471,30 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                   />
                 )}
 
-                <View style={styles.modalRow}>
-                  <TextInput
-                    style={[styles.modalInput, styles.smallInput]}
-                    value={climbDraft.gradeMin}
-                    onChangeText={(value) =>
-                      setClimbDraft((draft) => ({ ...draft, gradeMin: value }))
-                    }
-                    keyboardType="number-pad"
-                    placeholder="Min"
-                    placeholderTextColor={colors.textMuted}
-                  />
-                  <TextInput
-                    style={[styles.modalInput, styles.smallInput]}
-                    value={climbDraft.gradeMax}
-                    onChangeText={(value) =>
-                      setClimbDraft((draft) => ({ ...draft, gradeMax: value }))
-                    }
-                    keyboardType="number-pad"
-                    placeholder="Max"
-                    placeholderTextColor={colors.textMuted}
-                  />
-                </View>
+                {gradeOptions.length === 0 && (
+                  <View style={styles.modalRow}>
+                    <TextInput
+                      style={[styles.modalInput, styles.smallInput]}
+                      value={climbDraft.gradeMin}
+                      onChangeText={(value) =>
+                        setClimbDraft((draft) => ({ ...draft, gradeMin: value }))
+                      }
+                      keyboardType="number-pad"
+                      placeholder="Min"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                    <TextInput
+                      style={[styles.modalInput, styles.smallInput]}
+                      value={climbDraft.gradeMax}
+                      onChangeText={(value) =>
+                        setClimbDraft((draft) => ({ ...draft, gradeMax: value }))
+                      }
+                      keyboardType="number-pad"
+                      placeholder="Max"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.resultRow}>
                   {(['FLASH', 'SEND'] as const).map((result) => {
@@ -573,11 +559,12 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -778,32 +765,7 @@ const styles = StyleSheet.create({
     borderColor: colors.danger,
   },
 
-  statsStrip: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.sm,
+  statsRow: {
     marginBottom: spacing.md,
-  },
-  statCell: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  statValue: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  statLabel: {
-    ...typography.meta,
-    color: colors.textMuted,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: colors.border,
-    marginVertical: 4,
   },
 });

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,8 +9,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   createGym,
+  defaultOptionsForType,
   getGradeOptionsForGym,
   getGymById,
   getGyms,
@@ -18,7 +21,18 @@ import {
 } from '../domain/gymStore';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, colors, radius, spacing, typography } from '../ui';
+import {
+  Button,
+  PressableScale,
+  ScreenHeader,
+  Stepper,
+  getContrastText,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type GymEditScreenProps = RootStackScreenProps<'GymEdit'>;
 
@@ -40,7 +54,6 @@ const TYPE_OPTIONS: { value: GradingType; label: string }[] = [
   { value: 'color', label: 'Color' },
 ];
 
-const COLOR_SEEDS = ['#f8fafc', '#facc15', '#22c55e', '#3b82f6', '#ef4444'];
 const GRADE_COLOR_OPTIONS = [
   '#f8fafc',
   '#facc15',
@@ -65,35 +78,13 @@ const createDraftRowId = (): string => {
   return `grade-row-${draftRowCounter}`;
 };
 
-const seedRowFieldsForType = (type: GradingType): GradeRowFields[] => {
-  if (type === 'numeric') {
-    return Array.from({ length: 6 }, (_, index) => {
-      const grade = index + 1;
-      return {
-        label: `${grade}`,
-        colorHex: COLOR_SEEDS[index % COLOR_SEEDS.length],
-        gradeMin: `${index}`,
-        gradeMax: `${index}`,
-      };
-    });
-  }
-
-  if (type === 'color') {
-    return ['White', 'Yellow', 'Green', 'Blue', 'Red'].map((label, index) => ({
-      label,
-      colorHex: COLOR_SEEDS[index],
-      gradeMin: `${index}`,
-      gradeMax: `${index + 1}`,
-    }));
-  }
-
-  return Array.from({ length: 8 }, (_, index) => ({
-    label: index === 7 ? 'V7+' : `V${index}`,
-    colorHex: colors.gradePalette[index % colors.gradePalette.length],
-    gradeMin: `${index}`,
-    gradeMax: `${index === 7 ? 10 : index}`,
+const seedRowFieldsForType = (type: GradingType): GradeRowFields[] =>
+  defaultOptionsForType(type).map((option) => ({
+    label: option.label,
+    colorHex: option.colorHex ?? option.color_hex ?? '',
+    gradeMin: `${option.gradeMin ?? option.grade_min ?? 0}`,
+    gradeMax: `${option.gradeMax ?? option.grade_max ?? 0}`,
   }));
-};
 
 const seedRowsForType = (type: GradingType): EditableGradeRow[] =>
   seedRowFieldsForType(type).map((row) => ({
@@ -159,6 +150,8 @@ const rowsMatchSeed = (rows: EditableGradeRow[], type: GradingType): boolean => 
 };
 
 export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const returnToSessionId = route.params?.returnToSessionId;
   const editingGymId = route.params?.gymId;
   const parentId = route.params?.parentId ?? null;
@@ -180,6 +173,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const [name, setName] = useState('');
   const [gradingType, setGradingType] = useState<GradingType>('v_scale');
   const [rows, setRows] = useState<EditableGradeRow[]>(seedRowsForType('v_scale'));
+  const [colorPickerIndex, setColorPickerIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!editingGymId || !editingGym) return;
@@ -231,6 +225,32 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         gradeMax: `${current.length}`,
       },
     ]);
+  };
+
+  const removeRow = (index: number) => {
+    if (rows.length <= 1) {
+      Alert.alert('At least one grade required', 'A gym needs at least one grade — add another before removing this one.');
+      return;
+    }
+    const row = rows[index];
+    Alert.alert(`Delete ${row.label || 'this grade'}?`, 'This removes it from the gym’s grade list.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => setRows((current) => current.filter((_, i) => i !== index)),
+      },
+    ]);
+  };
+
+  const adjustGradeBound = (index: number, field: 'gradeMin' | 'gradeMax', delta: number) => {
+    setRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const next = Math.max(0, toNumber(row[field], 0) + delta);
+        return { ...row, [field]: `${next}` };
+      })
+    );
   };
 
   const navigateAfterSave = (gymId: string) => {
@@ -311,20 +331,8 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     const eyebrow = parentGym?.name ?? 'Company';
     const title = editingGym ? 'Rename branch' : 'New branch';
     return (
-      <View style={styles.screen}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>{eyebrow}</Text>
-            <Text style={styles.title}>{title}</Text>
-          </View>
-          <Button
-            label="Close"
-            variant="ghost"
-            onPress={() => navigation.goBack()}
-            style={styles.closeButton}
-            textStyle={styles.closeText}
-          />
-        </View>
+      <SafeAreaView edges={['top']} style={styles.screen}>
+        <ScreenHeader eyebrow={eyebrow} title={title} onClose={() => navigation.goBack()} />
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.label}>Branch name</Text>
@@ -356,26 +364,18 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             disabled={!name.trim()}
           />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // ─── Full gym edit / create mode ──────────────────────────────────────────
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>{editingGym ? editingGym.name : 'New gym'}</Text>
-          <Text style={styles.title}>{editingGym ? 'Edit grades' : 'Climb grades'}</Text>
-        </View>
-        <Button
-          label="Close"
-          variant="ghost"
-          onPress={() => navigation.goBack()}
-          style={styles.closeButton}
-          textStyle={styles.closeText}
-        />
-      </View>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <ScreenHeader
+        eyebrow={editingGym ? editingGym.name : 'New gym'}
+        title={editingGym ? 'Edit grades' : 'Climb grades'}
+        onClose={() => navigation.goBack()}
+      />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Gym name</Text>
@@ -392,81 +392,84 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           {TYPE_OPTIONS.map((option) => {
             const selected = option.value === gradingType;
             return (
-              <Pressable
+              <PressableScale
                 key={option.value}
                 style={[styles.typeChip, selected ? styles.typeChipSelected : null]}
                 onPress={() => updateType(option.value)}
+                scaleTo={0.94}
               >
                 <Text style={[styles.typeText, selected ? styles.typeTextSelected : null]}>
                   {option.label}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
 
         <View style={styles.gradeHeader}>
           <Text style={styles.label}>Grades at this gym</Text>
-          <Pressable onPress={addRow}>
+          <Pressable onPress={addRow} hitSlop={10}>
             <Text style={styles.addRowText}>+ Add grade</Text>
           </Pressable>
         </View>
 
-        {rows.map((row, index) => (
-          <View key={row.draftId} style={styles.gradeCard}>
-            <View style={styles.gradeRow}>
-              <TextInput
-                value={row.label}
-                onChangeText={(value) => updateRow(index, { label: value })}
-                placeholder="Label"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.labelInput]}
-              />
-              <TextInput
-                value={row.gradeMin}
-                onChangeText={(value) => updateRow(index, { gradeMin: value })}
-                keyboardType="number-pad"
-                placeholder="Easy"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.rangeInput]}
-              />
-              <TextInput
-                value={row.gradeMax}
-                onChangeText={(value) => updateRow(index, { gradeMax: value })}
-                keyboardType="number-pad"
-                placeholder="Hard"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.rangeInput]}
-              />
+        {rows.map((row, index) => {
+          const swatchColor = row.colorHex || colors.border;
+          return (
+            <View key={row.draftId} style={styles.gradeCard}>
+              <View style={styles.gradeTopRow}>
+                <TextInput
+                  value={row.label}
+                  onChangeText={(value) => updateRow(index, { label: value })}
+                  placeholder="Label"
+                  placeholderTextColor={colors.textMuted}
+                  style={[styles.input, styles.labelInput]}
+                />
+                <View style={[styles.previewChip, { backgroundColor: swatchColor }]}>
+                  <Text
+                    style={[styles.previewChipText, { color: getContrastText(swatchColor) }]}
+                    numberOfLines={1}
+                  >
+                    {row.label || '—'}
+                  </Text>
+                </View>
+                <PressableScale
+                  onPress={() => removeRow(index)}
+                  scaleTo={0.88}
+                  style={styles.deleteButton}
+                >
+                  <Text style={styles.deleteGlyph}>×</Text>
+                </PressableScale>
+              </View>
+
+              <View style={styles.gradeBottomRow}>
+                <View style={styles.rangeGroup}>
+                  <Text style={styles.rangeLabel}>Min</Text>
+                  <Stepper
+                    compact
+                    value={row.gradeMin}
+                    onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
+                    onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
+                  />
+                </View>
+                <View style={styles.rangeGroup}>
+                  <Text style={styles.rangeLabel}>Max</Text>
+                  <Stepper
+                    compact
+                    value={row.gradeMax}
+                    onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
+                    onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
+                  />
+                </View>
+                <PressableScale
+                  onPress={() => setColorPickerIndex(index)}
+                  scaleTo={0.9}
+                  style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
+                />
+              </View>
             </View>
-            <View style={styles.colorRow}>
-              <View style={[styles.currentSwatch, { backgroundColor: row.colorHex || colors.border }]} />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.paletteRow}
-                keyboardShouldPersistTaps="handled"
-              >
-                {GRADE_COLOR_OPTIONS.map((color) => {
-                  const selected = row.colorHex.toLowerCase() === color.toLowerCase();
-                  return (
-                    <Pressable
-                      key={`${index}-${color}`}
-                      onPress={() => updateRow(index, { colorHex: color })}
-                      style={[
-                        styles.colorSwatchButton,
-                        selected ? styles.colorSwatchSelected : null,
-                      ]}
-                      accessibilityLabel={`Use color ${color} for ${row.label || 'grade'}`}
-                    >
-                      <View style={[styles.colorSwatch, { backgroundColor: color }]} />
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -476,39 +479,60 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           disabled={!editingGym && !name.trim()}
         />
       </View>
-    </View>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={colorPickerIndex !== null}
+        onRequestClose={() => setColorPickerIndex(null)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setColorPickerIndex(null)}
+        >
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Grade color</Text>
+            <View style={styles.colorGrid}>
+              {GRADE_COLOR_OPTIONS.map((color) => {
+                const selected =
+                  colorPickerIndex !== null &&
+                  rows[colorPickerIndex]?.colorHex.toLowerCase() === color.toLowerCase();
+                return (
+                  <PressableScale
+                    key={color}
+                    scaleTo={0.9}
+                    onPress={() => {
+                      if (colorPickerIndex !== null) {
+                        updateRow(colorPickerIndex, { colorHex: color });
+                      }
+                      setColorPickerIndex(null);
+                    }}
+                    style={[
+                      styles.colorGridSwatch,
+                      { backgroundColor: color },
+                      selected ? styles.colorGridSwatchSelected : null,
+                    ]}
+                    accessibilityLabel={`Use color ${color}`}
+                  />
+                );
+              })}
+            </View>
+            <Button label="Close" variant="ghost" onPress={() => setColorPickerIndex(null)} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  eyebrow: {
-    ...typography.meta,
-    color: colors.accent,
-  },
-  title: {
-    ...typography.title,
-    marginTop: 2,
-  },
-  closeButton: {
-    minHeight: 38,
-    paddingHorizontal: 12,
-  },
-  closeText: {
-    fontSize: 10,
   },
   content: {
     gap: spacing.xs,
@@ -569,10 +593,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  gradeRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
   gradeCard: {
     borderRadius: radius.md,
     borderWidth: 1,
@@ -581,13 +601,55 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     gap: spacing.xs,
   },
-  labelInput: {
-    flex: 1.3,
-  },
-  colorRow: {
+  gradeTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  labelInput: {
+    flex: 1,
+  },
+  previewChip: {
+    minWidth: 52,
+    height: 40,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  previewChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteGlyph: {
+    color: colors.textMuted,
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  gradeBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  rangeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rangeLabel: {
+    ...typography.meta,
+    color: colors.textMuted,
   },
   currentSwatch: {
     width: 34,
@@ -595,37 +657,42 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.borderSoft,
+    marginLeft: 'auto',
   },
-  paletteRow: {
-    gap: 8,
-    paddingRight: spacing.sm,
-  },
-  colorSwatchButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    borderColor: colors.border,
+  modalBackdrop: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.overlay,
+    padding: spacing.md,
   },
-  colorSwatchSelected: {
-    borderColor: colors.textPrimary,
-    backgroundColor: colors.accentSoft,
-  },
-  colorSwatch: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  modalCard: {
+    width: '100%',
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.borderSoft,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
-  colorInput: {
-    flex: 1,
+  modalTitle: {
+    ...typography.title,
+    fontSize: 20,
   },
-  rangeInput: {
-    width: 64,
-    textAlign: 'center',
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  colorGridSwatch: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorGridSwatchSelected: {
+    borderColor: colors.textPrimary,
   },
   footer: {
     paddingTop: spacing.xs,

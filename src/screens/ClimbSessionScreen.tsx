@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import {
+  defaultOptionsForType,
   ensureSelectedClimbGym,
   getGradeOptionsForGym,
   getGyms,
@@ -11,7 +13,18 @@ import {
 import { appendEvent, getSessionById, setSessionStatus, setSessionTitle } from '../domain/sessionStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Divider, colors, getContrastText, radius, spacing, typography } from '../ui';
+import {
+  Button,
+  Divider,
+  PressableScale,
+  ScreenHeader,
+  getContrastText,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type GradeOption = {
   id?: string;
@@ -27,17 +40,6 @@ type GymLike = {
 };
 
 type ClimbSessionScreenProps = RootStackScreenProps<'ClimbLogger'>;
-
-const GRADE_OPTIONS: GradeOption[] = [
-  { id: 'v0', label: 'V0', min: 0, max: 0 },
-  { id: 'v1', label: 'V1', min: 1, max: 1 },
-  { id: 'v2', label: 'V2', min: 2, max: 2 },
-  { id: 'v3', label: 'V3', min: 3, max: 3 },
-  { id: 'v4', label: 'V4', min: 4, max: 4 },
-  { id: 'v5', label: 'V5', min: 5, max: 5 },
-  { id: 'v6', label: 'V6', min: 6, max: 6 },
-  { id: 'v7-plus', label: 'V7+', min: 7, max: 10 },
-];
 
 const normalizeGradeOption = (grade: unknown): GradeOption | null => {
   if (!grade || typeof grade !== 'object') return null;
@@ -69,6 +71,10 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
   };
 };
 
+const GRADE_OPTIONS: GradeOption[] = defaultOptionsForType('v_scale')
+  .map(normalizeGradeOption)
+  .filter((grade): grade is GradeOption => grade !== null);
+
 const normalizeGym = (gym: unknown): GymLike | null => {
   if (!gym || typeof gym !== 'object') return null;
   const value = gym as { id?: unknown; name?: unknown };
@@ -92,6 +98,8 @@ const formatLogTime = (ms: number): string => {
 };
 
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { sessionId } = route.params;
 
   const [session, setSession] = useState(() => getSessionById(sessionId));
@@ -131,6 +139,19 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     }, [route.params.gymId, sessionId])
   );
 
+  // Any way of leaving this screen — header back, Android hardware back, swipe, or the
+  // Done flow above — should never leave a session stuck 'active' forever. If Done already
+  // completed it, this is a no-op; otherwise it silently saves as abandoned.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      const current = getSessionById(sessionId);
+      if (current?.status === 'active') {
+        setSessionStatus(sessionId, 'abandoned');
+      }
+    });
+    return unsubscribe;
+  }, [navigation, sessionId]);
+
   const bump = () => setRefreshKey((k) => k + 1);
 
   const handleSaveTitle = () => {
@@ -169,28 +190,19 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     navigation.navigate('Tabs');
   };
 
-  const handleAbandon = () => {
-    if (session?.status !== 'active') {
-      navigation.navigate('Tabs');
-      return;
-    }
-    setSessionStatus(sessionId, 'abandoned');
-    navigation.navigate('Tabs');
-  };
-
   if (!session) {
     return (
-      <View style={styles.screen}>
+      <SafeAreaView edges={['top']} style={styles.screen}>
         <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const hasLogs = recentLogs.length > 0;
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Log climb</Text>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <ScreenHeader title="Log climb" onClose={() => navigation.navigate('Tabs')} />
 
       <View style={styles.titleBlock}>
         <Text style={styles.titleLabel}>Session name</Text>
@@ -223,8 +235,9 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           const color = grade.color ?? colors.gradePalette[index % colors.gradePalette.length];
           const active = selectedGrade.label === grade.label;
           return (
-            <Pressable
+            <PressableScale
               key={grade.id ?? grade.label}
+              scaleTo={0.92}
               style={[
                 styles.gradeTile,
                 { backgroundColor: color },
@@ -236,7 +249,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
               }}
             >
               <Text style={[styles.gradeText, { color: getContrastText(color) }]}>{grade.label}</Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -294,28 +307,23 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         })}
       </ScrollView>
 
-      <View style={styles.finishBar}>
-        {hasLogs ? (
+      {hasLogs ? (
+        <View style={styles.finishBar}>
           <Button label="Done" onPress={handleDone} style={styles.finishButton} />
-        ) : (
-          <Button label="Abandon Session" variant="ghost" onPress={handleAbandon} style={styles.finishButton} />
-        )}
-      </View>
-    </View>
+        </View>
+      ) : null}
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  title: {
-    ...typography.title,
-    marginBottom: spacing.sm,
   },
   titleBlock: {
     backgroundColor: colors.surface,
@@ -390,6 +398,11 @@ const styles = StyleSheet.create({
   },
   gradeTileActive: {
     borderColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 4,
   },
   gradeText: {
     fontSize: 15,

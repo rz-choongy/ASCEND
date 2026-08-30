@@ -268,6 +268,19 @@ export function getSessionStreak(): number {
   return streak;
 }
 
+export function getCompletedSessions(type?: SessionType): SessionRow[] {
+  if (type) {
+    return getAll<SessionRow>(
+      'SELECT * FROM sessions WHERE status = ? AND type = ? ORDER BY started_at ASC;',
+      ['completed', type]
+    );
+  }
+  return getAll<SessionRow>(
+    'SELECT * FROM sessions WHERE status = ? ORDER BY started_at ASC;',
+    ['completed']
+  );
+}
+
 export function getSessionsForDate(dateStr: string): SessionRow[] {
   // dateStr is 'YYYY-MM-DD'
   const [y, m, d] = dateStr.split('-').map(Number);

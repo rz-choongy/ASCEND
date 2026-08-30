@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -18,8 +19,9 @@ import { formatDuration, formatLocalDate } from '../domain/dateUtils';
 import { getSessionsForMonth } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Chip, colors, spacing } from '../ui';
-import { typography } from '../ui/tokens/typography';
+import { Chip, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type CalendarNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Calendar'>,
@@ -31,9 +33,6 @@ const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-
-const DOT_CLIMB = colors.accent;
-const DOT_STRENGTH = colors.success;
 
 function todayDate(): Date {
   const now = new Date();
@@ -69,6 +68,10 @@ function buildMonthGrid(monthStart: Date): (Date | null)[] {
 
 export function CalendarScreen() {
   const navigation = useNavigation<CalendarNavProp>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const DOT_CLIMB = colors.accent;
+  const DOT_STRENGTH = colors.success;
   const today = todayDate();
 
   const [currentMonth, setCurrentMonth] = useState<Date>(() =>
@@ -82,11 +85,14 @@ export function CalendarScreen() {
   useFocusEffect(
     useCallback(() => {
       setRefreshKey((k) => k + 1);
+      setSelectedDate(todayDate());
     }, [])
   );
 
-  const canGoPrev = true;
-  const canGoNext = true;
+  const thisMonth = firstOfMonth(today);
+  const earliestMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 12, 1);
+  const canGoPrev = currentMonth.getTime() > earliestMonth.getTime();
+  const canGoNext = currentMonth.getTime() < thisMonth.getTime();
 
   const monthSessions = useMemo(() => {
     // refreshKey intentionally used to bust memo on focus
@@ -169,7 +175,7 @@ export function CalendarScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       {/* Month navigation header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -329,14 +335,15 @@ export function CalendarScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const DAY_CELL_SIZE = 40;
 const DOT_SIZE = 5;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,

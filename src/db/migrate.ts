@@ -39,6 +39,17 @@ const setUserVersion = (version: number): void => {
   run(`PRAGMA user_version = ${version};`);
 };
 
+/** Backfills any columns missing from an existing table (e.g. an old dev DB predating a column added to the CREATE TABLE DDL). */
+const ensureColumns = (table: string, columns: { name: string; ddl: string }[]): void => {
+  const existing = getAll<{ name: string }>(`PRAGMA table_info(${table});`);
+  const existingNames = new Set(existing.map((col) => col.name));
+  columns.forEach((col) => {
+    if (!existingNames.has(col.name)) {
+      run(`ALTER TABLE ${table} ADD COLUMN ${col.ddl};`);
+    }
+  });
+};
+
 const ensureBaseSchema = (): void => {
   run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -53,22 +64,11 @@ const ensureBaseSchema = (): void => {
     );
   `);
 
-  const sessionColumns = getAll<{ name: string }>('PRAGMA table_info(sessions);');
-  const hasGymId = sessionColumns.some((column) => column.name === 'gym_id');
-
-  if (!hasGymId) {
-    run('ALTER TABLE sessions ADD COLUMN gym_id TEXT;');
-  }
-
-  const hasTitle = sessionColumns.some((column) => column.name === 'title');
-  if (!hasTitle) {
-    run('ALTER TABLE sessions ADD COLUMN title TEXT;');
-  }
-
-  const hasNotes = sessionColumns.some((column) => column.name === 'notes');
-  if (!hasNotes) {
-    run('ALTER TABLE sessions ADD COLUMN notes TEXT;');
-  }
+  ensureColumns('sessions', [
+    { name: 'gym_id', ddl: 'gym_id TEXT' },
+    { name: 'title', ddl: 'title TEXT' },
+    { name: 'notes', ddl: 'notes TEXT' },
+  ]);
 
   run(`
     CREATE TABLE IF NOT EXISTS events (
@@ -82,11 +82,9 @@ const ensureBaseSchema = (): void => {
     );
   `);
 
-  const eventColumns = getAll<{ name: string }>('PRAGMA table_info(events);');
-  const hasSchemaVersion = eventColumns.some((column) => column.name === 'schema_version');
-  if (!hasSchemaVersion) {
-    run('ALTER TABLE events ADD COLUMN schema_version INTEGER NOT NULL DEFAULT 1;');
-  }
+  ensureColumns('events', [
+    { name: 'schema_version', ddl: 'schema_version INTEGER NOT NULL DEFAULT 1' },
+  ]);
 
   run(`
     CREATE TABLE IF NOT EXISTS gyms (
@@ -100,11 +98,12 @@ const ensureBaseSchema = (): void => {
     );
   `);
 
-  const gymColumns = getAll<{ name: string }>('PRAGMA table_info(gyms);');
-  const hasParentId = gymColumns.some((col) => col.name === 'parent_id');
-  if (!hasParentId) {
-    run('ALTER TABLE gyms ADD COLUMN parent_id TEXT;');
-  }
+  ensureColumns('gyms', [
+    { name: 'parent_id', ddl: 'parent_id TEXT' },
+    { name: 'is_default', ddl: 'is_default INTEGER NOT NULL DEFAULT 0' },
+    { name: 'created_at', ddl: 'created_at INTEGER NOT NULL DEFAULT 0' },
+    { name: 'updated_at', ddl: 'updated_at INTEGER NOT NULL DEFAULT 0' },
+  ]);
 
   run(`
     CREATE TABLE IF NOT EXISTS gym_grade_options (
