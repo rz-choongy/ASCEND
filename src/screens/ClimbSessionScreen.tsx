@@ -10,7 +10,9 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
+import { formatElapsed } from '../domain/dateUtils';
 import { appendEvent, getSessionById, setSessionStatus, setSessionTitle } from '../domain/sessionStore';
+import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -90,13 +92,6 @@ const loadGrades = (gymId: string | null): GradeOption[] => {
   return grades.length > 0 ? grades : GRADE_OPTIONS;
 };
 
-const formatLogTime = (ms: number): string => {
-  const date = new Date(ms);
-  const hours = `${date.getHours()}`.padStart(2, '0');
-  const minutes = `${date.getMinutes()}`.padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
@@ -108,6 +103,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[0]);
   const [title, setTitle] = useState('');
+  const [showTimer, setShowTimer] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
@@ -117,6 +114,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       const refreshedSession = getSessionById(sessionId);
       setSession(refreshedSession);
       setTitle((prev) => prev || refreshedSession?.title || '');
+      setShowTimer(getShowSessionTimer());
+      setNow(Date.now());
       const routeGymId = route.params.gymId;
       const sessionGymId = refreshedSession?.gym_id ?? null;
       const selected = normalizeGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
@@ -151,6 +150,13 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     });
     return unsubscribe;
   }, [navigation, sessionId]);
+
+  // Ticks the live session-length display; only runs while there's something to show.
+  useEffect(() => {
+    if (!showTimer || session?.status !== 'active') return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [showTimer, session?.status]);
 
   const bump = () => setRefreshKey((k) => k + 1);
 
@@ -199,10 +205,18 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   }
 
   const hasLogs = recentLogs.length > 0;
+  const elapsedMs = Math.max(0, now - session.started_at);
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <ScreenHeader title="Log climb" onClose={() => navigation.navigate('Tabs')} />
+
+      {showTimer && session.status === 'active' ? (
+        <View style={styles.timerCard}>
+          <Text style={styles.timerLabel}>Session length</Text>
+          <Text style={styles.timerValue}>{formatElapsed(elapsedMs)}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.titleBlock}>
         <Text style={styles.titleLabel}>Session name</Text>
@@ -301,7 +315,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                   {log.result}
                 </Text>
               </View>
-              <Text style={styles.logTime}>{formatLogTime(log.createdAt)}</Text>
+              <Text style={styles.logTime}>{formatElapsed(log.createdAt - session.started_at)}</Text>
             </View>
           );
         })}
@@ -324,6 +338,27 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  timerCard: {
+    backgroundColor: colors.accentMuted,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.accentSoft,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  timerLabel: {
+    ...typography.meta,
+    color: colors.accent,
+  },
+  timerValue: {
+    color: colors.textPrimary,
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
   titleBlock: {
     backgroundColor: colors.surface,
