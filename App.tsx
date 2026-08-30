@@ -14,6 +14,7 @@ import { GymSelectScreen } from './src/screens/GymSelectScreen';
 import { LogScreen } from './src/screens/LogScreen';
 import { ProgressScreen } from './src/screens/ProgressScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
 import { ThemeProvider, useTheme, type ThemeColors } from './src/ui';
 
@@ -80,18 +81,15 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          height: 64,
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: {
-          fontSize: 13,
-          fontWeight: '600',
-          letterSpacing: 0.5,
-        },
         tabBarIcon: ({ color, focused }) => (
           <TabIcon name={route.name} color={color} focused={focused} />
         ),
@@ -133,6 +131,7 @@ function AppContent() {
             options={{ presentation: 'modal' }}
           />
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
@@ -188,11 +187,11 @@ export default function App() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     tabIconFrame: {
-      width: 30,
-      height: 26,
+      width: 44,
+      height: 34,
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 13,
+      borderRadius: 17,
     },
     tabIconFocused: {
       backgroundColor: colors.accentMuted,

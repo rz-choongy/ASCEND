@@ -8,6 +8,7 @@ export type RootStackParamList = {
   SessionDetail: { sessionId: string };
   GymSelect: { returnToSessionId?: string } | undefined;
   GymEdit: { returnToSessionId?: string; gymId?: string; parentId?: string } | undefined;
+  Settings: undefined;
 };
 
 export type TabParamList = {

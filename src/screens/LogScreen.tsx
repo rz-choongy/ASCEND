@@ -56,6 +56,32 @@ function sessionDisplayLabel(session: SessionRow): string {
   return session.title?.trim() || sessionTypeLabel(session.type);
 }
 
+const SettingsButton = ({
+  styles,
+  colors,
+  onPress,
+}: {
+  styles: ReturnType<typeof createStyles>;
+  colors: ThemeColors;
+  onPress: () => void;
+}) => (
+  <PressableScale
+    onPress={onPress}
+    scaleTo={0.88}
+    style={styles.settingsButton}
+    accessibilityLabel="Settings"
+  >
+    <View style={styles.sliderStack}>
+      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
+        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '18%' }]} />
+      </View>
+      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
+        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '58%' }]} />
+      </View>
+    </View>
+  </PressableScale>
+);
+
 const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnType<typeof createStyles> }) => {
   const { mode, setMode } = useTheme();
   const isDark = mode === 'dark';
@@ -146,6 +172,11 @@ export function LogScreen() {
               </View>
             ) : null}
             <ThemeToggle colors={colors} styles={styles} />
+            <SettingsButton
+              colors={colors}
+              styles={styles}
+              onPress={() => navigation.navigate('Settings')}
+            />
           </View>
         </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
@@ -349,6 +380,34 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sliderStack: {
+    width: 16,
+    height: 14,
+    justifyContent: 'space-between',
+  },
+  sliderTrack: {
+    width: 16,
+    height: 2,
+    borderRadius: 1,
+    justifyContent: 'center',
+  },
+  sliderKnob: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    top: -2,
   },
 
   // Active session banner
