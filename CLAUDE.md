@@ -79,7 +79,7 @@ Domain logic tests live alongside source (`*.test.ts`). Jest preset is `jest-exp
 
 # Do Not
 <!-- Add a line every time Claude makes a mistake -->
-- Do not add timers (session timers, rest timers) — out of scope for Mode 1
+- Do not add rest/interval timers between climbs — out of scope for Mode 1. A passive, read-only session-length display (no pause/resume) is in scope — see `ClimbSessionScreen`, gated behind the `show_session_timer` setting.
 - Do not add summary/confirmation screens after finishing a session — extra taps, bad UX
 - Do not add planner or routine-library screens — deferred to Mode 4
 - Basic progress/analytics screens (Mode 3) are now in scope — charts and trends derived from existing event-sourced data, read-only, no new write paths

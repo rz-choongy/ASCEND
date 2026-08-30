@@ -294,44 +294,54 @@ export function CalendarScreen() {
         {selectedSessions.length === 0 ? (
           <Text style={styles.noSessions}>No sessions on this day</Text>
         ) : (
-          <View style={styles.selectedSessionsBlock}>
-            {selectedSessions.map((session) => (
-              <TouchableOpacity
-                key={session.id}
-                style={styles.sessionRow}
-                onPress={() =>
-                  navigation.navigate('SessionDetail', { sessionId: session.id })
-                }
-                activeOpacity={0.75}
-              >
-                <View style={styles.sessionRowLeft}>
-                  <View
-                    style={[
-                      styles.sessionTypeDot,
-                      {
-                        backgroundColor:
-                          sessionReplayById.get(session.id)?.dotColor ??
-                          (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH),
-                      },
-                    ]}
-                  />
-                  <Text style={styles.sessionTypeLabel}>
-                    {formatSessionTitle(session)}
-                  </Text>
+          <View style={styles.timeline}>
+            <View style={styles.timelineLine} />
+            {selectedSessions.map((session) => {
+              const replay = sessionReplayById.get(session.id);
+              const nodeColor =
+                replay?.dotColor ?? (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH);
+              const lastGradeLabel =
+                session.type === 'climb'
+                  ? replay?.climbs[replay.climbs.length - 1]?.gradeLabel
+                  : undefined;
+
+              return (
+                <View key={session.id} style={styles.timelineItem}>
+                  <View style={[styles.timelineNode, { backgroundColor: nodeColor }]} />
+                  <TouchableOpacity
+                    style={styles.timelineCard}
+                    onPress={() =>
+                      navigation.navigate('SessionDetail', { sessionId: session.id })
+                    }
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.timelineCardLeft}>
+                      {lastGradeLabel ? (
+                        <View style={[styles.gradeBadge, { backgroundColor: nodeColor }]}>
+                          <Text style={styles.gradeBadgeText}>{lastGradeLabel}</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.sessionTypeDot, { backgroundColor: nodeColor }]} />
+                      )}
+                      <Text style={styles.sessionTypeLabel}>
+                        {formatSessionTitle(session)}
+                      </Text>
+                    </View>
+                    <View style={styles.sessionRowRight}>
+                      <Text style={styles.sessionTime}>
+                        {formatTime(session.started_at)}
+                      </Text>
+                      {session.completed_at != null ? (
+                        <Text style={styles.sessionDuration}>
+                          {formatDuration(session.started_at, session.completed_at)}
+                        </Text>
+                      ) : null}
+                      <Text style={styles.sessionChevron}>{'>'}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.sessionRowRight}>
-                  <Text style={styles.sessionTime}>
-                    {formatTime(session.started_at)}
-                  </Text>
-                  {session.completed_at != null ? (
-                    <Text style={styles.sessionDuration}>
-                      {formatDuration(session.started_at, session.completed_at)}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.sessionChevron}>{'>'}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -473,22 +483,57 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textMuted,
     paddingVertical: spacing.sm,
   },
-  selectedSessionsBlock: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+  timeline: {
+    position: 'relative',
+    paddingLeft: 20,
   },
-  sessionRow: {
+  timelineLine: {
+    position: 'absolute',
+    left: 5,
+    top: 6,
+    bottom: 6,
+    width: 2,
+    backgroundColor: colors.border,
+  },
+  timelineItem: {
+    position: 'relative',
+    marginBottom: spacing.xs,
+  },
+  timelineNode: {
+    position: 'absolute',
+    left: -20,
+    top: 14,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  timelineCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  sessionRowLeft: {
+  timelineCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  gradeBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  gradeBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textInverse,
   },
   sessionTypeDot: {
     width: 8,
