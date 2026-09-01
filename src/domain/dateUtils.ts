@@ -5,6 +5,17 @@ export const formatLocalDate = (value: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** Monday-anchored start of the week containing `date`, at local midnight. */
+export const startOfWeek = (date: Date): Date => {
+  const day = date.getDay(); // 0=Sun
+  const offset = day === 0 ? 6 : day - 1;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset);
+};
+
+export const addDays = (date: Date, days: number): Date => {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+};
+
 /** Formats a duration in ms as "MM:SS", rolling to "H:MM:SS" past an hour. */
 export const formatElapsed = (ms: number): string => {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));

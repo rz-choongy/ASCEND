@@ -1,4 +1,4 @@
-import { formatElapsed, formatLocalDate } from './dateUtils';
+import { addDays, formatElapsed, formatLocalDate, startOfWeek } from './dateUtils';
 
 describe('formatLocalDate', () => {
   it('formats dates as local YYYY-MM-DD', () => {
@@ -21,5 +21,35 @@ describe('formatElapsed', () => {
 
   it('clamps negative values to zero', () => {
     expect(formatElapsed(-5_000)).toBe('00:00');
+  });
+});
+
+describe('startOfWeek', () => {
+  it('returns the same Monday when given a Monday', () => {
+    // 2026-08-31 is a Monday
+    const monday = new Date(2026, 7, 31);
+    expect(formatLocalDate(startOfWeek(monday))).toBe('2026-08-31');
+  });
+
+  it('anchors back to Monday for a mid-week date', () => {
+    // 2026-09-02 is a Wednesday
+    const wednesday = new Date(2026, 8, 2);
+    expect(formatLocalDate(startOfWeek(wednesday))).toBe('2026-08-31');
+  });
+
+  it('anchors a Sunday back to the preceding Monday', () => {
+    // 2026-09-06 is a Sunday
+    const sunday = new Date(2026, 8, 6);
+    expect(formatLocalDate(startOfWeek(sunday))).toBe('2026-08-31');
+  });
+});
+
+describe('addDays', () => {
+  it('adds positive days, rolling into the next month', () => {
+    expect(formatLocalDate(addDays(new Date(2026, 7, 30), 3))).toBe('2026-09-02');
+  });
+
+  it('subtracts days for a negative offset', () => {
+    expect(formatLocalDate(addDays(new Date(2026, 8, 2), -3))).toBe('2026-08-30');
   });
 });

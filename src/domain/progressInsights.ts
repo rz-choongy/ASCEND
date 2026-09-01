@@ -1,4 +1,5 @@
 import { applyClimbEvents, type ClimbLog } from './climbLogUtils';
+import { startOfWeek } from './dateUtils';
 import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
@@ -64,13 +65,6 @@ const MONTH_SHORT = [
 const formatShortDate = (ms: number): string => {
   const d = new Date(ms);
   return `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`;
-};
-
-const startOfWeek = (date: Date): Date => {
-  const day = date.getDay(); // 0=Sun
-  const offset = day === 0 ? 6 : day - 1; // Monday-anchored
-  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset);
-  return start;
 };
 
 export const buildWeeklyFrequency = (sessions: SessionRow[], weeks: number): WeekFrequency[] => {

@@ -281,6 +281,14 @@ export function getCompletedSessions(type?: SessionType): SessionRow[] {
   );
 }
 
+/** startMs inclusive, endMs exclusive. */
+export function getSessionsForDateRange(startMs: number, endMs: number): SessionRow[] {
+  return getAll<SessionRow>(
+    'SELECT * FROM sessions WHERE status = ? AND started_at >= ? AND started_at < ? ORDER BY started_at ASC',
+    ['completed', startMs, endMs]
+  );
+}
+
 export function getSessionsForDate(dateStr: string): SessionRow[] {
   // dateStr is 'YYYY-MM-DD'
   const [y, m, d] = dateStr.split('-').map(Number);
