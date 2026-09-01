@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
-  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -233,14 +233,12 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         />
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent
-        visible={isAddExerciseOpen}
-        onRequestClose={() => setIsAddExerciseOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+      {isAddExerciseOpen ? (
+        <Pressable
+          style={[styles.modalBackdrop, styles.modalOverlay]}
+          onPress={() => setIsAddExerciseOpen(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Add exercise</Text>
             <TextInput
               style={styles.modalInput}
@@ -269,9 +267,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
                 style={styles.modalButton}
               />
             </View>
-          </View>
-        </View>
-      </Modal>
+          </Pressable>
+        </Pressable>
+      ) : null}
 
       {!selectedExercise ? (
         <View style={styles.emptyExerciseBox}>
@@ -426,6 +424,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'center',
     backgroundColor: colors.overlay,
     padding: spacing.md,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    elevation: 20,
+    zIndex: 20,
   },
   modalCard: {
     width: '100%',
