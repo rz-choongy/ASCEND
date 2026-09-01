@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
 import { getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { ListRow, PressableScale, radius, spacing, useTheme } from '../ui';
+import { ListRow, PressableScale, SegmentedControl, spacing, useTheme } from '../ui';
 import type { ThemeColors, ThemeMode } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -52,24 +52,14 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           <ListRow
             title="Theme"
             right={
-              <View style={styles.segmented}>
-                <PressableScale
-                  onPress={() => setThemeMode('light')}
-                  style={[styles.segment, mode === 'light' ? styles.segmentActive : null]}
-                >
-                  <Text style={mode === 'light' ? styles.segmentTextActive : styles.segmentText}>
-                    Light
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  onPress={() => setThemeMode('dark')}
-                  style={[styles.segment, mode === 'dark' ? styles.segmentActive : null]}
-                >
-                  <Text style={mode === 'dark' ? styles.segmentTextActive : styles.segmentText}>
-                    Dark
-                  </Text>
-                </PressableScale>
-              </View>
+              <SegmentedControl
+                options={[
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                ]}
+                value={mode}
+                onChange={setThemeMode}
+              />
             }
           />
         </View>
@@ -146,31 +136,4 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginBottom: spacing.xs,
     },
     group: {},
-    segmented: {
-      flexDirection: 'row',
-      backgroundColor: colors.surfaceAlt,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      padding: 3,
-      gap: 2,
-    },
-    segment: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: radius.md - 3,
-    },
-    segmentActive: {
-      backgroundColor: colors.accent,
-    },
-    segmentText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: colors.textSecondary,
-    },
-    segmentTextActive: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: colors.textInverse,
-    },
   });

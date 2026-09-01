@@ -12,5 +12,6 @@ export { Divider } from './components/Divider';
 export { ListRow } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';
+export { SegmentedControl } from './components/SegmentedControl';
 export { StatRow } from './components/StatTile';
 export { Stepper } from './components/Stepper';
