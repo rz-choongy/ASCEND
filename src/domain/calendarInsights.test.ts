@@ -5,7 +5,7 @@ jest.mock('./sessionStore', () => ({
 }));
 
 import { getSessionEvents } from './sessionStore';
-import { buildDayDots, buildSessionReplayMap } from './calendarInsights';
+import { buildSessionReplayMap } from './calendarInsights';
 import type { SessionRow } from './types';
 
 const mockGetSessionEvents = getSessionEvents as jest.Mock;
@@ -149,114 +149,5 @@ describe('buildSessionReplayMap', () => {
     expect(result.size).toBe(2);
     expect(result.get('c1')!.climbs).toHaveLength(1);
     expect(result.get('s1')!.sets).toHaveLength(1);
-  });
-});
-
-// ─── buildDayDots ────────────────────────────────────────────────────────────
-
-describe('buildDayDots', () => {
-  it('returns an empty map when sessionsByDate is empty', () => {
-    const result = buildDayDots(new Map(), new Map(), colors);
-    expect(result.size).toBe(0);
-  });
-
-  it('sets climbColor and no strengthColor when the day has only climb sessions', () => {
-    const session = makeSession({ id: 'c1', type: 'climb' });
-    const sessionsByDate = new Map([['2025-01-01', [session]]]);
-    const replayById = new Map([['c1', { dotColor: '#4ade80', climbs: [], sets: [] }]]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    const dots = result.get('2025-01-01')!;
-
-    expect(dots.climbColor).toBe('#4ade80');
-    expect(dots.strengthColor).toBeUndefined();
-  });
-
-  it('sets strengthColor and no climbColor when the day has only strength sessions', () => {
-    const session = makeSession({ id: 's1', type: 'strength' });
-    const sessionsByDate = new Map([['2025-01-02', [session]]]);
-    const replayById = new Map([['s1', { dotColor: colors.strength, climbs: [], sets: [] }]]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    const dots = result.get('2025-01-02')!;
-
-    expect(dots.strengthColor).toBe(colors.strength);
-    expect(dots.climbColor).toBeUndefined();
-  });
-
-  it('sets both climbColor and strengthColor when the day has mixed sessions', () => {
-    const cSession = makeSession({ id: 'c1', type: 'climb' });
-    const sSession = makeSession({ id: 's1', type: 'strength' });
-    const sessionsByDate = new Map([['2025-01-03', [cSession, sSession]]]);
-    const replayById = new Map([
-      ['c1', { dotColor: '#aaa', climbs: [], sets: [] }],
-      ['s1', { dotColor: colors.strength, climbs: [], sets: [] }],
-    ]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    const dots = result.get('2025-01-03')!;
-
-    expect(dots.climbColor).toBeDefined();
-    expect(dots.strengthColor).toBe(colors.strength);
-  });
-
-  it('uses the single shared dotColor when all climb sessions on a day share the same color', () => {
-    const c1 = makeSession({ id: 'c1', type: 'climb' });
-    const c2 = makeSession({ id: 'c2', type: 'climb' });
-    const sessionsByDate = new Map([['2025-01-04', [c1, c2]]]);
-    const replayById = new Map([
-      ['c1', { dotColor: '#aaa', climbs: [], sets: [] }],
-      ['c2', { dotColor: '#aaa', climbs: [], sets: [] }],
-    ]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    // All sessions same color → use that color directly
-    expect(result.get('2025-01-04')!.climbColor).toBe('#aaa');
-  });
-
-  it('falls back to insightColors.climb when climb sessions have different dot colors', () => {
-    const c1 = makeSession({ id: 'c1', type: 'climb' });
-    const c2 = makeSession({ id: 'c2', type: 'climb' });
-    const sessionsByDate = new Map([['2025-01-05', [c1, c2]]]);
-    const replayById = new Map([
-      ['c1', { dotColor: '#aaa', climbs: [], sets: [] }],
-      ['c2', { dotColor: '#bbb', climbs: [], sets: [] }],
-    ]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    // Mixed colors → fall back to generic climb color
-    expect(result.get('2025-01-05')!.climbColor).toBe(colors.climb);
-  });
-
-  it('falls back to insightColors.climb when replay is missing for a climb session', () => {
-    const session = makeSession({ id: 'c1', type: 'climb' });
-    const sessionsByDate = new Map([['2025-01-06', [session]]]);
-    // replayById is empty — the session has no entry
-    const replayById = new Map<string, { dotColor: string; climbs: []; sets: [] }>();
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-    // Missing replay → dotColor defaults to insightColors.climb via ?? operator
-    expect(result.get('2025-01-06')!.climbColor).toBe(colors.climb);
-  });
-
-  it('produces entries for each date key independently', () => {
-    const c1 = makeSession({ id: 'c1', type: 'climb' });
-    const s1 = makeSession({ id: 's1', type: 'strength' });
-    const sessionsByDate = new Map([
-      ['2025-02-01', [c1]],
-      ['2025-02-02', [s1]],
-    ]);
-    const replayById = new Map([
-      ['c1', { dotColor: '#4ade80', climbs: [], sets: [] }],
-      ['s1', { dotColor: colors.strength, climbs: [], sets: [] }],
-    ]);
-
-    const result = buildDayDots(sessionsByDate, replayById, colors);
-
-    expect(result.size).toBe(2);
-    expect(result.get('2025-02-01')!.climbColor).toBe('#4ade80');
-    expect(result.get('2025-02-01')!.strengthColor).toBeUndefined();
-    expect(result.get('2025-02-02')!.strengthColor).toBe(colors.strength);
-    expect(result.get('2025-02-02')!.climbColor).toBeUndefined();
   });
 });

@@ -12,7 +12,6 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  buildDayDots,
   buildSessionReplayMap,
   type SessionReplay,
 } from '../domain/calendarInsights';
@@ -24,7 +23,7 @@ import {
 } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Chip, SegmentedControl, spacing, useTheme } from '../ui';
+import { Chip, SegmentedControl, getContrastText, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -163,10 +162,6 @@ export function CalendarScreen() {
     }
     return map;
   }, [monthSessions]);
-
-  const dotsByDate = useMemo(() => {
-    return buildDayDots(sessionsByDate, sessionReplayById, { climb: DOT_CLIMB, strength: DOT_STRENGTH });
-  }, [sessionReplayById, sessionsByDate]);
 
   const grid = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
 
@@ -382,9 +377,11 @@ export function CalendarScreen() {
               }
 
               const key = formatLocalDate(day);
-              const dayDots = dotsByDate.get(key);
+              const daySessions = sessionsByDate.get(key) ?? [];
               const isToday = sameDay(day, today);
               const isSelected = sameDay(day, selectedDate);
+              const visibleChips = daySessions.slice(0, 2);
+              const overflowCount = daySessions.length - visibleChips.length;
 
               return (
                 <TouchableOpacity
@@ -410,13 +407,25 @@ export function CalendarScreen() {
                       {day.getDate()}
                     </Text>
                   </View>
-                  <View style={styles.dotsRow}>
-                    {dayDots?.climbColor && (
-                      <View style={[styles.dot, { backgroundColor: dayDots.climbColor }]} />
-                    )}
-                    {dayDots?.strengthColor && (
-                      <View style={[styles.dot, { backgroundColor: dayDots.strengthColor }]} />
-                    )}
+                  <View style={styles.dayChipsCol}>
+                    {visibleChips.map((session) => {
+                      const replay = sessionReplayById.get(session.id);
+                      const isClimb = session.type === 'climb';
+                      const chipColor = isClimb ? (replay?.dotColor ?? DOT_CLIMB) : DOT_STRENGTH;
+                      return (
+                        <View key={session.id} style={[styles.dayChip, { backgroundColor: chipColor }]}>
+                          <Text
+                            style={[styles.dayChipText, { color: getContrastText(chipColor) }]}
+                            numberOfLines={1}
+                          >
+                            {formatSessionTitle(session)}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                    {overflowCount > 0 ? (
+                      <Text style={styles.dayChipOverflow}>+{overflowCount}</Text>
+                    ) : null}
                   </View>
                 </TouchableOpacity>
               );
@@ -487,8 +496,7 @@ export function CalendarScreen() {
   );
 }
 
-const DAY_CELL_SIZE = 40;
-const DOT_SIZE = 5;
+const DAY_CELL_SIZE = 30;
 
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
@@ -552,14 +560,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   dayCell: {
     width: `${100 / 7}%`,
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingVertical: 4,
-    minHeight: DAY_CELL_SIZE + 12,
+    paddingHorizontal: 2,
   },
   dayNumberWrapper: {
-    width: DAY_CELL_SIZE - 6,
-    height: DAY_CELL_SIZE - 6,
-    borderRadius: (DAY_CELL_SIZE - 6) / 2,
+    alignSelf: 'center',
+    width: DAY_CELL_SIZE,
+    height: DAY_CELL_SIZE,
+    borderRadius: DAY_CELL_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -570,7 +579,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backgroundColor: colors.accent,
   },
   dayNumber: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '500',
     color: colors.textSecondary,
   },
@@ -582,16 +591,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textInverse,
     fontWeight: '700',
   },
-  dotsRow: {
-    flexDirection: 'row',
+  dayChipsCol: {
     marginTop: 3,
     gap: 2,
-    minHeight: DOT_SIZE,
+    minHeight: 34,
   },
-  dot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
+  dayChip: {
+    borderRadius: 4,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
+  },
+  dayChipText: {
+    fontSize: 8.5,
+    fontWeight: '700',
+  },
+  dayChipOverflow: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 
   // Divider

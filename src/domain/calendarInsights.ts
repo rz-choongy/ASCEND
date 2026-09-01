@@ -24,11 +24,6 @@ const findHardestClimb = (climbs: ClimbLog[]): ClimbLog | undefined => {
   }, undefined);
 };
 
-export type DayDots = {
-  climbColor?: string;
-  strengthColor?: string;
-};
-
 export const buildSessionReplayMap = (
   sessions: SessionRow[],
   insightColors: CalendarInsightColors
@@ -53,35 +48,6 @@ export const buildSessionReplayMap = (
         sets: applySetEvents(events),
       });
     }
-  }
-
-  return map;
-};
-
-export const buildDayDots = (
-  sessionsByDate: Map<string, SessionRow[]>,
-  replayById: Map<string, SessionReplay>,
-  insightColors: CalendarInsightColors
-): Map<string, DayDots> => {
-  const map = new Map<string, DayDots>();
-
-  for (const [dateKey, daySessions] of sessionsByDate) {
-    const climbColors = daySessions
-      .filter((session) => session.type === 'climb')
-      .map((session) => replayById.get(session.id)?.dotColor ?? insightColors.climb);
-    const uniqueClimbColors = new Set(climbColors);
-
-    map.set(dateKey, {
-      climbColor:
-        climbColors.length === 0
-          ? undefined
-          : uniqueClimbColors.size === 1
-            ? climbColors[0]
-            : insightColors.climb,
-      strengthColor: daySessions.some((session) => session.type === 'strength')
-        ? insightColors.strength
-        : undefined,
-    });
   }
 
   return map;
