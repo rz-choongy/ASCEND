@@ -40,7 +40,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
-        <PressableScale onPress={() => navigation.goBack()} style={styles.backButton}>
+        <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={8}>
           <View style={styles.backChevron} />
         </PressableScale>
         <Text style={styles.title}>Settings</Text>

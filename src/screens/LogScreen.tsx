@@ -70,6 +70,7 @@ const SettingsButton = ({
     scaleTo={0.88}
     style={styles.settingsButton}
     accessibilityLabel="Settings"
+    hitSlop={6}
   >
     <View style={styles.sliderStack}>
       <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
@@ -91,6 +92,7 @@ const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnTy
       scaleTo={0.88}
       style={styles.themeToggle}
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      hitSlop={6}
     >
       {isDark ? (
         <View style={styles.moonWrap}>

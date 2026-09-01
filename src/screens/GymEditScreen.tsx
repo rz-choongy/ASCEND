@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -173,6 +173,10 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const [gradingType, setGradingType] = useState<GradingType>('v_scale');
   const [rows, setRows] = useState<EditableGradeRow[]>(seedRowsForType('v_scale'));
   const [colorPickerIndex, setColorPickerIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  // Plain ref, not state: guards against a second tap firing before React
+  // re-renders with the disabled button, since handleSave runs synchronously.
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
     if (!editingGymId || !editingGym) return;
@@ -276,58 +280,66 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   };
 
   const handleSave = () => {
+    if (isSavingRef.current) return;
     const trimmedName = name.trim();
     if (!trimmedName) return;
 
-    // ── Branch mode: name-only save ────────────────────────────────────────
-    if (isBranchMode) {
-      if (editingGymId) {
-        // Rename existing branch — updateGym skips grade changes for branches
-        updateGym({ id: editingGymId, name: trimmedName, gradingType, gradeOptions: [] });
-        navigation.navigate('GymSelect');
+    isSavingRef.current = true;
+    setIsSaving(true);
+    try {
+      // ── Branch mode: name-only save ──────────────────────────────────────
+      if (isBranchMode) {
+        if (editingGymId) {
+          // Rename existing branch — updateGym skips grade changes for branches
+          updateGym({ id: editingGymId, name: trimmedName, gradingType, gradeOptions: [] });
+          navigation.navigate('GymSelect');
+          return;
+        }
+        // Create new branch
+        const resolvedParentId = parentId ?? editingGym?.parent_id ?? null;
+        if (!resolvedParentId) return;
+        const created = createGym({ name: trimmedName, parentId: resolvedParentId, makeSelected: true });
+        const gymId = getCreatedGymId(created);
+        if (!gymId) return;
+        navigateAfterSave(gymId);
         return;
       }
-      // Create new branch
-      const resolvedParentId = parentId ?? editingGym?.parent_id ?? null;
-      if (!resolvedParentId) return;
-      const created = createGym({ name: trimmedName, parentId: resolvedParentId, makeSelected: true });
+
+      // ── Full gym mode: validate grades ───────────────────────────────────
+      const gradeOptions = rows
+        .map((row, index) => ({
+          label: row.label.trim(),
+          gradeMin: toNumber(row.gradeMin, index),
+          gradeMax: toNumber(row.gradeMax, index),
+          colorHex: row.colorHex.trim() || null,
+          sortOrder: index,
+        }))
+        .filter((row) => row.label.length > 0);
+
+      if (gradeOptions.length === 0) {
+        Alert.alert('Add at least one grade', 'Each gym needs at least one grade before saving.');
+        return;
+      }
+
+      if (editingGymId) {
+        updateGym({
+          id: editingGymId,
+          name: trimmedName || editingGym?.name || 'Climbing Gym',
+          gradingType,
+          gradeOptions,
+        });
+        navigateAfterSave(editingGymId);
+        return;
+      }
+
+      const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true });
       const gymId = getCreatedGymId(created);
       if (!gymId) return;
       navigateAfterSave(gymId);
-      return;
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
     }
-
-    // ── Full gym mode: validate grades ─────────────────────────────────────
-    const gradeOptions = rows
-      .map((row, index) => ({
-        label: row.label.trim(),
-        gradeMin: toNumber(row.gradeMin, index),
-        gradeMax: toNumber(row.gradeMax, index),
-        colorHex: row.colorHex.trim() || null,
-        sortOrder: index,
-      }))
-      .filter((row) => row.label.length > 0);
-
-    if (gradeOptions.length === 0) {
-      Alert.alert('Add at least one grade', 'Each gym needs at least one grade before saving.');
-      return;
-    }
-
-    if (editingGymId) {
-      updateGym({
-        id: editingGymId,
-        name: trimmedName || editingGym?.name || 'Climbing Gym',
-        gradingType,
-        gradeOptions,
-      });
-      navigateAfterSave(editingGymId);
-      return;
-    }
-
-    const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true });
-    const gymId = getCreatedGymId(created);
-    if (!gymId) return;
-    navigateAfterSave(gymId);
   };
 
   // ─── Branch mode: name-only UI ─────────────────────────────────────────────
@@ -365,7 +377,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           <Button
             label={editingGym ? 'Save branch' : 'Add branch'}
             onPress={handleSave}
-            disabled={!name.trim()}
+            disabled={!name.trim() || isSaving}
           />
         </View>
       </SafeAreaView>
@@ -441,6 +453,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   onPress={() => removeRow(index)}
                   scaleTo={0.88}
                   style={styles.deleteButton}
+                  hitSlop={8}
                 >
                   <Text style={styles.deleteGlyph}>×</Text>
                 </PressableScale>
@@ -469,6 +482,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   onPress={() => setColorPickerIndex(index)}
                   scaleTo={0.9}
                   style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
+                  hitSlop={6}
                 />
               </View>
             </View>
@@ -480,7 +494,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         <Button
           label="Save gym"
           onPress={handleSave}
-          disabled={!editingGym && !name.trim()}
+          disabled={(!editingGym && !name.trim()) || isSaving}
         />
       </View>
 
