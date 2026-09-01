@@ -3,6 +3,7 @@ import type { ThemeMode } from '../ui/tokens/colors';
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
+const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 
 type AppSettingRow = {
   value: string;
@@ -37,4 +38,16 @@ export const getShowSessionTimer = (): boolean => {
 
 export const setShowSessionTimer = (value: boolean): void => {
   setSetting(SHOW_SESSION_TIMER_KEY, value ? '1' : '0');
+};
+
+/** Which gym's grade distribution to show on the Progress screen, remembered across sessions. */
+export const getProgressGradeGymId = (): string | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    PROGRESS_GRADE_GYM_ID_KEY,
+  ]);
+  return setting?.value ?? null;
+};
+
+export const setProgressGradeGymId = (gymId: string): void => {
+  setSetting(PROGRESS_GRADE_GYM_ID_KEY, gymId);
 };

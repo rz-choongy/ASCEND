@@ -3,15 +3,15 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  GRADING_TYPE_LABELS,
   buildAllTimeStats,
   buildGradeDistribution,
   buildStrengthVolumeTrend,
   buildWeeklyFrequency,
-  getAvailableGradingTypes,
+  getAvailableClimbGyms,
 } from '../domain/progressInsights';
 import { getCompletedSessions, getSessionStreak } from '../domain/sessionStore';
-import type { GymGradingType, SessionRow } from '../domain/types';
+import { getProgressGradeGymId, setProgressGradeGymId } from '../domain/settingsStore';
+import type { SessionRow } from '../domain/types';
 import { BarChart, Chip, StatRow, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -24,7 +24,8 @@ export function ProgressScreen() {
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [streak, setStreak] = useState(0);
-  const [selectedGradingType, setSelectedGradingType] = useState<GymGradingType | null>(null);
+  // undefined = user hasn't picked one this session yet -- fall back to the persisted setting.
+  const [selectedGymId, setSelectedGymId] = useState<string | null | undefined>(undefined);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,14 +39,27 @@ export function ProgressScreen() {
     () => buildWeeklyFrequency(sessions, WEEKS_SHOWN),
     [sessions]
   );
-  const availableGradingTypes = useMemo(() => getAvailableGradingTypes(sessions), [sessions]);
-  const activeGradingType =
-    selectedGradingType && availableGradingTypes.includes(selectedGradingType)
-      ? selectedGradingType
-      : (availableGradingTypes[0] ?? null);
+  const availableGyms = useMemo(() => getAvailableClimbGyms(sessions), [sessions]);
+  const activeGymId = useMemo(() => {
+    const availableIds = availableGyms.map((gym) => gym.gymId);
+    if (selectedGymId !== undefined && availableIds.includes(selectedGymId)) {
+      return selectedGymId;
+    }
+    const persisted = getProgressGradeGymId();
+    if (persisted && availableIds.includes(persisted)) {
+      return persisted;
+    }
+    return availableGyms[0]?.gymId ?? null;
+  }, [availableGyms, selectedGymId]);
+
+  function handleSelectGym(gymId: string | null) {
+    setSelectedGymId(gymId);
+    if (gymId) setProgressGradeGymId(gymId);
+  }
+
   const gradeDistribution = useMemo(
-    () => (activeGradingType ? buildGradeDistribution(sessions, activeGradingType) : []),
-    [sessions, activeGradingType]
+    () => (availableGyms.length > 0 ? buildGradeDistribution(sessions, activeGymId) : []),
+    [sessions, activeGymId, availableGyms.length]
   );
   const volumeTrend = useMemo(
     () => buildStrengthVolumeTrend(sessions, STRENGTH_SESSIONS_SHOWN),
@@ -104,18 +118,18 @@ export function ProgressScreen() {
         }))}
       />
 
-      {activeGradingType ? (
+      {availableGyms.length > 0 ? (
         <>
           <View style={[styles.gradeDistributionHeader, styles.sectionSpacing]}>
             <Text style={styles.sectionLabel}>Grade distribution</Text>
-            {availableGradingTypes.length > 1 ? (
+            {availableGyms.length > 1 ? (
               <View style={styles.gradingTypeChips}>
-                {availableGradingTypes.map((type) => (
+                {availableGyms.map((gym) => (
                   <Chip
-                    key={type}
-                    label={GRADING_TYPE_LABELS[type]}
-                    selected={type === activeGradingType}
-                    onPress={() => setSelectedGradingType(type)}
+                    key={gym.gymId ?? '__unspecified__'}
+                    label={gym.gymName}
+                    selected={gym.gymId === activeGymId}
+                    onPress={() => handleSelectGym(gym.gymId)}
                   />
                 ))}
               </View>

@@ -3,35 +3,37 @@ import { startOfWeek } from './dateUtils';
 import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
-import type { GymGradingType, SessionRow } from './types';
+import type { SessionRow } from './types';
 
-export const GRADING_TYPE_LABELS: Record<GymGradingType, string> = {
-  v_scale: 'V-Scale',
-  color: 'Color grades',
-  numeric: 'Numeric',
+export type ClimbGymOption = {
+  /** null represents climbs logged before gym tracking existed. */
+  gymId: string | null;
+  gymName: string;
 };
 
-const DEFAULT_GRADING_TYPE: GymGradingType = 'v_scale';
+const UNSPECIFIED_GYM_LABEL = 'Unspecified gym';
 
-const resolveGradingType = (gymId: string | null | undefined): GymGradingType => {
-  if (!gymId) return DEFAULT_GRADING_TYPE;
-  return getGymById(gymId)?.grading_type ?? DEFAULT_GRADING_TYPE;
-};
-
-/** Distinct grading systems present across the user's climb sessions, in first-seen order. */
-export const getAvailableGradingTypes = (sessions: SessionRow[]): GymGradingType[] => {
-  const seen = new Set<GymGradingType>();
-  const order: GymGradingType[] = [];
+/**
+ * Distinct gyms the user has actually climbed at, in first-seen order.
+ * Grouping by gym (not grading type) keeps two gyms that both happen to use
+ * "color" grades -- but mean different things by "Purple" -- from being
+ * merged into one chart.
+ */
+export const getAvailableClimbGyms = (sessions: SessionRow[]): ClimbGymOption[] => {
+  const seen = new Set<string>();
+  const options: ClimbGymOption[] = [];
   sessions
     .filter((session) => session.type === 'climb')
     .forEach((session) => {
-      const type = resolveGradingType(session.gym_id);
-      if (!seen.has(type)) {
-        seen.add(type);
-        order.push(type);
-      }
+      const key = session.gym_id ?? '__unspecified__';
+      if (seen.has(key)) return;
+      seen.add(key);
+      const gymName = session.gym_id
+        ? (getGymById(session.gym_id)?.name ?? 'Unknown gym')
+        : UNSPECIFIED_GYM_LABEL;
+      options.push({ gymId: session.gym_id, gymName });
     });
-  return order;
+  return options;
 };
 
 export type WeekFrequency = {
@@ -100,13 +102,11 @@ export const buildWeeklyFrequency = (sessions: SessionRow[], weeks: number): Wee
 
 export const buildGradeDistribution = (
   sessions: SessionRow[],
-  gradingType?: GymGradingType
+  gymId: string | null
 ): GradeDistributionBar[] => {
-  const climbSessions = sessions.filter((session) => {
-    if (session.type !== 'climb') return false;
-    if (!gradingType) return true;
-    return resolveGradingType(session.gym_id) === gradingType;
-  });
+  const climbSessions = sessions.filter(
+    (session) => session.type === 'climb' && session.gym_id === gymId
+  );
   const byLabel = new Map<string, { count: number; color: string; sortKey: number }>();
 
   climbSessions.forEach((session) => {
