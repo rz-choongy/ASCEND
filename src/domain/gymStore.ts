@@ -417,3 +417,28 @@ export const updateGym = (input: UpdateGymInput): GymRow => {
   }
   return updated;
 };
+
+/**
+ * Deletes a gym (and its branches, if it's a company) and their grade options.
+ * Logged sessions keep their gym_id — past history isn't affected, it just
+ * loses its live gym link. If the deleted gym was selected, the app falls
+ * back to the default gym next time it's read (getSelectedClimbGym already
+ * returns null for a dangling id, and callers fall through to ensureSelectedClimbGym).
+ */
+export const deleteGym = (gymId: string): void => {
+  const gym = getGymById(gymId);
+  if (!gym) return;
+  if (gym.is_default) {
+    throw new Error('The default gym can’t be deleted.');
+  }
+
+  const branches = getBranchesForGym(gymId);
+  runInTransaction(() => {
+    branches.forEach((branch) => {
+      run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [branch.id]);
+      run('DELETE FROM gyms WHERE id = ?;', [branch.id]);
+    });
+    run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
+    run('DELETE FROM gyms WHERE id = ?;', [gymId]);
+  });
+};

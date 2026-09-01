@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
+  deleteGym,
   ensureSelectedClimbGym,
   getGyms,
   getSelectedClimbGym,
@@ -78,6 +79,31 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
     navigation.goBack();
   };
 
+  const handleDeleteGym = (gym: GymRow) => {
+    const count = branchCount(gym.id);
+    const branchWarning = count > 0 ? ` This also removes its ${count} branch${count === 1 ? '' : 'es'}.` : '';
+    Alert.alert(
+      `Delete ${gym.name}?`,
+      `This removes the gym and its grade list.${branchWarning} Logged sessions keep their history.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              deleteGym(gym.id);
+              setAllGyms(getGyms());
+              if (drillParentId === gym.id) setDrillParentId(null);
+            } catch (e) {
+              Alert.alert('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleRootGymPress = (gym: GymRow) => {
     const count = branchCount(gym.id);
     if (count > 0) {
@@ -129,17 +155,26 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
                     {selected ? 'Selected' : 'Use'}
                   </Text>
-                  <Pressable
-                    onPress={() =>
-                      navigation.navigate('GymEdit', {
-                        returnToSessionId,
-                        gymId: branch.id,
-                      })
-                    }
-                    hitSlop={10}
-                  >
-                    <Text style={styles.editText}>Rename</Text>
-                  </Pressable>
+                  <View style={styles.actionButtonsRow}>
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate('GymEdit', {
+                          returnToSessionId,
+                          gymId: branch.id,
+                        })
+                      }
+                      hitSlop={10}
+                    >
+                      <Text style={styles.editText}>Rename</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteGym(branch)}
+                      hitSlop={10}
+                      style={styles.deleteButton}
+                    >
+                      <Text style={styles.deleteButtonText}>×</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </Pressable>
             );
@@ -204,17 +239,28 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                     <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
                       {selected ? 'Selected' : 'Use'}
                     </Text>
-                    <Pressable
-                      onPress={() =>
-                        navigation.navigate('GymEdit', {
-                          returnToSessionId,
-                          gymId: gym.id,
-                        })
-                      }
-                      hitSlop={10}
-                    >
-                      <Text style={styles.editText}>Edit grades</Text>
-                    </Pressable>
+                    <View style={styles.actionButtonsRow}>
+                      <Pressable
+                        onPress={() =>
+                          navigation.navigate('GymEdit', {
+                            returnToSessionId,
+                            gymId: gym.id,
+                          })
+                        }
+                        hitSlop={10}
+                      >
+                        <Text style={styles.editText}>Edit grades</Text>
+                      </Pressable>
+                      {!gym.is_default ? (
+                        <Pressable
+                          onPress={() => handleDeleteGym(gym)}
+                          hitSlop={10}
+                          style={styles.deleteButton}
+                        >
+                          <Text style={styles.deleteButtonText}>×</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </>
                 )}
               </View>
@@ -317,6 +363,26 @@ const createStyles = (colors: ThemeColors) =>
     color: colors.textMuted,
     fontSize: 11,
     fontWeight: '700',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  deleteButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 15,
   },
   emptyCard: {
     borderWidth: 1,

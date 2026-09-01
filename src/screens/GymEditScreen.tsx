@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -247,7 +246,12 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     setRows((current) =>
       current.map((row, rowIndex) => {
         if (rowIndex !== index) return row;
-        const next = Math.max(0, toNumber(row[field], 0) + delta);
+        const proposed = Math.max(0, toNumber(row[field], 0) + delta);
+        const otherField = field === 'gradeMin' ? 'gradeMax' : 'gradeMin';
+        const otherValue = toNumber(row[otherField], 0);
+        // Keep min <= max: decrementing max can't pass min, incrementing min can't pass max.
+        const next =
+          field === 'gradeMin' ? Math.min(proposed, otherValue) : Math.max(proposed, otherValue);
         return { ...row, [field]: `${next}` };
       })
     );
@@ -450,6 +454,9 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                     value={row.gradeMin}
                     onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
                     onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
+                    onBigDecrement={() => adjustGradeBound(index, 'gradeMin', -5)}
+                    onBigIncrement={() => adjustGradeBound(index, 'gradeMin', 5)}
+                    bigStepLabel="5"
                   />
                 </View>
                 <View style={styles.rangeGroup}>
@@ -459,6 +466,9 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                     value={row.gradeMax}
                     onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
                     onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
+                    onBigDecrement={() => adjustGradeBound(index, 'gradeMax', -5)}
+                    onBigIncrement={() => adjustGradeBound(index, 'gradeMax', 5)}
+                    bigStepLabel="5"
                   />
                 </View>
                 <PressableScale
@@ -480,14 +490,9 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         />
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent
-        visible={colorPickerIndex !== null}
-        onRequestClose={() => setColorPickerIndex(null)}
-      >
+      {colorPickerIndex !== null ? (
         <Pressable
-          style={styles.modalBackdrop}
+          style={[styles.modalBackdrop, styles.modalOverlay]}
           onPress={() => setColorPickerIndex(null)}
         >
           <Pressable style={styles.modalCard} onPress={() => {}}>
@@ -520,7 +525,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             <Button label="Close" variant="ghost" onPress={() => setColorPickerIndex(null)} />
           </Pressable>
         </Pressable>
-      </Modal>
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -665,6 +670,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'center',
     backgroundColor: colors.overlay,
     padding: spacing.md,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    elevation: 20,
+    zIndex: 20,
   },
   modalCard: {
     width: '100%',
