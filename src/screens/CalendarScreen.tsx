@@ -133,6 +133,7 @@ export function CalendarScreen() {
     useCallback(() => {
       setRefreshKey((k) => k + 1);
       setSelectedDate(todayDate());
+      setCurrentMonth(firstOfMonth(todayDate()));
     }, [])
   );
 
