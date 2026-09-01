@@ -3,14 +3,16 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
+  GRADING_TYPE_LABELS,
   buildAllTimeStats,
   buildGradeDistribution,
   buildStrengthVolumeTrend,
   buildWeeklyFrequency,
+  getAvailableGradingTypes,
 } from '../domain/progressInsights';
 import { getCompletedSessions, getSessionStreak } from '../domain/sessionStore';
-import type { SessionRow } from '../domain/types';
-import { BarChart, StatRow, spacing, useTheme } from '../ui';
+import type { GymGradingType, SessionRow } from '../domain/types';
+import { BarChart, Chip, StatRow, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -22,6 +24,7 @@ export function ProgressScreen() {
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [streak, setStreak] = useState(0);
+  const [selectedGradingType, setSelectedGradingType] = useState<GymGradingType | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,7 +38,15 @@ export function ProgressScreen() {
     () => buildWeeklyFrequency(sessions, WEEKS_SHOWN),
     [sessions]
   );
-  const gradeDistribution = useMemo(() => buildGradeDistribution(sessions), [sessions]);
+  const availableGradingTypes = useMemo(() => getAvailableGradingTypes(sessions), [sessions]);
+  const activeGradingType =
+    selectedGradingType && availableGradingTypes.includes(selectedGradingType)
+      ? selectedGradingType
+      : (availableGradingTypes[0] ?? null);
+  const gradeDistribution = useMemo(
+    () => (activeGradingType ? buildGradeDistribution(sessions, activeGradingType) : []),
+    [sessions, activeGradingType]
+  );
   const volumeTrend = useMemo(
     () => buildStrengthVolumeTrend(sessions, STRENGTH_SESSIONS_SHOWN),
     [sessions]
@@ -93,9 +104,23 @@ export function ProgressScreen() {
         }))}
       />
 
-      {gradeDistribution.length > 0 ? (
+      {activeGradingType ? (
         <>
-          <Text style={[styles.sectionLabel, styles.sectionSpacing]}>Grade distribution</Text>
+          <View style={[styles.gradeDistributionHeader, styles.sectionSpacing]}>
+            <Text style={styles.sectionLabel}>Grade distribution</Text>
+            {availableGradingTypes.length > 1 ? (
+              <View style={styles.gradingTypeChips}>
+                {availableGradingTypes.map((type) => (
+                  <Chip
+                    key={type}
+                    label={GRADING_TYPE_LABELS[type]}
+                    selected={type === activeGradingType}
+                    onPress={() => setSelectedGradingType(type)}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
           <BarChart
             height={110}
             bars={gradeDistribution.map((bar) => ({
@@ -148,6 +173,18 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sectionLabel: {
     ...typography.section,
     marginBottom: spacing.sm,
+  },
+  gradeDistributionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  gradingTypeChips: {
+    flexDirection: 'row',
+    gap: spacing.xxs,
   },
   sectionSpacing: {
     marginTop: spacing.lg,

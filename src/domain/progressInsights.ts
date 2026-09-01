@@ -1,7 +1,37 @@
 import { applyClimbEvents, type ClimbLog } from './climbLogUtils';
+import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
-import type { SessionRow } from './types';
+import type { GymGradingType, SessionRow } from './types';
+
+export const GRADING_TYPE_LABELS: Record<GymGradingType, string> = {
+  v_scale: 'V-Scale',
+  color: 'Color grades',
+  numeric: 'Numeric',
+};
+
+const DEFAULT_GRADING_TYPE: GymGradingType = 'v_scale';
+
+const resolveGradingType = (gymId: string | null | undefined): GymGradingType => {
+  if (!gymId) return DEFAULT_GRADING_TYPE;
+  return getGymById(gymId)?.grading_type ?? DEFAULT_GRADING_TYPE;
+};
+
+/** Distinct grading systems present across the user's climb sessions, in first-seen order. */
+export const getAvailableGradingTypes = (sessions: SessionRow[]): GymGradingType[] => {
+  const seen = new Set<GymGradingType>();
+  const order: GymGradingType[] = [];
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => {
+      const type = resolveGradingType(session.gym_id);
+      if (!seen.has(type)) {
+        seen.add(type);
+        order.push(type);
+      }
+    });
+  return order;
+};
 
 export type WeekFrequency = {
   weekLabel: string;
@@ -74,8 +104,15 @@ export const buildWeeklyFrequency = (sessions: SessionRow[], weeks: number): Wee
   return buckets;
 };
 
-export const buildGradeDistribution = (sessions: SessionRow[]): GradeDistributionBar[] => {
-  const climbSessions = sessions.filter((session) => session.type === 'climb');
+export const buildGradeDistribution = (
+  sessions: SessionRow[],
+  gradingType?: GymGradingType
+): GradeDistributionBar[] => {
+  const climbSessions = sessions.filter((session) => {
+    if (session.type !== 'climb') return false;
+    if (!gradingType) return true;
+    return resolveGradingType(session.gym_id) === gradingType;
+  });
   const byLabel = new Map<string, { count: number; color: string; sortKey: number }>();
 
   climbSessions.forEach((session) => {
