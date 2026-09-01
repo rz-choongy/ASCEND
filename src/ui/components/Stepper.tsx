@@ -34,19 +34,29 @@ export const Stepper = ({
   return (
     <View style={[styles.row, style]}>
       {onBigDecrement ? (
-        <PressableScale onPress={onBigDecrement} scaleTo={0.88} style={[buttonStyle, styles.bigButton]}>
+        <PressableScale
+          onPress={onBigDecrement}
+          scaleTo={0.88}
+          style={[buttonStyle, styles.bigButton]}
+          hitSlop={4}
+        >
           <Text style={styles.bigText}>-{bigStepLabel}</Text>
         </PressableScale>
       ) : null}
-      <PressableScale onPress={onDecrement} scaleTo={0.88} style={buttonStyle}>
+      <PressableScale onPress={onDecrement} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>-</Text>
       </PressableScale>
       <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
-      <PressableScale onPress={onIncrement} scaleTo={0.88} style={buttonStyle}>
+      <PressableScale onPress={onIncrement} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>+</Text>
       </PressableScale>
       {onBigIncrement ? (
-        <PressableScale onPress={onBigIncrement} scaleTo={0.88} style={[buttonStyle, styles.bigButton]}>
+        <PressableScale
+          onPress={onBigIncrement}
+          scaleTo={0.88}
+          style={[buttonStyle, styles.bigButton]}
+          hitSlop={4}
+        >
           <Text style={styles.bigText}>+{bigStepLabel}</Text>
         </PressableScale>
       ) : null}

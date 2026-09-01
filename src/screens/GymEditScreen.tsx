@@ -454,9 +454,6 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                     value={row.gradeMin}
                     onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
                     onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
-                    onBigDecrement={() => adjustGradeBound(index, 'gradeMin', -5)}
-                    onBigIncrement={() => adjustGradeBound(index, 'gradeMin', 5)}
-                    bigStepLabel="5"
                   />
                 </View>
                 <View style={styles.rangeGroup}>
@@ -466,9 +463,6 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                     value={row.gradeMax}
                     onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
                     onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
-                    onBigDecrement={() => adjustGradeBound(index, 'gradeMax', -5)}
-                    onBigIncrement={() => adjustGradeBound(index, 'gradeMax', 5)}
-                    bigStepLabel="5"
                   />
                 </View>
                 <PressableScale
