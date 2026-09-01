@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,17 +6,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { formatLocalDate } from '../domain/dateUtils';
+import { formatDuration, formatLocalDate } from '../domain/dateUtils';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
-import { createSession, getActiveSession, getSessionsForDate } from '../domain/sessionStore';
+import { createSession, getActiveSession, getSessionStreak, getSessionsForDate, getAllCompletedSessionCount } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Button, Card, colors, spacing } from '../ui';
-import { typography } from '../ui/tokens/typography';
+import { Button, Card, PressableScale, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type LogNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Log'>,
@@ -54,22 +56,76 @@ function sessionDisplayLabel(session: SessionRow): string {
   return session.title?.trim() || sessionTypeLabel(session.type);
 }
 
+const SettingsButton = ({
+  styles,
+  colors,
+  onPress,
+}: {
+  styles: ReturnType<typeof createStyles>;
+  colors: ThemeColors;
+  onPress: () => void;
+}) => (
+  <PressableScale
+    onPress={onPress}
+    scaleTo={0.88}
+    style={styles.settingsButton}
+    accessibilityLabel="Settings"
+  >
+    <View style={styles.sliderStack}>
+      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
+        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '18%' }]} />
+      </View>
+      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
+        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '58%' }]} />
+      </View>
+    </View>
+  </PressableScale>
+);
+
+const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnType<typeof createStyles> }) => {
+  const { mode, setMode } = useTheme();
+  const isDark = mode === 'dark';
+  return (
+    <PressableScale
+      onPress={() => setMode(isDark ? 'light' : 'dark')}
+      scaleTo={0.88}
+      style={styles.themeToggle}
+      accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? (
+        <View style={styles.moonWrap}>
+          <View style={[styles.moonBase, { backgroundColor: colors.textPrimary }]} />
+          <View style={[styles.moonCutout, { backgroundColor: colors.surfaceRaised }]} />
+        </View>
+      ) : (
+        <View style={[styles.sunDot, { backgroundColor: colors.warning }]} />
+      )}
+    </PressableScale>
+  );
+};
+
 export function LogScreen() {
   const navigation = useNavigation<LogNavProp>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
   const today = new Date();
-  const todayStr = formatLocalDate(today);
 
   const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
   const [todaySessions, setTodaySessions] = useState<SessionRow[]>([]);
   const [selectedGym, setSelectedGym] = useState<GymLike | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [hasEverLogged, setHasEverLogged] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       const todayStr = formatLocalDate(new Date());
-      setActiveSession(getActiveSession());
+      const active = getActiveSession();
+      setActiveSession(active);
       setTodaySessions(getSessionsForDate(todayStr));
       setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
+      setStreak(getSessionStreak());
+      setHasEverLogged(getAllCompletedSessionCount() > 0 || active !== null);
     }, [])
   );
 
@@ -99,14 +155,30 @@ export function LogScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
+    <SafeAreaView edges={['top']} style={styles.root}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
       {/* Date header */}
       <View style={styles.headerBlock}>
-        <Text style={styles.screenTitle}>Today</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.screenTitle}>Today</Text>
+          <View style={styles.headerRight}>
+            {streak > 0 ? (
+              <View style={styles.streakPill}>
+                <Text style={styles.streakText}>{streak} day streak</Text>
+              </View>
+            ) : null}
+            <ThemeToggle colors={colors} styles={styles} />
+            <SettingsButton
+              colors={colors}
+              styles={styles}
+              onPress={() => navigation.navigate('Settings')}
+            />
+          </View>
+        </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
       </View>
 
@@ -169,6 +241,16 @@ export function LogScreen() {
         )}
       </View>
 
+      {/* First-time empty state */}
+      {!hasEverLogged && !activeSession ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateTitle}>Start your first session</Text>
+          <Text style={styles.emptyStateCopy}>
+            Tap "Start climbing" or "Start strength" above to log your first session. It'll show up here.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Today's sessions */}
       {todaySessions.length > 0 ? (
         <View style={styles.sessionSection}>
@@ -200,20 +282,30 @@ export function LogScreen() {
                 <Text style={styles.sessionTime}>
                   {formatTime(session.started_at)}
                 </Text>
+                {session.completed_at != null ? (
+                  <Text style={styles.sessionDuration}>
+                    {formatDuration(session.started_at, session.completed_at)}
+                  </Text>
+                ) : null}
                 <Text style={styles.chevron}>{'>'}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: spacing.md,
@@ -227,11 +319,95 @@ const styles = StyleSheet.create({
     gap: 2,
     marginBottom: spacing.xs,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   screenTitle: {
     ...typography.display,
   },
   dateHeader: {
     ...typography.bodyMuted,
+  },
+  streakPill: {
+    backgroundColor: colors.accentMuted,
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  streakText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  themeToggle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moonWrap: {
+    width: 14,
+    height: 14,
+  },
+  moonBase: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  moonCutout: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    top: -3,
+    left: 5,
+  },
+  sunDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sliderStack: {
+    width: 16,
+    height: 14,
+    justifyContent: 'space-between',
+  },
+  sliderTrack: {
+    width: 16,
+    height: 2,
+    borderRadius: 1,
+    justifyContent: 'center',
+  },
+  sliderKnob: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    top: -2,
   },
 
   // Active session banner
@@ -306,6 +482,10 @@ const styles = StyleSheet.create({
   sessionTime: {
     ...typography.bodyMuted,
   },
+  sessionDuration: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
   chevron: {
     color: colors.textMuted,
     fontSize: 14,
@@ -355,4 +535,24 @@ const styles = StyleSheet.create({
   ctaButton: {
     width: '100%',
   },
-});
+
+  emptyState: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  emptyStateTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptyStateCopy: {
+    ...typography.bodyMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  });

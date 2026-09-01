@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -14,12 +15,13 @@ import {
   buildDayDots,
   buildSessionReplayMap,
 } from '../domain/calendarInsights';
-import { formatLocalDate } from '../domain/dateUtils';
+import { formatDuration, formatLocalDate } from '../domain/dateUtils';
 import { getSessionsForMonth } from '../domain/sessionStore';
-import type { SessionRow } from '../domain/types';
+import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors, spacing } from '../ui';
-import { typography } from '../ui/tokens/typography';
+import { Chip, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type CalendarNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Calendar'>,
@@ -31,9 +33,6 @@ const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-
-const DOT_CLIMB = colors.accent;
-const DOT_STRENGTH = colors.success;
 
 function todayDate(): Date {
   const now = new Date();
@@ -69,23 +68,31 @@ function buildMonthGrid(monthStart: Date): (Date | null)[] {
 
 export function CalendarScreen() {
   const navigation = useNavigation<CalendarNavProp>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const DOT_CLIMB = colors.accent;
+  const DOT_STRENGTH = colors.success;
   const today = todayDate();
 
   const [currentMonth, setCurrentMonth] = useState<Date>(() =>
     firstOfMonth(today)
   );
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [typeFilter, setTypeFilter] = useState<SessionType | null>(null);
   // Trigger to force refresh when screen re-focuses
   const [refreshKey, setRefreshKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       setRefreshKey((k) => k + 1);
+      setSelectedDate(todayDate());
     }, [])
   );
 
-  const canGoPrev = true;
-  const canGoNext = true;
+  const thisMonth = firstOfMonth(today);
+  const earliestMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 12, 1);
+  const canGoPrev = currentMonth.getTime() > earliestMonth.getTime();
+  const canGoNext = currentMonth.getTime() < thisMonth.getTime();
 
   const monthSessions = useMemo(() => {
     // refreshKey intentionally used to bust memo on focus
@@ -151,7 +158,10 @@ export function CalendarScreen() {
   }
 
   const selectedKey = formatLocalDate(selectedDate);
-  const selectedSessions = sessionsByDate.get(selectedKey) ?? [];
+  const selectedSessions = useMemo(() => {
+    const all = sessionsByDate.get(selectedKey) ?? [];
+    return typeFilter ? all.filter((s) => s.type === typeFilter) : all;
+  }, [sessionsByDate, selectedKey, typeFilter]);
 
   function formatTime(ts: number): string {
     const d = new Date(ts);
@@ -165,7 +175,7 @@ export function CalendarScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       {/* Month navigation header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -268,59 +278,82 @@ export function CalendarScreen() {
         style={styles.sessionPanel}
         contentContainerStyle={styles.sessionPanelContent}
       >
-        <Text style={styles.panelDateLabel}>
-          {selectedDate.getDate()}{' '}
-          {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
-          {selectedDate.getFullYear()}
-        </Text>
+        <View style={styles.panelHeader}>
+          <Text style={styles.panelDateLabel}>
+            {selectedDate.getDate()}{' '}
+            {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
+            {selectedDate.getFullYear()}
+          </Text>
+          <View style={styles.filterChips}>
+            <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
+            <Chip label="Climb" selected={typeFilter === 'climb'} onPress={() => setTypeFilter('climb')} />
+            <Chip label="Strength" selected={typeFilter === 'strength'} onPress={() => setTypeFilter('strength')} />
+          </View>
+        </View>
 
         {selectedSessions.length === 0 ? (
           <Text style={styles.noSessions}>No sessions on this day</Text>
         ) : (
-          <View style={styles.selectedSessionsBlock}>
-            {selectedSessions.map((session) => (
-              <TouchableOpacity
-                key={session.id}
-                style={styles.sessionRow}
-                onPress={() =>
-                  navigation.navigate('SessionDetail', { sessionId: session.id })
-                }
-                activeOpacity={0.75}
-              >
-                <View style={styles.sessionRowLeft}>
-                  <View
-                    style={[
-                      styles.sessionTypeDot,
-                      {
-                        backgroundColor:
-                          sessionReplayById.get(session.id)?.dotColor ??
-                          (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH),
-                      },
-                    ]}
-                  />
-                  <Text style={styles.sessionTypeLabel}>
-                    {formatSessionTitle(session)}
-                  </Text>
+          <View style={styles.timeline}>
+            <View style={styles.timelineLine} />
+            {selectedSessions.map((session) => {
+              const replay = sessionReplayById.get(session.id);
+              const nodeColor =
+                replay?.dotColor ?? (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH);
+              const lastGradeLabel =
+                session.type === 'climb'
+                  ? replay?.climbs[replay.climbs.length - 1]?.gradeLabel
+                  : undefined;
+
+              return (
+                <View key={session.id} style={styles.timelineItem}>
+                  <View style={[styles.timelineNode, { backgroundColor: nodeColor }]} />
+                  <TouchableOpacity
+                    style={styles.timelineCard}
+                    onPress={() =>
+                      navigation.navigate('SessionDetail', { sessionId: session.id })
+                    }
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.timelineCardLeft}>
+                      {lastGradeLabel ? (
+                        <View style={[styles.gradeBadge, { backgroundColor: nodeColor }]}>
+                          <Text style={styles.gradeBadgeText}>{lastGradeLabel}</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.sessionTypeDot, { backgroundColor: nodeColor }]} />
+                      )}
+                      <Text style={styles.sessionTypeLabel}>
+                        {formatSessionTitle(session)}
+                      </Text>
+                    </View>
+                    <View style={styles.sessionRowRight}>
+                      <Text style={styles.sessionTime}>
+                        {formatTime(session.started_at)}
+                      </Text>
+                      {session.completed_at != null ? (
+                        <Text style={styles.sessionDuration}>
+                          {formatDuration(session.started_at, session.completed_at)}
+                        </Text>
+                      ) : null}
+                      <Text style={styles.sessionChevron}>{'>'}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.sessionRowRight}>
-                  <Text style={styles.sessionTime}>
-                    {formatTime(session.started_at)}
-                  </Text>
-                  <Text style={styles.sessionChevron}>{'>'}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const DAY_CELL_SIZE = 40;
 const DOT_SIZE = 5;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
@@ -434,31 +467,73 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
     paddingBottom: spacing.md,
   },
+  panelHeader: {
+    marginBottom: spacing.xs,
+    gap: spacing.xs,
+  },
   panelDateLabel: {
     ...typography.section,
-    marginBottom: spacing.xs,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   noSessions: {
     ...typography.bodyMuted,
     color: colors.textMuted,
     paddingVertical: spacing.sm,
   },
-  selectedSessionsBlock: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+  timeline: {
+    position: 'relative',
+    paddingLeft: 20,
   },
-  sessionRow: {
+  timelineLine: {
+    position: 'absolute',
+    left: 5,
+    top: 6,
+    bottom: 6,
+    width: 2,
+    backgroundColor: colors.border,
+  },
+  timelineItem: {
+    position: 'relative',
+    marginBottom: spacing.xs,
+  },
+  timelineNode: {
+    position: 'absolute',
+    left: -20,
+    top: 14,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  timelineCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  sessionRowLeft: {
+  timelineCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  gradeBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  gradeBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textInverse,
   },
   sessionTypeDot: {
     width: 8,
@@ -476,6 +551,10 @@ const styles = StyleSheet.create({
   },
   sessionTime: {
     ...typography.bodyMuted,
+  },
+  sessionDuration: {
+    ...typography.meta,
+    color: colors.textMuted,
   },
   sessionChevron: {
     color: colors.textMuted,

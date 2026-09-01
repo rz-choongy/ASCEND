@@ -7,12 +7,14 @@ export type RootStackParamList = {
   StrengthLogger: { sessionId: string };
   SessionDetail: { sessionId: string };
   GymSelect: { returnToSessionId?: string } | undefined;
-  GymEdit: { returnToSessionId?: string; gymId?: string } | undefined;
+  GymEdit: { returnToSessionId?: string; gymId?: string; parentId?: string } | undefined;
+  Settings: undefined;
 };
 
 export type TabParamList = {
   Log: undefined;
   Calendar: undefined;
+  Progress: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

@@ -9,7 +9,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
+import { formatDuration } from '../domain/dateUtils';
 import { getGradeOptionsForGym } from '../domain/gymStore';
 import {
   appendSessionCorrectionEvent,
@@ -21,7 +23,9 @@ import {
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Divider, ListRow, colors, radius, spacing, typography } from '../ui';
+import { Button, Divider, ListRow, StatRow, radius, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type SessionDetailScreenProps = RootStackScreenProps<'SessionDetail'>;
 
@@ -65,16 +69,6 @@ const formatDateLine = (ms: number): string => {
   const month = date.toLocaleDateString(undefined, { month: 'short' });
   const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   return `${weekday} ${day} ${month} - ${time}`;
-};
-
-const formatDuration = (startMs: number, endMs: number): string => {
-  const totalMin = Math.round((endMs - startMs) / 60_000);
-  if (totalMin < 60) {
-    return `${totalMin} min`;
-  }
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 
 const formatLogTime = (ms: number): string => {
@@ -124,6 +118,8 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
 // Screen
 
 export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { sessionId } = route.params;
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -161,14 +157,33 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
       .filter((grade): grade is GradeOption => grade !== null);
   }, [session?.gym_id]);
 
+  const climbStats = useMemo(() => {
+    if (session?.type !== 'climb' || climbs.length === 0) return null;
+    const sends = climbs.filter((c) => c.result === 'SEND').length;
+    const flashes = climbs.filter((c) => c.result === 'FLASH').length;
+    const flashRate = climbs.length > 0 ? Math.round((flashes / climbs.length) * 100) : 0;
+    return { total: climbs.length, sends, flashes, flashRate };
+  }, [climbs, session?.type]);
+
+  const strengthStats = useMemo(() => {
+    if (session?.type !== 'strength' || sets.length === 0) return null;
+    const totalSets = sets.length;
+    const totalVolume = sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
+    const exerciseCounts = sets.reduce<Record<string, number>>((acc, s) => {
+      acc[s.exerciseName] = (acc[s.exerciseName] ?? 0) + 1;
+      return acc;
+    }, {});
+    return { totalSets, totalVolume, exerciseCounts };
+  }, [sets, session?.type]);
+
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [title, setTitle] = useState(session?.title ?? '');
 
   if (!session) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top']} style={styles.container}>
         <Text style={styles.emptyText}>Session not found.</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -292,7 +307,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => navigation.goBack()} style={styles.backRow} hitSlop={12}>
           <Text style={styles.backLabel}>← Back</Text>
@@ -315,6 +330,33 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
             <Text style={styles.metaLine}>{duration}</Text>
           ) : null}
         </View>
+
+        {/* Stats strip */}
+        {climbStats ? (
+          <StatRow
+            style={styles.statsRow}
+            items={[
+              { value: `${climbStats.total}`, label: 'Climbs' },
+              { value: `${climbStats.sends}`, label: 'Sends' },
+              { value: `${climbStats.flashes}`, label: 'Flashes' },
+              { value: `${climbStats.flashRate}%`, label: 'Flash rate' },
+            ]}
+          />
+        ) : null}
+
+        {strengthStats ? (
+          <StatRow
+            style={styles.statsRow}
+            items={[
+              { value: `${strengthStats.totalSets}`, label: 'Sets' },
+              {
+                value: strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}kg` : 'bw',
+                label: 'Volume',
+              },
+              { value: `${Object.keys(strengthStats.exerciseCounts).length}`, label: 'Exercises' },
+            ]}
+          />
+        ) : null}
 
         {/* Log list */}
         <Text style={styles.sectionLabel}>{isClimb ? 'Sends' : 'Sets'}</Text>
@@ -429,28 +471,30 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                   />
                 )}
 
-                <View style={styles.modalRow}>
-                  <TextInput
-                    style={[styles.modalInput, styles.smallInput]}
-                    value={climbDraft.gradeMin}
-                    onChangeText={(value) =>
-                      setClimbDraft((draft) => ({ ...draft, gradeMin: value }))
-                    }
-                    keyboardType="number-pad"
-                    placeholder="Min"
-                    placeholderTextColor={colors.textMuted}
-                  />
-                  <TextInput
-                    style={[styles.modalInput, styles.smallInput]}
-                    value={climbDraft.gradeMax}
-                    onChangeText={(value) =>
-                      setClimbDraft((draft) => ({ ...draft, gradeMax: value }))
-                    }
-                    keyboardType="number-pad"
-                    placeholder="Max"
-                    placeholderTextColor={colors.textMuted}
-                  />
-                </View>
+                {gradeOptions.length === 0 && (
+                  <View style={styles.modalRow}>
+                    <TextInput
+                      style={[styles.modalInput, styles.smallInput]}
+                      value={climbDraft.gradeMin}
+                      onChangeText={(value) =>
+                        setClimbDraft((draft) => ({ ...draft, gradeMin: value }))
+                      }
+                      keyboardType="number-pad"
+                      placeholder="Min"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                    <TextInput
+                      style={[styles.modalInput, styles.smallInput]}
+                      value={climbDraft.gradeMax}
+                      onChangeText={(value) =>
+                        setClimbDraft((draft) => ({ ...draft, gradeMax: value }))
+                      }
+                      keyboardType="number-pad"
+                      placeholder="Max"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                  </View>
+                )}
 
                 <View style={styles.resultRow}>
                   {(['FLASH', 'SEND'] as const).map((result) => {
@@ -515,11 +559,12 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -718,5 +763,9 @@ const styles = StyleSheet.create({
   deleteEntryButton: {
     flex: 1,
     borderColor: colors.danger,
+  },
+
+  statsRow: {
+    marginBottom: spacing.md,
   },
 });

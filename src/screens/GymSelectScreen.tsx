@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ensureSelectedClimbGym,
@@ -7,36 +8,15 @@ import {
   getSelectedClimbGym,
   setSelectedClimbGym,
 } from '../domain/gymStore';
+import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, colors, radius, spacing, typography } from '../ui';
+import { Button, ScreenHeader, radius, spacing, useTheme } from '../ui';
+import type { ThemeColors } from '../ui/tokens/colors';
 
 type GymSelectScreenProps = RootStackScreenProps<'GymSelect'>;
 
-type GymLike = {
-  id: string;
-  name: string;
-  gradingType?: string;
-};
-
-const normalizeGym = (gym: unknown): GymLike | null => {
-  if (!gym || typeof gym !== 'object') return null;
-  const value = gym as {
-    id?: unknown;
-    name?: unknown;
-    gradingType?: unknown;
-    grading_type?: unknown;
-  };
-  if (typeof value.id !== 'string' || typeof value.name !== 'string') return null;
-  const gradingType = value.gradingType ?? value.grading_type;
-  return {
-    id: value.id,
-    name: value.name,
-    gradingType: typeof gradingType === 'string' ? gradingType : undefined,
-  };
-};
-
-const gradingTypeLabel = (gradingType?: string): string => {
+const gradingTypeLabel = (gradingType: string): string => {
   switch (gradingType) {
     case 'numeric':
       return 'Numeric grades';
@@ -49,24 +29,39 @@ const gradingTypeLabel = (gradingType?: string): string => {
 };
 
 export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const returnToSessionId = route.params?.returnToSessionId;
-  const [gyms, setGyms] = useState<GymLike[]>([]);
+  const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
+  /** null = root level; string = drilling into a company */
+  const [drillParentId, setDrillParentId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      const selected = normalizeGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
-      const nextGyms = getGyms()
-        .map(normalizeGym)
-        .filter((gym): gym is GymLike => gym !== null);
-      setGyms(nextGyms);
+      const selected = getSelectedClimbGym() ?? ensureSelectedClimbGym();
+      setAllGyms(getGyms());
       setSelectedGymId(selected?.id ?? null);
     }, [])
   );
 
-  const handleSelect = (gym: GymLike) => {
+  const rootGyms = useMemo(() => allGyms.filter((g) => !g.parent_id), [allGyms]);
+  const drillParent = useMemo(
+    () => (drillParentId ? allGyms.find((g) => g.id === drillParentId) ?? null : null),
+    [allGyms, drillParentId]
+  );
+  const branches = useMemo(
+    () => (drillParentId ? allGyms.filter((g) => g.parent_id === drillParentId) : []),
+    [allGyms, drillParentId]
+  );
+  const branchCount = useCallback(
+    (gymId: string) => allGyms.filter((g) => g.parent_id === gymId).length,
+    [allGyms]
+  );
+
+  const handleSelectGym = (gymId: string) => {
     if (returnToSessionId) {
-      const changed = setSessionGymId(returnToSessionId, gym.id);
+      const changed = setSessionGymId(returnToSessionId, gymId);
       if (!changed) {
         Alert.alert(
           'Gym locked for this session',
@@ -75,66 +70,157 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
         navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
         return;
       }
-      setSelectedClimbGym(gym.id);
-      navigation.navigate('ClimbLogger', {
-        sessionId: returnToSessionId,
-        gymId: gym.id,
-      });
+      setSelectedClimbGym(gymId);
+      navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
       return;
     }
-    setSelectedClimbGym(gym.id);
+    setSelectedClimbGym(gymId);
     navigation.goBack();
   };
 
-  return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>Climbing grades</Text>
-          <Text style={styles.title}>Choose gym</Text>
-        </View>
-        <Button
-          label="Close"
-          variant="ghost"
-          onPress={() => navigation.goBack()}
-          style={styles.closeButton}
-          textStyle={styles.closeText}
+  const handleRootGymPress = (gym: GymRow) => {
+    const count = branchCount(gym.id);
+    if (count > 0) {
+      // Drill into this company's branches
+      setDrillParentId(gym.id);
+    } else {
+      handleSelectGym(gym.id);
+    }
+  };
+
+  // ─── Level 2: inside a company ────────────────────────────────────────────
+  if (drillParentId) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.screen}>
+        <ScreenHeader
+          eyebrow={drillParent?.name ?? 'Company'}
+          title="Select branch"
+          onClose={() => navigation.goBack()}
+          left={
+            <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
+              <Text style={styles.backChevron}>‹</Text>
+              <Text style={styles.backLabel}>All gyms</Text>
+            </Pressable>
+          }
         />
-      </View>
+
+        <ScrollView contentContainerStyle={styles.content}>
+          {branches.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No branches yet.</Text>
+              <Text style={styles.emptySubText}>Add the first branch below.</Text>
+            </View>
+          ) : null}
+          {branches.map((branch) => {
+            const selected = branch.id === selectedGymId;
+            return (
+              <Pressable
+                key={branch.id}
+                style={[styles.gymRow, selected ? styles.gymRowSelected : null]}
+                onPress={() => handleSelectGym(branch.id)}
+              >
+                <View style={styles.gymTextCol}>
+                  <Text style={styles.gymName}>{branch.name}</Text>
+                  <Text style={styles.gymMeta}>
+                    Grades from {drillParent?.name ?? 'company'}
+                  </Text>
+                </View>
+                <View style={styles.actionCol}>
+                  <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
+                    {selected ? 'Selected' : 'Use'}
+                  </Text>
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate('GymEdit', {
+                        returnToSessionId,
+                        gymId: branch.id,
+                      })
+                    }
+                    hitSlop={10}
+                  >
+                    <Text style={styles.editText}>Rename</Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            label="Add Branch"
+            onPress={() =>
+              navigation.navigate('GymEdit', {
+                returnToSessionId,
+                parentId: drillParentId,
+              })
+            }
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ─── Level 1: root gyms ───────────────────────────────────────────────────
+  return (
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <ScreenHeader
+        eyebrow="Climbing grades"
+        title="Choose gym"
+        onClose={() => navigation.goBack()}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {gyms.map((gym) => {
+        {rootGyms.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              No gyms yet — tap Add Gym to create your first.
+            </Text>
+          </View>
+        )}
+        {rootGyms.map((gym) => {
+          const count = branchCount(gym.id);
           const selected = gym.id === selectedGymId;
+          const isCompany = count > 0;
           return (
             <Pressable
               key={gym.id}
-              style={[styles.gymRow, selected ? styles.gymRowSelected : null]}
-              onPress={() => handleSelect(gym)}
+              style={[styles.gymRow, selected && !isCompany ? styles.gymRowSelected : null]}
+              onPress={() => handleRootGymPress(gym)}
             >
               <View style={styles.gymTextCol}>
                 <Text style={styles.gymName}>{gym.name}</Text>
-                <Text style={styles.gymMeta}>{gradingTypeLabel(gym.gradingType)}</Text>
+                <Text style={styles.gymMeta}>
+                  {isCompany
+                    ? `${count} branch${count === 1 ? '' : 'es'}`
+                    : gradingTypeLabel(gym.grading_type)}
+                </Text>
               </View>
               <View style={styles.actionCol}>
-                <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
-                  {selected ? 'Selected' : 'Use'}
-                </Text>
-                <Pressable
-                  onPress={() =>
-                    navigation.navigate('GymEdit', {
-                      returnToSessionId,
-                      gymId: gym.id,
-                    })
-                  }
-                  hitSlop={10}
-                >
-                  <Text style={styles.editText}>Edit grades</Text>
-                </Pressable>
+                {isCompany ? (
+                  <Text style={styles.drillText}>Branches ›</Text>
+                ) : (
+                  <>
+                    <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
+                      {selected ? 'Selected' : 'Use'}
+                    </Text>
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate('GymEdit', {
+                          returnToSessionId,
+                          gymId: gym.id,
+                        })
+                      }
+                      hitSlop={10}
+                    >
+                      <Text style={styles.editText}>Edit grades</Text>
+                    </Pressable>
+                  </>
+                )}
               </View>
             </Pressable>
           );
         })}
-
       </ScrollView>
 
       <View style={styles.footer}>
@@ -143,11 +229,12 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           onPress={() => navigation.navigate('GymEdit', { returnToSessionId })}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
@@ -155,27 +242,24 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  header: {
+  backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    gap: 4,
+    marginBottom: 8,
   },
-  eyebrow: {
-    ...typography.meta,
+  backChevron: {
     color: colors.accent,
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 22,
   },
-  title: {
-    ...typography.title,
-    marginTop: 2,
-  },
-  closeButton: {
-    minHeight: 38,
-    paddingHorizontal: 12,
-  },
-  closeText: {
-    fontSize: 10,
+  backLabel: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   content: {
     gap: spacing.xs,
@@ -209,6 +293,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
+  actionCol: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
   selectText: {
     color: colors.textSecondary,
     fontSize: 12,
@@ -219,16 +307,48 @@ const styles = StyleSheet.create({
   selectTextActive: {
     color: colors.accent,
   },
-  actionCol: {
-    alignItems: 'flex-end',
-    gap: 6,
+  drillText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   editText: {
     color: colors.textMuted,
     fontSize: 11,
     fontWeight: '700',
   },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: radius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  emptySubText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 4,
+  },
   footer: {
     paddingTop: spacing.xs,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  emptyStateText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });

@@ -104,8 +104,8 @@ export const appendSessionCorrectionEvent = <T extends SessionCorrectionEventTyp
   payload: SessionEventPayload<T>
 ): string => {
   const session = getSessionById(sessionId);
-  if (!session || session.status !== 'completed') {
-    throw new Error('Cannot correct a session that is not completed.');
+  if (!session || (session.status !== 'completed' && session.status !== 'abandoned')) {
+    throw new Error('Cannot correct a session that is not completed or abandoned.');
   }
 
   const eventId = uuid();
@@ -187,10 +187,11 @@ export const setSessionStatus = (
 };
 
 export const removeSessionFromHistory = (sessionId: string): void => {
-  run('UPDATE sessions SET status = ? WHERE id = ? AND status = ?;', [
+  run('UPDATE sessions SET status = ? WHERE id = ? AND status IN (?, ?);', [
     'deleted',
     sessionId,
     'completed',
+    'abandoned',
   ]);
 };
 
@@ -225,6 +226,58 @@ export function getSessionsForMonth(year: number, month: number): SessionRow[] {
   return getAll<SessionRow>(
     'SELECT * FROM sessions WHERE status = ? AND started_at >= ? AND started_at < ? ORDER BY started_at ASC',
     ['completed', start, end]
+  );
+}
+
+export function getAllCompletedSessionCount(): number {
+  const row = getFirst<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM sessions WHERE status = ?;',
+    ['completed']
+  );
+  return row?.n ?? 0;
+}
+
+export function getSessionStreak(): number {
+  const rows = getAll<{ day: string }>(
+    `SELECT DISTINCT date(started_at / 1000, 'unixepoch', 'localtime') AS day
+     FROM sessions WHERE status = 'completed'
+     ORDER BY day DESC;`
+  );
+  if (rows.length === 0) return 0;
+
+  // Only count if the most recent session was today or yesterday (streak alive)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const mostRecent = new Date(rows[0].day + 'T00:00:00');
+  const daysSinceLast = Math.round((today.getTime() - mostRecent.getTime()) / 86_400_000);
+  if (daysSinceLast > 1) return 0;
+
+  // Count consecutive days backwards from the most recent
+  let streak = 1;
+  let prev = mostRecent;
+  for (let i = 1; i < rows.length; i++) {
+    const curr = new Date(rows[i].day + 'T00:00:00');
+    const diff = Math.round((prev.getTime() - curr.getTime()) / 86_400_000);
+    if (diff === 1) {
+      streak += 1;
+      prev = curr;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+export function getCompletedSessions(type?: SessionType): SessionRow[] {
+  if (type) {
+    return getAll<SessionRow>(
+      'SELECT * FROM sessions WHERE status = ? AND type = ? ORDER BY started_at ASC;',
+      ['completed', type]
+    );
+  }
+  return getAll<SessionRow>(
+    'SELECT * FROM sessions WHERE status = ? ORDER BY started_at ASC;',
+    ['completed']
   );
 }
 

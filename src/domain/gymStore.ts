@@ -17,6 +17,8 @@ export type CreateGymInput = {
   grading_type?: GymGradingType;
   gradeOptions?: GymGradeOptionInput[];
   makeSelected?: boolean;
+  /** If set, this gym is a branch of the given parent gym and inherits its grade system. */
+  parentId?: string | null;
 };
 
 export type UpdateGymInput = {
@@ -51,14 +53,18 @@ type NormalizedGymGradeOption = {
 const uuid = (): string => Crypto.randomUUID();
 
 const defaultVScaleGrades: GymGradeOptionInput[] = [
-  { id: 'grade-default-v0', label: 'V0', gradeMin: 0, gradeMax: 0, colorHex: '#65A30D', sortOrder: 0 },
+  { id: 'grade-default-v0', label: 'V0', gradeMin: 0, gradeMax: 0, colorHex: '#22C55E', sortOrder: 0 },
   { id: 'grade-default-v1', label: 'V1', gradeMin: 1, gradeMax: 1, colorHex: '#84CC16', sortOrder: 1 },
   { id: 'grade-default-v2', label: 'V2', gradeMin: 2, gradeMax: 2, colorHex: '#EAB308', sortOrder: 2 },
-  { id: 'grade-default-v3', label: 'V3', gradeMin: 3, gradeMax: 3, colorHex: '#F97316', sortOrder: 3 },
-  { id: 'grade-default-v4', label: 'V4', gradeMin: 4, gradeMax: 4, colorHex: '#EF4444', sortOrder: 4 },
-  { id: 'grade-default-v5', label: 'V5', gradeMin: 5, gradeMax: 5, colorHex: '#A855F7', sortOrder: 5 },
-  { id: 'grade-default-v6', label: 'V6', gradeMin: 6, gradeMax: 6, colorHex: '#3B82F6', sortOrder: 6 },
-  { id: 'grade-default-v7-plus', label: 'V7+', gradeMin: 7, gradeMax: 10, colorHex: '#111827', sortOrder: 7 },
+  { id: 'grade-default-v3', label: 'V3', gradeMin: 3, gradeMax: 3, colorHex: '#F59E0B', sortOrder: 3 },
+  { id: 'grade-default-v4', label: 'V4', gradeMin: 4, gradeMax: 4, colorHex: '#F97316', sortOrder: 4 },
+  { id: 'grade-default-v5', label: 'V5', gradeMin: 5, gradeMax: 5, colorHex: '#EF4444', sortOrder: 5 },
+  { id: 'grade-default-v6', label: 'V6', gradeMin: 6, gradeMax: 6, colorHex: '#EC4899', sortOrder: 6 },
+  { id: 'grade-default-v7', label: 'V7', gradeMin: 7, gradeMax: 7, colorHex: '#D946EF', sortOrder: 7 },
+  { id: 'grade-default-v8', label: 'V8', gradeMin: 8, gradeMax: 8, colorHex: '#A855F7', sortOrder: 8 },
+  { id: 'grade-default-v9', label: 'V9', gradeMin: 9, gradeMax: 9, colorHex: '#6366F1', sortOrder: 9 },
+  { id: 'grade-default-v10', label: 'V10', gradeMin: 10, gradeMax: 10, colorHex: '#3B82F6', sortOrder: 10 },
+  { id: 'grade-default-v11-plus', label: 'V11+', gradeMin: 11, gradeMax: 17, colorHex: '#111827', sortOrder: 11 },
 ];
 
 const defaultNumericGrades: GymGradeOptionInput[] = Array.from({ length: 10 }, (_, index) => ({
@@ -78,7 +84,7 @@ const defaultColorGrades: GymGradeOptionInput[] = [
   { label: 'Black', gradeMin: 8, gradeMax: 10, colorHex: '#111827', sortOrder: 5 },
 ];
 
-const defaultOptionsForType = (gradingType: GymGradingType): GymGradeOptionInput[] => {
+export const defaultOptionsForType = (gradingType: GymGradingType): GymGradeOptionInput[] => {
   if (gradingType === 'numeric') {
     return defaultNumericGrades;
   }
@@ -187,6 +193,10 @@ const ensureDefaultClimbGymSeeded = (): void => {
     ) VALUES (?, ?, ?, ?, ?, ?);`,
     [DEFAULT_CLIMB_GYM_ID, 'Default V-Scale', 'v_scale', 1, timestamp, timestamp]
   );
+
+  // Superseded by explicit V7-V10 + V11+ rows below; old DBs seeded before that change still have it.
+  run("DELETE FROM gym_grade_options WHERE id = 'grade-default-v7-plus';");
+
   defaultVScaleGrades.forEach((option) => {
     const normalized = normalizeGradeOption(option, option.sortOrder ?? 0);
     run(
@@ -216,9 +226,26 @@ const ensureDefaultClimbGymSeeded = (): void => {
   });
 };
 
+/** Returns all gyms — companies, standalone gyms, and branches. */
 export const getGyms = (): GymRow[] => {
   ensureDefaultClimbGymSeeded();
   return getAll<GymRow>('SELECT * FROM gyms ORDER BY is_default DESC, name ASC;');
+};
+
+/** Returns only root-level gyms (companies + standalones) — excludes branches. */
+export const getRootGyms = (): GymRow[] => {
+  ensureDefaultClimbGymSeeded();
+  return getAll<GymRow>(
+    'SELECT * FROM gyms WHERE parent_id IS NULL ORDER BY is_default DESC, name ASC;'
+  );
+};
+
+/** Returns all branches of the given parent gym, ordered by name. */
+export const getBranchesForGym = (parentId: string): GymRow[] => {
+  return getAll<GymRow>(
+    'SELECT * FROM gyms WHERE parent_id = ? ORDER BY name ASC;',
+    [parentId]
+  );
 };
 
 export const getGymById = (gymId: string): GymRow | null => {
@@ -273,12 +300,21 @@ export const ensureSelectedClimbGym = (): GymRow => {
 
 export const createGym = (input: CreateGymInput): GymRow => {
   const gymId = uuid();
-  const gradingType = input.gradingType ?? input.grading_type ?? 'v_scale';
-  const gradeOptions =
-    input.gradeOptions && input.gradeOptions.length > 0
-      ? input.gradeOptions
-      : defaultOptionsForType(gradingType);
+  const parentId = input.parentId ?? null;
   const timestamp = Date.now();
+
+  let gradingType: GymGradingType;
+  if (parentId) {
+    // Branches inherit grading type from parent; no grade rows needed.
+    const parent = getFirst<GymRow>('SELECT * FROM gyms WHERE id = ? LIMIT 1;', [parentId]);
+    if (!parent) {
+      throw new Error('Parent gym not found.');
+    }
+    gradingType = parent.grading_type;
+  } else {
+    gradingType = input.gradingType ?? input.grading_type ?? 'v_scale';
+  }
+
   const existingDefault = getFirst<GymRow>('SELECT * FROM gyms WHERE is_default = 1 LIMIT 1;');
 
   run(
@@ -287,13 +323,21 @@ export const createGym = (input: CreateGymInput): GymRow => {
       name,
       grading_type,
       is_default,
+      parent_id,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?);`,
-    [gymId, normalizeName(input.name), gradingType, existingDefault ? 0 : 1, timestamp, timestamp]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    [gymId, normalizeName(input.name), gradingType, existingDefault ? 0 : 1, parentId, timestamp, timestamp]
   );
 
-  insertGradeOptions(gymId, gradeOptions);
+  // Branches have no grade rows of their own; they always resolve to parent's grades.
+  if (!parentId) {
+    const gradeOptions =
+      input.gradeOptions && input.gradeOptions.length > 0
+        ? input.gradeOptions
+        : defaultOptionsForType(gradingType);
+    insertGradeOptions(gymId, gradeOptions);
+  }
 
   if (input.makeSelected) {
     setSelectedClimbGym(gymId);
@@ -307,10 +351,19 @@ export const createGym = (input: CreateGymInput): GymRow => {
 };
 
 export const getGradeOptionsForGym = (gymId: string): GymGradeOptionRow[] => {
+  // Branches inherit grades from their parent; resolve the source gym first.
+  const gym = getFirst<GymRow>('SELECT * FROM gyms WHERE id = ? LIMIT 1;', [gymId]);
+  const sourceId = gym?.parent_id ?? gymId;
   return getAll<GymGradeOptionRow>(
     'SELECT * FROM gym_grade_options WHERE gym_id = ? ORDER BY sort_order ASC, created_at ASC;',
-    [gymId]
+    [sourceId]
   );
+};
+
+const doReplaceGymGradeOptions = (gymId: string, options: GymGradeOptionInput[]): void => {
+  run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
+  insertGradeOptions(gymId, options);
+  run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [Date.now(), gymId]);
 };
 
 export const replaceGymGradeOptions = (
@@ -325,11 +378,7 @@ export const replaceGymGradeOptions = (
     throw new Error('A gym needs at least one grade option.');
   }
 
-  runInTransaction(() => {
-    run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
-    insertGradeOptions(gymId, options);
-    run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [Date.now(), gymId]);
-  });
+  runInTransaction(() => doReplaceGymGradeOptions(gymId, options));
 
   return getGradeOptionsForGym(gymId);
 };
@@ -340,13 +389,27 @@ export const updateGym = (input: UpdateGymInput): GymRow => {
     throw new Error('Cannot update a missing gym.');
   }
 
-  run('UPDATE gyms SET name = ?, grading_type = ?, updated_at = ? WHERE id = ?;', [
-    normalizeName(input.name),
-    input.gradingType,
-    Date.now(),
-    input.id,
-  ]);
-  replaceGymGradeOptions(input.id, input.gradeOptions);
+  if (existing.parent_id) {
+    // Branches: rename only — grades are always inherited from the parent.
+    run('UPDATE gyms SET name = ?, updated_at = ? WHERE id = ?;', [
+      normalizeName(input.name),
+      Date.now(),
+      input.id,
+    ]);
+  } else {
+    if (input.gradeOptions.length === 0) {
+      throw new Error('A gym needs at least one grade option.');
+    }
+    runInTransaction(() => {
+      run('UPDATE gyms SET name = ?, grading_type = ?, updated_at = ? WHERE id = ?;', [
+        normalizeName(input.name),
+        input.gradingType,
+        Date.now(),
+        input.id,
+      ]);
+      doReplaceGymGradeOptions(input.id, input.gradeOptions);
+    });
+  }
 
   const updated = getGymById(input.id);
   if (!updated) {
