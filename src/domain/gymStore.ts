@@ -317,27 +317,29 @@ export const createGym = (input: CreateGymInput): GymRow => {
 
   const existingDefault = getFirst<GymRow>('SELECT * FROM gyms WHERE is_default = 1 LIMIT 1;');
 
-  run(
-    `INSERT INTO gyms (
-      id,
-      name,
-      grading_type,
-      is_default,
-      parent_id,
-      created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    [gymId, normalizeName(input.name), gradingType, existingDefault ? 0 : 1, parentId, timestamp, timestamp]
-  );
+  runInTransaction(() => {
+    run(
+      `INSERT INTO gyms (
+        id,
+        name,
+        grading_type,
+        is_default,
+        parent_id,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [gymId, normalizeName(input.name), gradingType, existingDefault ? 0 : 1, parentId, timestamp, timestamp]
+    );
 
-  // Branches have no grade rows of their own; they always resolve to parent's grades.
-  if (!parentId) {
-    const gradeOptions =
-      input.gradeOptions && input.gradeOptions.length > 0
-        ? input.gradeOptions
-        : defaultOptionsForType(gradingType);
-    insertGradeOptions(gymId, gradeOptions);
-  }
+    // Branches have no grade rows of their own; they always resolve to parent's grades.
+    if (!parentId) {
+      const gradeOptions =
+        input.gradeOptions && input.gradeOptions.length > 0
+          ? input.gradeOptions
+          : defaultOptionsForType(gradingType);
+      insertGradeOptions(gymId, gradeOptions);
+    }
+  });
 
   if (input.makeSelected) {
     setSelectedClimbGym(gymId);
@@ -353,7 +355,20 @@ export const createGym = (input: CreateGymInput): GymRow => {
 export const getGradeOptionsForGym = (gymId: string): GymGradeOptionRow[] => {
   // Branches inherit grades from their parent; resolve the source gym first.
   const gym = getFirst<GymRow>('SELECT * FROM gyms WHERE id = ? LIMIT 1;', [gymId]);
-  const sourceId = gym?.parent_id ?? gymId;
+  if (!gym) {
+    // gymId no longer exists (its gym/branch was deleted, but old sessions still
+    // reference it) -- fall back to the default gym's grades instead of silently
+    // returning an empty list, which left callers like SessionHistoryScreen's edit
+    // picker with nothing to choose from.
+    ensureDefaultClimbGymSeeded();
+    const fallback = getFirst<GymRow>('SELECT * FROM gyms WHERE is_default = 1 LIMIT 1;');
+    if (!fallback) return [];
+    return getAll<GymGradeOptionRow>(
+      'SELECT * FROM gym_grade_options WHERE gym_id = ? ORDER BY sort_order ASC, created_at ASC;',
+      [fallback.id]
+    );
+  }
+  const sourceId = gym.parent_id ?? gymId;
   return getAll<GymGradeOptionRow>(
     'SELECT * FROM gym_grade_options WHERE gym_id = ? ORDER BY sort_order ASC, created_at ASC;',
     [sourceId]
