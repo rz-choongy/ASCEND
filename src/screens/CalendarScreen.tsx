@@ -14,12 +14,17 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   buildDayDots,
   buildSessionReplayMap,
+  type SessionReplay,
 } from '../domain/calendarInsights';
-import { formatDuration, formatLocalDate } from '../domain/dateUtils';
-import { getSessionsForMonth } from '../domain/sessionStore';
+import { addDays, formatDuration, formatLocalDate, startOfWeek } from '../domain/dateUtils';
+import {
+  getCompletedSessions,
+  getSessionsForDateRange,
+  getSessionsForMonth,
+} from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Chip, spacing, useTheme } from '../ui';
+import { Chip, SegmentedControl, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -28,7 +33,12 @@ type CalendarNavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+type CalendarView = 'month' | 'week' | 'list';
+
 const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const WEEKDAY_FULL = [
+  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -41,6 +51,14 @@ function todayDate(): Date {
 
 function firstOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 /** Returns a Monday-anchored grid of Date | null for the month. */
@@ -66,6 +84,37 @@ function buildMonthGrid(monthStart: Date): (Date | null)[] {
   return cells;
 }
 
+type SessionGroup = { dateKey: string; date: Date; sessions: SessionRow[] };
+
+function groupSessionsByDay(sessions: SessionRow[], order: 'asc' | 'desc'): SessionGroup[] {
+  const map = new Map<string, SessionRow[]>();
+  sessions.forEach((session) => {
+    const key = formatLocalDate(new Date(session.started_at));
+    const existing = map.get(key) ?? [];
+    existing.push(session);
+    map.set(key, existing);
+  });
+  const groups = Array.from(map.entries()).map(([dateKey, sess]) => ({
+    dateKey,
+    date: new Date(sess[0].started_at),
+    sessions: sess.slice().sort((a, b) => a.started_at - b.started_at),
+  }));
+  groups.sort((a, b) =>
+    order === 'desc' ? b.date.getTime() - a.date.getTime() : a.date.getTime() - b.date.getTime()
+  );
+  return groups;
+}
+
+function formatWeekRangeLabel(weekStart: Date): string {
+  const weekEnd = addDays(weekStart, 6);
+  const startLabel = `${weekStart.getDate()} ${MONTH_NAMES[weekStart.getMonth()].slice(0, 3)}`;
+  const endLabel =
+    weekStart.getMonth() === weekEnd.getMonth()
+      ? `${weekEnd.getDate()}`
+      : `${weekEnd.getDate()} ${MONTH_NAMES[weekEnd.getMonth()].slice(0, 3)}`;
+  return `${startLabel} – ${endLabel} ${weekEnd.getFullYear()}`;
+}
+
 export function CalendarScreen() {
   const navigation = useNavigation<CalendarNavProp>();
   const { colors, typography } = useTheme();
@@ -74,9 +123,8 @@ export function CalendarScreen() {
   const DOT_STRENGTH = colors.success;
   const today = todayDate();
 
-  const [currentMonth, setCurrentMonth] = useState<Date>(() =>
-    firstOfMonth(today)
-  );
+  const [viewMode, setViewMode] = useState<CalendarView>('month');
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => firstOfMonth(today));
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [typeFilter, setTypeFilter] = useState<SessionType | null>(null);
   // Trigger to force refresh when screen re-focuses
@@ -97,17 +145,11 @@ export function CalendarScreen() {
   const monthSessions = useMemo(() => {
     // refreshKey intentionally used to bust memo on focus
     void refreshKey;
-    return getSessionsForMonth(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth()
-    );
+    return getSessionsForMonth(currentMonth.getFullYear(), currentMonth.getMonth());
   }, [currentMonth, refreshKey]);
 
   const sessionReplayById = useMemo(() => {
-    return buildSessionReplayMap(monthSessions, {
-      climb: DOT_CLIMB,
-      strength: DOT_STRENGTH,
-    });
+    return buildSessionReplayMap(monthSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH });
   }, [monthSessions]);
 
   /** Map of 'YYYY-MM-DD' -> SessionRow[] */
@@ -123,10 +165,7 @@ export function CalendarScreen() {
   }, [monthSessions]);
 
   const dotsByDate = useMemo(() => {
-    return buildDayDots(sessionsByDate, sessionReplayById, {
-      climb: DOT_CLIMB,
-      strength: DOT_STRENGTH,
-    });
+    return buildDayDots(sessionsByDate, sessionReplayById, { climb: DOT_CLIMB, strength: DOT_STRENGTH });
   }, [sessionReplayById, sessionsByDate]);
 
   const grid = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
@@ -135,11 +174,7 @@ export function CalendarScreen() {
     setCurrentMonth((month) => {
       const target = new Date(month.getFullYear(), month.getMonth() + monthOffset, 1);
       setSelectedDate((selected) => {
-        const daysInTargetMonth = new Date(
-          target.getFullYear(),
-          target.getMonth() + 1,
-          0
-        ).getDate();
+        const daysInTargetMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
         const selectedDay = Math.min(selected.getDate(), daysInTargetMonth);
         return new Date(target.getFullYear(), target.getMonth(), selectedDay);
       });
@@ -163,6 +198,59 @@ export function CalendarScreen() {
     return typeFilter ? all.filter((s) => s.type === typeFilter) : all;
   }, [sessionsByDate, selectedKey, typeFilter]);
 
+  // Week view
+  const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
+  const canGoPrevWeek = weekStart.getTime() > startOfWeek(earliestMonth).getTime();
+  const canGoNextWeek = weekStart.getTime() < startOfWeek(today).getTime();
+
+  const weekSessions = useMemo(() => {
+    void refreshKey;
+    return getSessionsForDateRange(weekStart.getTime(), addDays(weekStart, 7).getTime());
+  }, [weekStart, refreshKey]);
+
+  const weekSessionReplayById = useMemo(
+    () => buildSessionReplayMap(weekSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH }),
+    [weekSessions]
+  );
+
+  const filteredWeekSessions = useMemo(
+    () => (typeFilter ? weekSessions.filter((s) => s.type === typeFilter) : weekSessions),
+    [weekSessions, typeFilter]
+  );
+
+  const weekGroups = useMemo(
+    () => groupSessionsByDay(filteredWeekSessions, 'desc'),
+    [filteredWeekSessions]
+  );
+
+  function prevWeek() {
+    if (!canGoPrevWeek) return;
+    setSelectedDate((d) => addDays(d, -7));
+  }
+
+  function nextWeek() {
+    if (!canGoNextWeek) return;
+    setSelectedDate((d) => addDays(d, 7));
+  }
+
+  // List view (all-time)
+  const allSessions = useMemo(() => {
+    void refreshKey;
+    return getCompletedSessions();
+  }, [refreshKey]);
+
+  const allSessionReplayById = useMemo(
+    () => buildSessionReplayMap(allSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH }),
+    [allSessions]
+  );
+
+  const filteredAllSessions = useMemo(
+    () => (typeFilter ? allSessions.filter((s) => s.type === typeFilter) : allSessions),
+    [allSessions, typeFilter]
+  );
+
+  const allGroups = useMemo(() => groupSessionsByDay(filteredAllSessions, 'desc'), [filteredAllSessions]);
+
   function formatTime(ts: number): string {
     const d = new Date(ts);
     const h = `${d.getHours()}`.padStart(2, '0');
@@ -174,177 +262,227 @@ export function CalendarScreen() {
     return session.title?.trim() || (session.type === 'climb' ? 'Climbing' : 'Strength');
   }
 
+  function formatGroupLabel(date: Date): string {
+    if (sameDay(date, today)) return `Today · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
+    return `${WEEKDAY_FULL[date.getDay()]} · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
+  }
+
+  function renderSessionItem(session: SessionRow, replayById: Map<string, SessionReplay>) {
+    const replay = replayById.get(session.id);
+    const nodeColor = replay?.dotColor ?? (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH);
+    const hardestGradeLabel = session.type === 'climb' ? replay?.hardestGradeLabel : undefined;
+
+    return (
+      <View key={session.id} style={styles.timelineItem}>
+        <View style={[styles.timelineNode, { backgroundColor: nodeColor }]} />
+        <TouchableOpacity
+          style={styles.timelineCard}
+          onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
+          activeOpacity={0.75}
+        >
+          <View style={styles.timelineCardLeft}>
+            {hardestGradeLabel ? (
+              <View style={[styles.gradeBadge, { backgroundColor: nodeColor }]}>
+                <Text style={styles.gradeBadgeText}>{hardestGradeLabel}</Text>
+              </View>
+            ) : (
+              <View style={[styles.sessionTypeDot, { backgroundColor: nodeColor }]} />
+            )}
+            <Text style={styles.sessionTypeLabel}>{formatSessionTitle(session)}</Text>
+          </View>
+          <View style={styles.sessionRowRight}>
+            <Text style={styles.sessionTime}>{formatTime(session.started_at)}</Text>
+            {session.completed_at != null ? (
+              <Text style={styles.sessionDuration}>
+                {formatDuration(session.started_at, session.completed_at)}
+              </Text>
+            ) : null}
+            <Text style={styles.sessionChevron}>{'>'}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  function renderGroupedTimeline(groups: SessionGroup[], replayById: Map<string, SessionReplay>) {
+    if (groups.length === 0) {
+      return <Text style={styles.noSessions}>No sessions here yet</Text>;
+    }
+    return groups.map((group) => (
+      <View key={group.dateKey} style={styles.groupBlock}>
+        <Text style={styles.groupDateLabel}>{formatGroupLabel(group.date)}</Text>
+        <View style={styles.timeline}>
+          <View style={styles.timelineLine} />
+          {group.sessions.map((session) => renderSessionItem(session, replayById))}
+        </View>
+      </View>
+    ));
+  }
+
+  const filterChips = (
+    <View style={styles.filterChips}>
+      <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
+      <Chip label="Climb" selected={typeFilter === 'climb'} onPress={() => setTypeFilter('climb')} />
+      <Chip label="Strength" selected={typeFilter === 'strength'} onPress={() => setTypeFilter('strength')} />
+    </View>
+  );
+
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
-      {/* Month navigation header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={prevMonth}
-          disabled={!canGoPrev}
-          style={styles.navBtn}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Text style={[styles.navArrow, !canGoPrev && styles.navArrowDisabled]}>
-            {'<'}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.monthLabel}>
-          {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-        </Text>
-
-        <TouchableOpacity
-          onPress={nextMonth}
-          disabled={!canGoNext}
-          style={styles.navBtn}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Text style={[styles.navArrow, !canGoNext && styles.navArrowDisabled]}>
-            {'>'}
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.viewSwitcher}>
+        <SegmentedControl
+          options={[
+            { value: 'month', label: 'Month' },
+            { value: 'week', label: 'Week' },
+            { value: 'list', label: 'List' },
+          ]}
+          value={viewMode}
+          onChange={setViewMode}
+        />
       </View>
 
-      {/* Weekday labels */}
-      <View style={styles.weekdayRow}>
-        {WEEKDAY_LABELS.map((label) => (
-          <View key={label} style={styles.weekdayCell}>
-            <Text style={styles.weekdayText}>{label}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Calendar grid */}
-      <View style={styles.grid}>
-        {grid.map((day, idx) => {
-          if (!day) {
-            return <View key={`blank-${idx}`} style={styles.dayCell} />;
-          }
-
-          const key = formatLocalDate(day);
-          const daySessions = sessionsByDate.get(key) ?? [];
-          const dayDots = dotsByDate.get(key);
-          const isToday =
-            day.getFullYear() === today.getFullYear() &&
-            day.getMonth() === today.getMonth() &&
-            day.getDate() === today.getDate();
-          const isSelected =
-            day.getFullYear() === selectedDate.getFullYear() &&
-            day.getMonth() === selectedDate.getMonth() &&
-            day.getDate() === selectedDate.getDate();
-
-          return (
+      {viewMode === 'month' ? (
+        <>
+          <View style={styles.header}>
             <TouchableOpacity
-              key={key}
-              style={styles.dayCell}
-              onPress={() => setSelectedDate(day)}
-              activeOpacity={0.7}
+              onPress={prevMonth}
+              disabled={!canGoPrev}
+              style={styles.navBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <View
-                style={[
-                  styles.dayNumberWrapper,
-                  isSelected && styles.dayNumberSelected,
-                  isToday && !isSelected && styles.dayNumberToday,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dayNumber,
-                    isToday && !isSelected && styles.dayNumberTodayText,
-                    isSelected && styles.dayNumberSelectedText,
-                  ]}
-                >
-                  {day.getDate()}
-                </Text>
-              </View>
-              <View style={styles.dotsRow}>
-                {dayDots?.climbColor && (
-                  <View style={[styles.dot, { backgroundColor: dayDots.climbColor }]} />
-                )}
-                {dayDots?.strengthColor && (
-                  <View style={[styles.dot, { backgroundColor: dayDots.strengthColor }]} />
-                )}
-              </View>
+              <Text style={[styles.navArrow, !canGoPrev && styles.navArrowDisabled]}>{'<'}</Text>
             </TouchableOpacity>
-          );
-        })}
-      </View>
 
-      {/* Divider */}
-      <View style={styles.divider} />
+            <Text style={styles.monthLabel}>
+              {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            </Text>
 
-      {/* Selected day sessions panel */}
-      <ScrollView
-        style={styles.sessionPanel}
-        contentContainerStyle={styles.sessionPanelContent}
-      >
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelDateLabel}>
-            {selectedDate.getDate()}{' '}
-            {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
-            {selectedDate.getFullYear()}
-          </Text>
-          <View style={styles.filterChips}>
-            <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
-            <Chip label="Climb" selected={typeFilter === 'climb'} onPress={() => setTypeFilter('climb')} />
-            <Chip label="Strength" selected={typeFilter === 'strength'} onPress={() => setTypeFilter('strength')} />
+            <TouchableOpacity
+              onPress={nextMonth}
+              disabled={!canGoNext}
+              style={styles.navBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.navArrow, !canGoNext && styles.navArrowDisabled]}>{'>'}</Text>
+            </TouchableOpacity>
           </View>
-        </View>
 
-        {selectedSessions.length === 0 ? (
-          <Text style={styles.noSessions}>No sessions on this day</Text>
-        ) : (
-          <View style={styles.timeline}>
-            <View style={styles.timelineLine} />
-            {selectedSessions.map((session) => {
-              const replay = sessionReplayById.get(session.id);
-              const nodeColor =
-                replay?.dotColor ?? (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH);
-              const lastGradeLabel =
-                session.type === 'climb'
-                  ? replay?.climbs[replay.climbs.length - 1]?.gradeLabel
-                  : undefined;
+          <View style={styles.weekdayRow}>
+            {WEEKDAY_LABELS.map((label) => (
+              <View key={label} style={styles.weekdayCell}>
+                <Text style={styles.weekdayText}>{label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.grid}>
+            {grid.map((day, idx) => {
+              if (!day) {
+                return <View key={`blank-${idx}`} style={styles.dayCell} />;
+              }
+
+              const key = formatLocalDate(day);
+              const dayDots = dotsByDate.get(key);
+              const isToday = sameDay(day, today);
+              const isSelected = sameDay(day, selectedDate);
 
               return (
-                <View key={session.id} style={styles.timelineItem}>
-                  <View style={[styles.timelineNode, { backgroundColor: nodeColor }]} />
-                  <TouchableOpacity
-                    style={styles.timelineCard}
-                    onPress={() =>
-                      navigation.navigate('SessionDetail', { sessionId: session.id })
-                    }
-                    activeOpacity={0.75}
+                <TouchableOpacity
+                  key={key}
+                  style={styles.dayCell}
+                  onPress={() => setSelectedDate(day)}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.dayNumberWrapper,
+                      isSelected && styles.dayNumberSelected,
+                      isToday && !isSelected && styles.dayNumberToday,
+                    ]}
                   >
-                    <View style={styles.timelineCardLeft}>
-                      {lastGradeLabel ? (
-                        <View style={[styles.gradeBadge, { backgroundColor: nodeColor }]}>
-                          <Text style={styles.gradeBadgeText}>{lastGradeLabel}</Text>
-                        </View>
-                      ) : (
-                        <View style={[styles.sessionTypeDot, { backgroundColor: nodeColor }]} />
-                      )}
-                      <Text style={styles.sessionTypeLabel}>
-                        {formatSessionTitle(session)}
-                      </Text>
-                    </View>
-                    <View style={styles.sessionRowRight}>
-                      <Text style={styles.sessionTime}>
-                        {formatTime(session.started_at)}
-                      </Text>
-                      {session.completed_at != null ? (
-                        <Text style={styles.sessionDuration}>
-                          {formatDuration(session.started_at, session.completed_at)}
-                        </Text>
-                      ) : null}
-                      <Text style={styles.sessionChevron}>{'>'}</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
+                    <Text
+                      style={[
+                        styles.dayNumber,
+                        isToday && !isSelected && styles.dayNumberTodayText,
+                        isSelected && styles.dayNumberSelectedText,
+                      ]}
+                    >
+                      {day.getDate()}
+                    </Text>
+                  </View>
+                  <View style={styles.dotsRow}>
+                    {dayDots?.climbColor && (
+                      <View style={[styles.dot, { backgroundColor: dayDots.climbColor }]} />
+                    )}
+                    {dayDots?.strengthColor && (
+                      <View style={[styles.dot, { backgroundColor: dayDots.strengthColor }]} />
+                    )}
+                  </View>
+                </TouchableOpacity>
               );
             })}
           </View>
-        )}
-      </ScrollView>
+
+          <View style={styles.divider} />
+
+          <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+            <View style={styles.panelHeader}>
+              <Text style={styles.panelDateLabel}>
+                {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
+                {selectedDate.getFullYear()}
+              </Text>
+              {filterChips}
+            </View>
+
+            {selectedSessions.length === 0 ? (
+              <Text style={styles.noSessions}>No sessions on this day</Text>
+            ) : (
+              <View style={styles.timeline}>
+                <View style={styles.timelineLine} />
+                {selectedSessions.map((session) => renderSessionItem(session, sessionReplayById))}
+              </View>
+            )}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {viewMode === 'week' ? (
+        <>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={prevWeek}
+              disabled={!canGoPrevWeek}
+              style={styles.navBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.navArrow, !canGoPrevWeek && styles.navArrowDisabled]}>{'<'}</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.monthLabel}>{formatWeekRangeLabel(weekStart)}</Text>
+
+            <TouchableOpacity
+              onPress={nextWeek}
+              disabled={!canGoNextWeek}
+              style={styles.navBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.navArrow, !canGoNextWeek && styles.navArrowDisabled]}>{'>'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+            <View style={styles.panelHeader}>{filterChips}</View>
+            {renderGroupedTimeline(weekGroups, weekSessionReplayById)}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {viewMode === 'list' ? (
+        <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+          <View style={[styles.panelHeader, styles.listPanelHeader]}>{filterChips}</View>
+          {renderGroupedTimeline(allGroups, allSessionReplayById)}
+        </ScrollView>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -358,6 +496,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: spacing.lg,
+  },
+
+  viewSwitcher: {
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.sm,
+    alignItems: 'flex-start',
   },
 
   // Header
@@ -471,6 +615,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.xs,
     gap: spacing.xs,
   },
+  listPanelHeader: {
+    marginTop: spacing.xs,
+  },
   panelDateLabel: {
     ...typography.section,
   },
@@ -483,6 +630,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textMuted,
     paddingVertical: spacing.sm,
   },
+
+  groupBlock: {
+    marginBottom: spacing.md,
+  },
+  groupDateLabel: {
+    ...typography.meta,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+
   timeline: {
     position: 'relative',
     paddingLeft: 20,

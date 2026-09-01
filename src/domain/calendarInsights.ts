@@ -10,8 +10,18 @@ type CalendarInsightColors = {
 
 export type SessionReplay = {
   dotColor: string;
+  /** Label of the hardest climb logged in the session (e.g. "V6"), if any. */
+  hardestGradeLabel?: string;
   climbs: ClimbLog[];
   sets: LoggedSet[];
+};
+
+/** Hardest climb by gradeMax; among ties, the most recently logged one. */
+const findHardestClimb = (climbs: ClimbLog[]): ClimbLog | undefined => {
+  return climbs.reduce<ClimbLog | undefined>((hardest, climb) => {
+    if (!hardest || climb.gradeMax >= hardest.gradeMax) return climb;
+    return hardest;
+  }, undefined);
 };
 
 export type DayDots = {
@@ -29,9 +39,10 @@ export const buildSessionReplayMap = (
     const events = getSessionEvents(session.id);
     if (session.type === 'climb') {
       const climbs = applyClimbEvents(events);
-      const lastClimb = climbs[climbs.length - 1];
+      const hardestClimb = findHardestClimb(climbs);
       map.set(session.id, {
-        dotColor: lastClimb?.gradeColor || insightColors.climb,
+        dotColor: hardestClimb?.gradeColor || insightColors.climb,
+        hardestGradeLabel: hardestClimb?.gradeLabel,
         climbs,
         sets: [],
       });

@@ -30,10 +30,11 @@ const climbEvent = (
   gradeLabel: string,
   gradeColor: string | null = null,
   result: 'SEND' | 'FLASH' = 'SEND',
+  gradeMax = 1,
 ) => ({
   id,
   type: 'CLIMB_LOGGED',
-  payload: { gradeLabel, gradeMin: 1, gradeMax: 1, result, gradeColor },
+  payload: { gradeLabel, gradeMin: gradeMax, gradeMax, result, gradeColor },
   createdAt: 1,
 });
 
@@ -72,15 +73,27 @@ describe('buildSessionReplayMap', () => {
     expect(replay.sets).toHaveLength(0);
   });
 
-  it('uses gradeColor of the last climb as dotColor', () => {
+  it('uses gradeColor and label of the hardest climb as dotColor, regardless of log order', () => {
     const session = makeSession({ id: 'sess-1', type: 'climb' });
     mockGetSessionEvents.mockReturnValueOnce([
-      climbEvent('evt-a', 'V2', '#aaa'),
-      climbEvent('evt-b', 'V5', '#bbb'),
+      climbEvent('evt-a', 'V5', '#bbb', 'SEND', 5),
+      climbEvent('evt-b', 'V2', '#aaa', 'SEND', 2), // logged after, but easier
     ]);
 
     const result = buildSessionReplayMap([session], colors);
     expect(result.get('sess-1')!.dotColor).toBe('#bbb');
+    expect(result.get('sess-1')!.hardestGradeLabel).toBe('V5');
+  });
+
+  it('breaks a tie between equally-hard climbs by using the most recently logged one', () => {
+    const session = makeSession({ id: 'sess-1', type: 'climb' });
+    mockGetSessionEvents.mockReturnValueOnce([
+      climbEvent('evt-a', 'V3-a', '#aaa', 'SEND', 3),
+      climbEvent('evt-b', 'V3-b', '#bbb', 'SEND', 3),
+    ]);
+
+    const result = buildSessionReplayMap([session], colors);
+    expect(result.get('sess-1')!.hardestGradeLabel).toBe('V3-b');
   });
 
   it('falls back to insightColors.climb as dotColor when last climb has no gradeColor', () => {
