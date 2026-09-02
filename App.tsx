@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
 import { useEffect, useMemo, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -141,7 +142,7 @@ function AppContent() {
 
 // Matches darkColors.background — used only before the DB (and therefore ThemeProvider,
 // which reads the persisted theme preference from it) is confirmed ready.
-const FALLBACK_BACKGROUND = '#0a0e14';
+const FALLBACK_BACKGROUND = '#121212';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -154,6 +155,24 @@ export default function App() {
     } catch (e) {
       setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');
     }
+  }, []);
+
+  useEffect(() => {
+    // Fetch and apply an OTA update immediately on launch, instead of
+    // waiting for the default "downloads now, applies next launch"
+    // behavior -- one reopen picks up new changes rather than two.
+    if (__DEV__) return;
+    (async () => {
+      try {
+        const result = await Updates.checkForUpdateAsync();
+        if (result.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {
+        // No network, no update server reachable, etc. -- non-fatal, keep using the current bundle.
+      }
+    })();
   }, []);
 
   if (initError) {
