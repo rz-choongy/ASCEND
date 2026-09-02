@@ -12,7 +12,7 @@ import {
 import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, ScreenHeader, radius, spacing, useTheme } from '../ui';
+import { Button, PressableScale, ScreenHeader, radius, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 
 type GymSelectScreenProps = RootStackScreenProps<'GymSelect'>;
@@ -33,6 +33,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const returnToSessionId = route.params?.returnToSessionId;
+  const allowDelete = route.params?.allowDelete ?? false;
   const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
   /** null = root level; string = drilling into a company */
@@ -140,43 +141,47 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           {branches.map((branch) => {
             const selected = branch.id === selectedGymId;
             return (
-              <Pressable
-                key={branch.id}
-                style={[styles.gymRow, selected ? styles.gymRowSelected : null]}
-                onPress={() => handleSelectGym(branch.id)}
-              >
-                <View style={styles.gymTextCol}>
-                  <Text style={styles.gymName}>{branch.name}</Text>
-                  <Text style={styles.gymMeta}>
-                    Grades from {drillParent?.name ?? 'company'}
-                  </Text>
-                </View>
-                <View style={styles.actionCol}>
-                  <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
-                    {selected ? 'Selected' : 'Use'}
-                  </Text>
-                  <View style={styles.actionButtonsRow}>
-                    <Pressable
-                      onPress={() =>
-                        navigation.navigate('GymEdit', {
-                          returnToSessionId,
-                          gymId: branch.id,
-                        })
-                      }
-                      hitSlop={10}
-                    >
-                      <Text style={styles.editText}>Rename</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handleDeleteGym(branch)}
-                      hitSlop={10}
-                      style={styles.deleteButton}
-                    >
-                      <Text style={styles.deleteButtonText}>×</Text>
-                    </Pressable>
+              <View key={branch.id} style={[styles.gymCard, selected ? styles.gymCardSelected : null]}>
+                <View style={styles.gymHeaderRow}>
+                  <View style={styles.gymTextCol}>
+                    <Text style={styles.gymName}>{branch.name}</Text>
+                    <Text style={styles.gymMeta}>Grades from {drillParent?.name ?? 'company'}</Text>
                   </View>
+                  {selected ? <Text style={styles.selectedBadge}>Selected</Text> : null}
                 </View>
-              </Pressable>
+                <View style={styles.actionButtonsRow}>
+                  <PressableScale
+                    style={[styles.actionButton, styles.useButton, selected ? styles.useButtonSelected : null]}
+                    onPress={() => handleSelectGym(branch.id)}
+                    scaleTo={0.96}
+                  >
+                    <Text style={[styles.actionButtonText, selected ? styles.useButtonTextSelected : null]}>
+                      {selected ? 'In use' : 'Use'}
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    style={styles.actionButton}
+                    onPress={() =>
+                      navigation.navigate('GymEdit', {
+                        returnToSessionId,
+                        gymId: branch.id,
+                      })
+                    }
+                    scaleTo={0.96}
+                  >
+                    <Text style={styles.actionButtonText}>Rename</Text>
+                  </PressableScale>
+                  {allowDelete ? (
+                    <PressableScale
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteGym(branch)}
+                      scaleTo={0.94}
+                    >
+                      <Text style={styles.deleteButtonText}>Delete</Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
+              </View>
             );
           })}
         </ScrollView>
@@ -218,53 +223,64 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           const selected = gym.id === selectedGymId;
           const isCompany = count > 0;
           return (
-            <Pressable
+            <View
               key={gym.id}
-              style={[styles.gymRow, selected && !isCompany ? styles.gymRowSelected : null]}
-              onPress={() => handleRootGymPress(gym)}
+              style={[styles.gymCard, selected && !isCompany ? styles.gymCardSelected : null]}
             >
-              <View style={styles.gymTextCol}>
-                <Text style={styles.gymName}>{gym.name}</Text>
-                <Text style={styles.gymMeta}>
-                  {isCompany
-                    ? `${count} branch${count === 1 ? '' : 'es'}`
-                    : gradingTypeLabel(gym.grading_type)}
-                </Text>
+              <View style={styles.gymHeaderRow}>
+                <View style={styles.gymTextCol}>
+                  <Text style={styles.gymName}>{gym.name}</Text>
+                  <Text style={styles.gymMeta}>
+                    {isCompany
+                      ? `${count} branch${count === 1 ? '' : 'es'}`
+                      : gradingTypeLabel(gym.grading_type)}
+                  </Text>
+                </View>
+                {selected && !isCompany ? <Text style={styles.selectedBadge}>Selected</Text> : null}
               </View>
-              <View style={styles.actionCol}>
-                {isCompany ? (
-                  <Text style={styles.drillText}>Branches ›</Text>
-                ) : (
-                  <>
-                    <Text style={[styles.selectText, selected ? styles.selectTextActive : null]}>
-                      {selected ? 'Selected' : 'Use'}
+              {isCompany ? (
+                <PressableScale
+                  style={styles.actionButtonWide}
+                  onPress={() => handleRootGymPress(gym)}
+                  scaleTo={0.97}
+                >
+                  <Text style={styles.actionButtonText}>View branches ›</Text>
+                </PressableScale>
+              ) : (
+                <View style={styles.actionButtonsRow}>
+                  <PressableScale
+                    style={[styles.actionButton, styles.useButton, selected ? styles.useButtonSelected : null]}
+                    onPress={() => handleSelectGym(gym.id)}
+                    scaleTo={0.96}
+                  >
+                    <Text style={[styles.actionButtonText, selected ? styles.useButtonTextSelected : null]}>
+                      {selected ? 'In use' : 'Use'}
                     </Text>
-                    <View style={styles.actionButtonsRow}>
-                      <Pressable
-                        onPress={() =>
-                          navigation.navigate('GymEdit', {
-                            returnToSessionId,
-                            gymId: gym.id,
-                          })
-                        }
-                        hitSlop={10}
-                      >
-                        <Text style={styles.editText}>Edit grades</Text>
-                      </Pressable>
-                      {!gym.is_default ? (
-                        <Pressable
-                          onPress={() => handleDeleteGym(gym)}
-                          hitSlop={10}
-                          style={styles.deleteButton}
-                        >
-                          <Text style={styles.deleteButtonText}>×</Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </>
-                )}
-              </View>
-            </Pressable>
+                  </PressableScale>
+                  <PressableScale
+                    style={styles.actionButton}
+                    onPress={() =>
+                      navigation.navigate('GymEdit', {
+                        returnToSessionId,
+                        gymId: gym.id,
+                      })
+                    }
+                    scaleTo={0.96}
+                  >
+                    <Text style={styles.actionButtonText}>Edit grades</Text>
+                  </PressableScale>
+                  {allowDelete && !gym.is_default ? (
+                    <PressableScale
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteGym(gym)}
+                      scaleTo={0.94}
+                    >
+                      <Text style={styles.deleteButtonText}>Delete</Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
+              )}
+            </View>
           );
         })}
       </ScrollView>
@@ -311,19 +327,23 @@ const createStyles = (colors: ThemeColors) =>
     gap: spacing.xs,
     paddingBottom: spacing.lg,
   },
-  gymRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  gymCard: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     padding: spacing.sm,
+    gap: spacing.xs,
   },
-  gymRowSelected: {
+  gymCardSelected: {
     borderColor: colors.accent,
     backgroundColor: colors.accentMuted,
+  },
+  gymHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   gymTextCol: {
     flex: 1,
@@ -339,50 +359,65 @@ const createStyles = (colors: ThemeColors) =>
     fontWeight: '600',
     marginTop: 4,
   },
-  actionCol: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  selectText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+  selectedBadge: {
+    color: colors.accent,
+    fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  selectTextActive: {
-    color: colors.accent,
-  },
-  drillText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  editText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-  },
   actionButtonsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'stretch',
+    gap: spacing.xs,
   },
-  deleteButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  actionButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  actionButtonWide: {
+    minHeight: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteButtonText: {
-    color: colors.textMuted,
+  actionButtonText: {
+    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: '800',
-    lineHeight: 15,
+  },
+  useButton: {
+    borderColor: colors.accent,
+  },
+  useButtonSelected: {
+    backgroundColor: colors.accent,
+  },
+  useButtonTextSelected: {
+    color: colors.textInverse,
+  },
+  deleteButton: {
+    minHeight: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  deleteButtonText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: '800',
   },
   emptyCard: {
     borderWidth: 1,

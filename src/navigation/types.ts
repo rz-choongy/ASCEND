@@ -6,7 +6,7 @@ export type RootStackParamList = {
   ClimbLogger: { sessionId: string; gymId?: string };
   StrengthLogger: { sessionId: string };
   SessionDetail: { sessionId: string };
-  GymSelect: { returnToSessionId?: string } | undefined;
+  GymSelect: { returnToSessionId?: string; allowDelete?: boolean } | undefined;
   GymEdit: { returnToSessionId?: string; gymId?: string; parentId?: string } | undefined;
   Settings: undefined;
 };

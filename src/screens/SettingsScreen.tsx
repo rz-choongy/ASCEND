@@ -70,7 +70,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             title="Default gym"
             subtitle="Used to prefill new climbing sessions"
             meta={gymName}
-            onPress={() => navigation.navigate('GymSelect')}
+            onPress={() => navigation.navigate('GymSelect', { allowDelete: true })}
           />
           <ListRow
             title="Session timer"
