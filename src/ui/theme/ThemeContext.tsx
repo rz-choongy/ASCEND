@@ -1,7 +1,19 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
-import { getThemeMode, setThemeMode as persistThemeMode } from '../../domain/settingsStore';
-import { darkColors, lightColors, type ThemeColors, type ThemeMode } from '../tokens/colors';
+import {
+  getAccentColorId,
+  getThemeMode,
+  setAccentColorId as persistAccentColorId,
+  setThemeMode as persistThemeMode,
+} from '../../domain/settingsStore';
+import {
+  applyAccent,
+  darkColors,
+  lightColors,
+  type AccentColorId,
+  type ThemeColors,
+  type ThemeMode,
+} from '../tokens/colors';
 import { createTypography, type Typography } from '../tokens/typography';
 
 type ThemeContextValue = {
@@ -9,6 +21,8 @@ type ThemeContextValue = {
   typography: Typography;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
+  accentId: AccentColorId;
+  setAccentId: (accentId: AccentColorId) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -18,21 +32,30 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [mode, setModeState] = useState<ThemeMode>(() => {
     return getThemeMode() ?? (systemScheme === 'light' ? 'light' : 'dark');
   });
+  const [accentId, setAccentIdState] = useState<AccentColorId>(() => getAccentColorId());
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
     persistThemeMode(next);
   }, []);
 
+  const setAccentId = useCallback((next: AccentColorId) => {
+    setAccentIdState(next);
+    persistAccentColorId(next);
+  }, []);
+
   const value = useMemo<ThemeContextValue>(() => {
-    const colors = mode === 'light' ? lightColors : darkColors;
+    const base = mode === 'light' ? lightColors : darkColors;
+    const colors = applyAccent(base, accentId, mode);
     return {
       colors,
       typography: createTypography(colors),
       mode,
       setMode,
+      accentId,
+      setAccentId,
     };
-  }, [mode, setMode]);
+  }, [mode, setMode, accentId, setAccentId]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
