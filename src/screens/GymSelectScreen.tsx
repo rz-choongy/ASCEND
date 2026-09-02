@@ -115,36 +115,32 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
             const selected = branch.id === selectedGymId;
             return (
               <View key={branch.id} style={[styles.gymCard, selected ? styles.gymCardSelected : null]}>
-                <View style={styles.gymHeaderRow}>
-                  <View style={styles.gymTextCol}>
-                    <Text style={styles.gymName}>{branch.name}</Text>
-                    <Text style={styles.gymMeta}>Grades from {drillParent?.name ?? 'company'}</Text>
-                  </View>
-                  {selected ? <Text style={styles.selectedBadge}>Selected</Text> : null}
+                <View style={styles.gymTextCol}>
+                  <Text style={styles.gymName}>{branch.name}</Text>
+                  <Text style={styles.gymMeta}>Grades from {drillParent?.name ?? 'company'}</Text>
                 </View>
-                <View style={styles.actionButtonsRow}>
-                  <PressableScale
-                    style={[styles.actionButton, styles.useButton, selected ? styles.useButtonSelected : null]}
-                    onPress={() => handleSelectGym(branch.id)}
-                    scaleTo={0.96}
-                  >
-                    <Text style={[styles.actionButtonText, selected ? styles.useButtonTextSelected : null]}>
-                      {selected ? 'In use' : 'Use'}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    style={styles.actionButton}
-                    onPress={() =>
-                      navigation.navigate('GymEdit', {
-                        returnToSessionId,
-                        gymId: branch.id,
-                      })
-                    }
-                    scaleTo={0.96}
-                  >
-                    <Text style={styles.actionButtonText}>Rename</Text>
-                  </PressableScale>
-                </View>
+                <PressableScale
+                  style={[styles.useButton, selected ? styles.useButtonSelected : null]}
+                  onPress={() => handleSelectGym(branch.id)}
+                  scaleTo={0.96}
+                >
+                  <Text style={[styles.useButtonText, selected ? styles.useButtonTextSelected : null]}>
+                    {selected ? 'In use' : 'Use'}
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  style={styles.editIconButton}
+                  onPress={() =>
+                    navigation.navigate('GymEdit', {
+                      returnToSessionId,
+                      gymId: branch.id,
+                    })
+                  }
+                  scaleTo={0.9}
+                  hitSlop={6}
+                >
+                  <Text style={styles.editIconGlyph}>✎</Text>
+                </PressableScale>
               </View>
             );
           })}
@@ -186,55 +182,52 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           const count = branchCount(gym.id);
           const selected = gym.id === selectedGymId;
           const isCompany = count > 0;
-          return (
-            <View
-              key={gym.id}
-              style={[styles.gymCard, selected && !isCompany ? styles.gymCardSelected : null]}
-            >
-              <View style={styles.gymHeaderRow}>
+
+          if (isCompany) {
+            return (
+              <PressableScale
+                key={gym.id}
+                style={styles.gymCard}
+                onPress={() => handleRootGymPress(gym)}
+                scaleTo={0.98}
+              >
                 <View style={styles.gymTextCol}>
                   <Text style={styles.gymName}>{gym.name}</Text>
-                  <Text style={styles.gymMeta}>
-                    {isCompany
-                      ? `${count} branch${count === 1 ? '' : 'es'}`
-                      : gradingTypeLabel(gym.grading_type)}
-                  </Text>
+                  <Text style={styles.gymMeta}>{`${count} branch${count === 1 ? '' : 'es'}`}</Text>
                 </View>
-                {selected && !isCompany ? <Text style={styles.selectedBadge}>Selected</Text> : null}
+                <Text style={styles.chevron}>›</Text>
+              </PressableScale>
+            );
+          }
+
+          return (
+            <View key={gym.id} style={[styles.gymCard, selected ? styles.gymCardSelected : null]}>
+              <View style={styles.gymTextCol}>
+                <Text style={styles.gymName}>{gym.name}</Text>
+                <Text style={styles.gymMeta}>{gradingTypeLabel(gym.grading_type)}</Text>
               </View>
-              {isCompany ? (
-                <PressableScale
-                  style={styles.actionButtonWide}
-                  onPress={() => handleRootGymPress(gym)}
-                  scaleTo={0.97}
-                >
-                  <Text style={styles.actionButtonText}>View branches ›</Text>
-                </PressableScale>
-              ) : (
-                <View style={styles.actionButtonsRow}>
-                  <PressableScale
-                    style={[styles.actionButton, styles.useButton, selected ? styles.useButtonSelected : null]}
-                    onPress={() => handleSelectGym(gym.id)}
-                    scaleTo={0.96}
-                  >
-                    <Text style={[styles.actionButtonText, selected ? styles.useButtonTextSelected : null]}>
-                      {selected ? 'In use' : 'Use'}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    style={styles.actionButton}
-                    onPress={() =>
-                      navigation.navigate('GymEdit', {
-                        returnToSessionId,
-                        gymId: gym.id,
-                      })
-                    }
-                    scaleTo={0.96}
-                  >
-                    <Text style={styles.actionButtonText}>Edit grades</Text>
-                  </PressableScale>
-                </View>
-              )}
+              <PressableScale
+                style={[styles.useButton, selected ? styles.useButtonSelected : null]}
+                onPress={() => handleSelectGym(gym.id)}
+                scaleTo={0.96}
+              >
+                <Text style={[styles.useButtonText, selected ? styles.useButtonTextSelected : null]}>
+                  {selected ? 'In use' : 'Use'}
+                </Text>
+              </PressableScale>
+              <PressableScale
+                style={styles.editIconButton}
+                onPress={() =>
+                  navigation.navigate('GymEdit', {
+                    returnToSessionId,
+                    gymId: gym.id,
+                  })
+                }
+                scaleTo={0.9}
+                hitSlop={6}
+              >
+                <Text style={styles.editIconGlyph}>✎</Text>
+              </PressableScale>
             </View>
           );
         })}
@@ -283,22 +276,19 @@ const createStyles = (colors: ThemeColors) =>
     paddingBottom: spacing.lg,
   },
   gymCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    padding: spacing.sm,
-    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   gymCardSelected: {
     borderColor: colors.accent,
     backgroundColor: colors.accentMuted,
-  },
-  gymHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
   },
   gymTextCol: {
     flex: 1,
@@ -314,51 +304,44 @@ const createStyles = (colors: ThemeColors) =>
     fontWeight: '600',
     marginTop: 4,
   },
-  selectedBadge: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: spacing.xs,
-  },
-  actionButton: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
-  actionButtonWide: {
-    minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionButtonText: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '800',
+  chevron: {
+    color: colors.textMuted,
+    fontSize: 22,
+    fontWeight: '700',
   },
   useButton: {
+    minHeight: 36,
+    borderRadius: radius.sm,
+    borderWidth: 1,
     borderColor: colors.accent,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
   },
   useButtonSelected: {
     backgroundColor: colors.accent,
   },
+  useButtonText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   useButtonTextSelected: {
     color: colors.textInverse,
+  },
+  editIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editIconGlyph: {
+    color: colors.textSecondary,
+    fontSize: 15,
   },
   emptyCard: {
     borderWidth: 1,
