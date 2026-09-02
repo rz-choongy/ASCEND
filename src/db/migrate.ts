@@ -5,15 +5,24 @@ const now = (): number => Date.now();
 const DEFAULT_CLIMB_GYM_ID = 'gym-default-v-scale';
 const SELECTED_CLIMB_GYM_KEY = 'selected_climb_gym_id';
 
+// Kept in sync by hand with gymStore.ts's defaultVScaleGrades -- this is the only other
+// place the default V-scale grade set is defined (SQL seeding here needs snake_case params;
+// gymStore's version feeds normal app code with camelCase fields), so a divergence between
+// the two is exactly what caused the old V7+-only row here to double up against gymStore's
+// later V7-V11+ split.
 const defaultGrades = [
-  { id: 'grade-default-v0', label: 'V0', grade_min: 0, grade_max: 0, color_hex: '#65A30D', sort_order: 0 },
+  { id: 'grade-default-v0', label: 'V0', grade_min: 0, grade_max: 0, color_hex: '#22C55E', sort_order: 0 },
   { id: 'grade-default-v1', label: 'V1', grade_min: 1, grade_max: 1, color_hex: '#84CC16', sort_order: 1 },
   { id: 'grade-default-v2', label: 'V2', grade_min: 2, grade_max: 2, color_hex: '#EAB308', sort_order: 2 },
-  { id: 'grade-default-v3', label: 'V3', grade_min: 3, grade_max: 3, color_hex: '#F97316', sort_order: 3 },
-  { id: 'grade-default-v4', label: 'V4', grade_min: 4, grade_max: 4, color_hex: '#EF4444', sort_order: 4 },
-  { id: 'grade-default-v5', label: 'V5', grade_min: 5, grade_max: 5, color_hex: '#A855F7', sort_order: 5 },
-  { id: 'grade-default-v6', label: 'V6', grade_min: 6, grade_max: 6, color_hex: '#3B82F6', sort_order: 6 },
-  { id: 'grade-default-v7-plus', label: 'V7+', grade_min: 7, grade_max: 10, color_hex: '#111827', sort_order: 7 },
+  { id: 'grade-default-v3', label: 'V3', grade_min: 3, grade_max: 3, color_hex: '#F59E0B', sort_order: 3 },
+  { id: 'grade-default-v4', label: 'V4', grade_min: 4, grade_max: 4, color_hex: '#F97316', sort_order: 4 },
+  { id: 'grade-default-v5', label: 'V5', grade_min: 5, grade_max: 5, color_hex: '#EF4444', sort_order: 5 },
+  { id: 'grade-default-v6', label: 'V6', grade_min: 6, grade_max: 6, color_hex: '#EC4899', sort_order: 6 },
+  { id: 'grade-default-v7', label: 'V7', grade_min: 7, grade_max: 7, color_hex: '#D946EF', sort_order: 7 },
+  { id: 'grade-default-v8', label: 'V8', grade_min: 8, grade_max: 8, color_hex: '#A855F7', sort_order: 8 },
+  { id: 'grade-default-v9', label: 'V9', grade_min: 9, grade_max: 9, color_hex: '#6366F1', sort_order: 9 },
+  { id: 'grade-default-v10', label: 'V10', grade_min: 10, grade_max: 10, color_hex: '#3B82F6', sort_order: 10 },
+  { id: 'grade-default-v11-plus', label: 'V11+', grade_min: 11, grade_max: 17, color_hex: '#111827', sort_order: 11 },
 ];
 
 const defaultExercises = [
@@ -24,7 +33,7 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 3;
+const APP_SCHEMA_VERSION = 4;
 
 type Migration = {
   version: number;
@@ -50,7 +59,7 @@ const ensureColumns = (table: string, columns: { name: string; ddl: string }[]):
   });
 };
 
-const ensureBaseSchema = (): void => {
+const ensureSchema = (): void => {
   run(`
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY NOT NULL,
@@ -140,7 +149,17 @@ const ensureBaseSchema = (): void => {
       updated_at INTEGER NOT NULL
     );
   `);
+};
 
+/**
+ * Seed data only -- must run once on true first-run (migration version 1), never as part
+ * of the "re-run idempotently" safety net below. INSERT OR IGNORE on a fixed id is only a
+ * no-op if that exact row still exists; once the user edits a gym's grades, the fixed-id
+ * seed rows get deleted and replaced with fresh-uuid ones, so re-running this on every
+ * launch was re-adding the original seed rows alongside the user's edits -- doubling the
+ * grade list every time the app started.
+ */
+const seedDefaults = (): void => {
   const seededAt = now();
 
   run(
@@ -202,6 +221,30 @@ const ensureBaseSchema = (): void => {
   });
 };
 
+const ensureBaseSchema = (): void => {
+  ensureSchema();
+  seedDefaults();
+};
+
+/**
+ * One-time cleanup for databases that already hit the reseed-doubling bug above: for each
+ * gym, keep only the most-recently-updated grade_options row per label (the user's edit,
+ * if they made one) and drop the rest.
+ */
+const dedupeGymGradeOptions = (): void => {
+  run(`
+    DELETE FROM gym_grade_options
+    WHERE rowid NOT IN (
+      SELECT g1.rowid FROM gym_grade_options g1
+      WHERE g1.updated_at = (
+        SELECT MAX(g2.updated_at) FROM gym_grade_options g2
+        WHERE g2.gym_id = g1.gym_id AND g2.label = g1.label
+      )
+      GROUP BY g1.gym_id, g1.label
+    );
+  `);
+};
+
 const ensureBetaHardening = (): void => {
   // Preserve the newest active session if an old dev/beta DB somehow has duplicates.
   const activeSessions = getAll<{ id: string }>(
@@ -234,6 +277,7 @@ const migrations: Migration[] = [
   { version: 1, up: ensureBaseSchema },
   { version: 2, up: ensureBetaHardening },
   { version: 3, up: addGymParentIdColumn },
+  { version: 4, up: dedupeGymGradeOptions },
 ];
 
 export const migrate = (): void => {
@@ -251,8 +295,10 @@ export const migrate = (): void => {
   }
 
   // Keep idempotent safety checks active for dev DBs whose user_version was touched manually.
+  // Schema only -- never re-seed here, or every launch would re-add default rows the user
+  // has since edited away (see seedDefaults' comment).
   if (currentVersion >= APP_SCHEMA_VERSION) {
-    ensureBaseSchema();
+    ensureSchema();
     ensureBetaHardening();
   }
 };
