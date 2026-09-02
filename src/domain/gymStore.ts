@@ -197,6 +197,16 @@ const ensureDefaultClimbGymSeeded = (): void => {
   // Superseded by explicit V7-V10 + V11+ rows below; old DBs seeded before that change still have it.
   run("DELETE FROM gym_grade_options WHERE id = 'grade-default-v7-plus';");
 
+  // Only seed when the default gym truly has no grades yet (a fresh DB). Once the user
+  // edits and saves, doReplaceGymGradeOptions deletes these fixed-id rows and inserts
+  // fresh-uuid ones -- re-adding the fixed-id rows here on every read used to bring the
+  // original seed set back alongside the user's edits, doubling the grade list.
+  const existingCount = getFirst<{ count: number }>(
+    'SELECT COUNT(*) as count FROM gym_grade_options WHERE gym_id = ?;',
+    [DEFAULT_CLIMB_GYM_ID]
+  );
+  if ((existingCount?.count ?? 0) > 0) return;
+
   defaultVScaleGrades.forEach((option) => {
     const normalized = normalizeGradeOption(option, option.sortOrder ?? 0);
     run(
