@@ -11,7 +11,11 @@ import type { Typography } from '../ui/tokens/typography';
 
 type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 
-const APP_VERSION = '1.0.0';
+// Bumped by hand with each shipped round of changes. Deliberately separate from
+// app.json's "version" field, which drives EAS's runtimeVersion (policy:
+// "appVersion") -- bumping that would break OTA updates for already-installed
+// builds, since it changes what runtime an `eas update` targets.
+const APP_VERSION = '1.0.4';
 
 export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const { colors, typography, mode, setMode } = useTheme();
@@ -70,7 +74,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             title="Default gym"
             subtitle="Used to prefill new climbing sessions"
             meta={gymName}
-            onPress={() => navigation.navigate('GymSelect', { allowDelete: true })}
+            onPress={() => navigation.navigate('GymSelect')}
           />
           <ListRow
             title="Session timer"

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   createGym,
   defaultOptionsForType,
+  deleteGym,
   getGradeOptionsForGym,
   getGymById,
   getGyms,
@@ -276,7 +277,40 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
       navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
       return;
     }
-    navigation.navigate('GymSelect');
+    // GymEdit is always pushed directly from GymSelect — goBack() returns to
+    // that exact instance instead of navigate(), which could otherwise stack
+    // a second GymSelect screen and leave Close bouncing between the two.
+    navigation.goBack();
+  };
+
+  const branchCount = (gymId: string): number =>
+    getGyms().filter((gym) => gym.parent_id === gymId).length;
+
+  const handleDelete = () => {
+    if (!editingGym) return;
+    const count = isBranchMode ? 0 : branchCount(editingGym.id);
+    const branchWarning =
+      count > 0 ? ` This also removes its ${count} branch${count === 1 ? '' : 'es'}.` : '';
+    const noun = isBranchMode ? 'branch' : 'gym';
+    Alert.alert(
+      `Delete ${editingGym.name}?`,
+      `This removes the ${noun} and its grade list.${branchWarning} Logged sessions keep their history.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              deleteGym(editingGym.id);
+              navigation.goBack();
+            } catch (e) {
+              Alert.alert('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleSave = () => {
@@ -292,7 +326,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         if (editingGymId) {
           // Rename existing branch — updateGym skips grade changes for branches
           updateGym({ id: editingGymId, name: trimmedName, gradingType, gradeOptions: [] });
-          navigation.navigate('GymSelect');
+          navigation.goBack();
           return;
         }
         // Create new branch
@@ -379,6 +413,11 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             onPress={handleSave}
             disabled={!name.trim() || isSaving}
           />
+          {editingGym ? (
+            <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
+              <Text style={styles.deleteLinkText}>Delete branch</Text>
+            </Pressable>
+          ) : null}
         </View>
       </SafeAreaView>
     );
@@ -496,6 +535,11 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           onPress={handleSave}
           disabled={(!editingGym && !name.trim()) || isSaving}
         />
+        {editingGym && !editingGym.is_default ? (
+          <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
+            <Text style={styles.deleteLinkText}>Delete gym</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {colorPickerIndex !== null ? (
@@ -718,6 +762,17 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   footer: {
     paddingTop: spacing.xs,
+    gap: spacing.xs,
+  },
+  deleteLink: {
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteLinkText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: '700',
   },
   inheritedNotice: {
     flexDirection: 'row',

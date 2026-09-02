@@ -3,7 +3,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  deleteGym,
   ensureSelectedClimbGym,
   getGyms,
   getSelectedClimbGym,
@@ -33,7 +32,6 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const returnToSessionId = route.params?.returnToSessionId;
-  const allowDelete = route.params?.allowDelete ?? false;
   const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
   /** null = root level; string = drilling into a company */
@@ -78,31 +76,6 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
     }
     setSelectedClimbGym(gymId);
     navigation.goBack();
-  };
-
-  const handleDeleteGym = (gym: GymRow) => {
-    const count = branchCount(gym.id);
-    const branchWarning = count > 0 ? ` This also removes its ${count} branch${count === 1 ? '' : 'es'}.` : '';
-    Alert.alert(
-      `Delete ${gym.name}?`,
-      `This removes the gym and its grade list.${branchWarning} Logged sessions keep their history.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            try {
-              deleteGym(gym.id);
-              setAllGyms(getGyms());
-              if (drillParentId === gym.id) setDrillParentId(null);
-            } catch (e) {
-              Alert.alert('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
-            }
-          },
-        },
-      ]
-    );
   };
 
   const handleRootGymPress = (gym: GymRow) => {
@@ -171,15 +144,6 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   >
                     <Text style={styles.actionButtonText}>Rename</Text>
                   </PressableScale>
-                  {allowDelete ? (
-                    <PressableScale
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteGym(branch)}
-                      scaleTo={0.94}
-                    >
-                      <Text style={styles.deleteButtonText}>Delete</Text>
-                    </PressableScale>
-                  ) : null}
                 </View>
               </View>
             );
@@ -269,15 +233,6 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   >
                     <Text style={styles.actionButtonText}>Edit grades</Text>
                   </PressableScale>
-                  {allowDelete && !gym.is_default ? (
-                    <PressableScale
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteGym(gym)}
-                      scaleTo={0.94}
-                    >
-                      <Text style={styles.deleteButtonText}>Delete</Text>
-                    </PressableScale>
-                  ) : null}
                 </View>
               )}
             </View>
@@ -404,20 +359,6 @@ const createStyles = (colors: ThemeColors) =>
   },
   useButtonTextSelected: {
     color: colors.textInverse,
-  },
-  deleteButton: {
-    minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  deleteButtonText: {
-    color: colors.danger,
-    fontSize: 13,
-    fontWeight: '800',
   },
   emptyCard: {
     borderWidth: 1,
