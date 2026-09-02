@@ -16,6 +16,10 @@ export const addDays = (date: Date, days: number): Date => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 };
 
+export const firstOfMonth = (date: Date): Date => {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+};
+
 /** Formats a duration in ms as "MM:SS", rolling to "H:MM:SS" past an hour. */
 export const formatElapsed = (ms: number): string => {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
