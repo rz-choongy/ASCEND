@@ -1,9 +1,12 @@
 import { getFirst, run } from '../db/db';
-import type { ThemeMode } from '../ui/tokens/colors';
+import { DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
+const ACCENT_COLOR_KEY = 'accent_color';
+
+const VALID_ACCENT_IDS: AccentColorId[] = ['blue', 'teal', 'purple', 'orange', 'rose'];
 
 type AppSettingRow = {
   value: string;
@@ -50,4 +53,16 @@ export const getProgressGradeGymId = (): string | null => {
 
 export const setProgressGradeGymId = (gymId: string): void => {
   setSetting(PROGRESS_GRADE_GYM_ID_KEY, gymId);
+};
+
+export const getAccentColorId = (): AccentColorId => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    ACCENT_COLOR_KEY,
+  ]);
+  const value = setting?.value;
+  return VALID_ACCENT_IDS.includes(value as AccentColorId) ? (value as AccentColorId) : DEFAULT_ACCENT_ID;
+};
+
+export const setAccentColorId = (accentId: AccentColorId): void => {
+  setSetting(ACCENT_COLOR_KEY, accentId);
 };

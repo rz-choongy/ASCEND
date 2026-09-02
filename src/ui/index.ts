@@ -1,4 +1,10 @@
-export { getContrastText, type ThemeColors, type ThemeMode } from './tokens/colors';
+export {
+  ACCENT_PALETTE,
+  getContrastText,
+  type AccentColorId,
+  type ThemeColors,
+  type ThemeMode,
+} from './tokens/colors';
 export { spacing } from './tokens/spacing';
 export { radius } from './tokens/radius';
 export { type Typography } from './tokens/typography';

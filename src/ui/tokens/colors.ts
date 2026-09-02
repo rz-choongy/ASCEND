@@ -23,25 +23,26 @@ const gradePalette = [
   '#3f473f',
 ];
 
+/** "Soft black" -- a neutral near-black, chosen over the earlier navy-tinted dark background. */
 export const darkColors = {
-  background: '#0a0e14',
-  backgroundWarm: '#0d1219',
-  surface: '#131820',
-  surfaceAlt: '#171d27',
-  surfaceRaised: '#1c2430',
-  border: '#242c38',
-  borderSoft: '#333d4c',
-  textPrimary: '#f5f7fa',
-  textSecondary: '#a9b2c3',
-  textMuted: '#6b7484',
-  textInverse: '#05080d',
+  background: '#121212',
+  backgroundWarm: '#161616',
+  surface: '#1c1c1c',
+  surfaceAlt: '#202020',
+  surfaceRaised: '#262626',
+  border: '#2e2e2e',
+  borderSoft: '#3d3d3d',
+  textPrimary: '#ececec',
+  textSecondary: '#adadad',
+  textMuted: '#7a7a7a',
+  textInverse: '#0a0a0a',
   accent: '#2f8fff',
   accentMuted: '#152238',
   accentSoft: '#1d3a5c',
   success: '#3ecf6e',
   warning: '#f2c45f',
   danger: '#f2564a',
-  overlay: 'rgba(4, 6, 10, 0.78)',
+  overlay: 'rgba(0, 0, 0, 0.78)',
   gradePalette,
 };
 
@@ -70,3 +71,42 @@ export const lightColors = {
 
 export type ThemeColors = typeof darkColors;
 export type ThemeMode = 'light' | 'dark';
+
+export type AccentColorId = 'blue' | 'teal' | 'purple' | 'orange' | 'rose';
+
+type AccentTint = { accent: string; accentMuted: string; accentSoft: string };
+
+export const ACCENT_PALETTE: Record<AccentColorId, { label: string; dark: AccentTint; light: AccentTint }> = {
+  blue: {
+    label: 'Blue',
+    dark: { accent: '#2f8fff', accentMuted: '#152238', accentSoft: '#1d3a5c' },
+    light: { accent: '#2f8fff', accentMuted: '#e7f1ff', accentSoft: '#cee3ff' },
+  },
+  teal: {
+    label: 'Teal',
+    dark: { accent: '#2dd4bf', accentMuted: '#0f2624', accentSoft: '#164a44' },
+    light: { accent: '#0d9488', accentMuted: '#e3faf6', accentSoft: '#b8f0e7' },
+  },
+  purple: {
+    label: 'Purple',
+    dark: { accent: '#a78bfa', accentMuted: '#241f38', accentSoft: '#3b2f5c' },
+    light: { accent: '#7c3aed', accentMuted: '#f1ebfe', accentSoft: '#ddccfb' },
+  },
+  orange: {
+    label: 'Orange',
+    dark: { accent: '#fb923c', accentMuted: '#2b1d10', accentSoft: '#4a2f16' },
+    light: { accent: '#ea580c', accentMuted: '#fdece0', accentSoft: '#fbd0ad' },
+  },
+  rose: {
+    label: 'Rose',
+    dark: { accent: '#fb7185', accentMuted: '#2b141a', accentSoft: '#4a1f29' },
+    light: { accent: '#e11d48', accentMuted: '#fde8ec', accentSoft: '#fac0cb' },
+  },
+};
+
+export const DEFAULT_ACCENT_ID: AccentColorId = 'blue';
+
+export const applyAccent = (base: ThemeColors, accentId: AccentColorId, mode: ThemeMode): ThemeColors => {
+  const tint = ACCENT_PALETTE[accentId]?.[mode] ?? ACCENT_PALETTE[DEFAULT_ACCENT_ID][mode];
+  return { ...base, ...tint };
+};

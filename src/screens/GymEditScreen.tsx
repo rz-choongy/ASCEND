@@ -26,7 +26,6 @@ import {
   PressableScale,
   ScreenHeader,
   Stepper,
-  getContrastText,
   radius,
   spacing,
   useTheme,
@@ -471,59 +470,43 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         {rows.map((row, index) => {
           const swatchColor = row.colorHex || colors.border;
           return (
-            <View key={row.draftId} style={styles.gradeCard}>
-              <View style={styles.gradeTopRow}>
-                <TextInput
-                  value={row.label}
-                  onChangeText={(value) => updateRow(index, { label: value })}
-                  placeholder="Label"
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.input, styles.labelInput]}
+            <View key={row.draftId} style={styles.gradeRow}>
+              <TextInput
+                value={row.label}
+                onChangeText={(value) => updateRow(index, { label: value })}
+                placeholder="Label"
+                placeholderTextColor={colors.textMuted}
+                style={[styles.input, styles.gradeLabelInput]}
+              />
+              <View style={styles.rangeGroup}>
+                <Stepper
+                  compact
+                  value={row.gradeMin}
+                  onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
+                  onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
                 />
-                <View style={[styles.previewChip, { backgroundColor: swatchColor }]}>
-                  <Text
-                    style={[styles.previewChipText, { color: getContrastText(swatchColor) }]}
-                    numberOfLines={1}
-                  >
-                    {row.label || '—'}
-                  </Text>
-                </View>
-                <PressableScale
-                  onPress={() => removeRow(index)}
-                  scaleTo={0.88}
-                  style={styles.deleteButton}
-                  hitSlop={8}
-                >
-                  <Text style={styles.deleteGlyph}>×</Text>
-                </PressableScale>
-              </View>
-
-              <View style={styles.gradeBottomRow}>
-                <View style={styles.rangeGroup}>
-                  <Text style={styles.rangeLabel}>Min</Text>
-                  <Stepper
-                    compact
-                    value={row.gradeMin}
-                    onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
-                    onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
-                  />
-                </View>
-                <View style={styles.rangeGroup}>
-                  <Text style={styles.rangeLabel}>Max</Text>
-                  <Stepper
-                    compact
-                    value={row.gradeMax}
-                    onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
-                    onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
-                  />
-                </View>
-                <PressableScale
-                  onPress={() => setColorPickerIndex(index)}
-                  scaleTo={0.9}
-                  style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
-                  hitSlop={6}
+                <Text style={styles.rangeDash}>–</Text>
+                <Stepper
+                  compact
+                  value={row.gradeMax}
+                  onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
+                  onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
                 />
               </View>
+              <PressableScale
+                onPress={() => setColorPickerIndex(index)}
+                scaleTo={0.9}
+                style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
+                hitSlop={6}
+              />
+              <PressableScale
+                onPress={() => removeRow(index)}
+                scaleTo={0.88}
+                style={styles.deleteButton}
+                hitSlop={8}
+              >
+                <Text style={styles.deleteGlyph}>×</Text>
+              </PressableScale>
             </View>
           );
         })}
@@ -650,33 +633,38 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 13,
     fontWeight: '800',
   },
-  gradeCard: {
+  gradeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.xs,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceRaised,
     padding: spacing.xs,
-    gap: spacing.xs,
   },
-  gradeTopRow: {
+  gradeLabelInput: {
+    flexGrow: 1,
+    flexShrink: 0,
+    minWidth: 76,
+  },
+  rangeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.xxs,
   },
-  labelInput: {
-    flex: 1,
+  rangeDash: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
   },
-  previewChip: {
-    minWidth: 52,
-    height: 40,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  previewChipText: {
-    fontSize: 12,
-    fontWeight: '800',
+  currentSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
   },
   deleteButton: {
     width: 32,
@@ -692,29 +680,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 16,
     fontWeight: '800',
     lineHeight: 18,
-  },
-  gradeBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  rangeGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  rangeLabel: {
-    ...typography.meta,
-    color: colors.textMuted,
-  },
-  currentSwatch: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    marginLeft: 'auto',
   },
   modalBackdrop: {
     flex: 1,
