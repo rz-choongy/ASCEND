@@ -77,7 +77,7 @@ function TabNavigator() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
+          height: 58,
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
@@ -210,8 +210,8 @@ export default function App() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     tabIconFrame: {
-      width: 44,
-      height: 34,
+      width: 42,
+      height: 32,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 0,

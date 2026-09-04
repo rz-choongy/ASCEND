@@ -354,9 +354,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   content: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
 
   // Header
@@ -418,8 +418,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   streakRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+    gap: 10,
+    marginTop: 4,
   },
   streakNumWrap: {
     flexDirection: 'row',
@@ -430,8 +430,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   streakNum: {
     ...typography.display,
-    fontSize: 42,
-    lineHeight: 40,
+    fontSize: 30,
+    lineHeight: 32,
   },
   streakLabel: {
     fontSize: 9.5,
@@ -449,11 +449,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   weekCell: {
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   weekDot: {
-    width: 13,
-    height: 13,
+    width: 10,
+    height: 10,
     borderWidth: 1,
     borderColor: colors.textMuted,
     backgroundColor: colors.background,
@@ -504,7 +504,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
   // CTA buttons
   ctaSection: {
-    gap: spacing.sm,
+    gap: spacing.s,
     marginTop: spacing.xs,
   },
   activeLockBox: {
@@ -532,7 +532,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     borderRadius: 0,
     backgroundColor: colors.surfaceAlt,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   gymLabel: {
     ...typography.meta,
@@ -549,7 +549,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   ctaRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: 6,
   },
   ctaPrimary: {
     flex: 2.6,
@@ -583,15 +583,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: 16,
+    padding: 12,
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
   },
   prGrade: {
     ...typography.display,
-    fontSize: 34,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 27,
     color: colors.accent,
     flexShrink: 0,
   },
@@ -624,8 +624,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 11,
+    gap: 10,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -685,8 +685,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 14,
-    paddingTop: 14,
+    paddingVertical: 10,
     marginTop: 4,
     borderTopWidth: 1,
     borderTopColor: colors.border,

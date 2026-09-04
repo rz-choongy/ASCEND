@@ -391,8 +391,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
+    paddingVertical: 6,
+    marginBottom: 10,
   },
   closeBtn: {
     width: 32,
@@ -452,8 +452,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     borderColor: colors.border,
     borderRadius: 0,
     backgroundColor: colors.surface,
-    padding: spacing.sm,
-    marginBottom: spacing.md,
+    padding: 12,
+    marginBottom: 14,
   },
   gymSelectorLabel: {
     ...typography.meta,
@@ -477,12 +477,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 7,
+    gap: 6,
     marginBottom: spacing.sm,
   },
   gradeTile: {
     width: '22.5%',
-    minHeight: 56,
+    minHeight: 46,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -505,8 +505,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
   actionRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
+    gap: 6,
+    marginBottom: 10,
   },
   actionButtonPrimary: {
     flex: 1.4,
@@ -527,8 +527,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.sm,
-    paddingTop: 14,
-    paddingBottom: 6,
+    paddingTop: 10,
+    paddingBottom: 4,
   },
   panelHd: {
     ...typography.section,
@@ -550,8 +550,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 11,
+    gap: 8,
+    paddingVertical: 8,
     paddingHorizontal: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -600,7 +600,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
   statBar: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.surfaceRaised,
@@ -608,7 +608,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   statNums: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 26,
+    gap: 18,
     marginBottom: 4,
   },
   statNum: {

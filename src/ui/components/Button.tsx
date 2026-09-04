@@ -114,13 +114,13 @@ export const Button = ({
 const createStyles = (typography: Typography) =>
   StyleSheet.create({
     base: {
-      minHeight: 52,
+      minHeight: 44,
       borderRadius: radius.lg,
       borderWidth: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
     },
     text: {
       ...typography.body,

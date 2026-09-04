@@ -38,13 +38,13 @@ const createStyles = (colors: ThemeColors) =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: 9,
       paddingHorizontal: 12,
       borderRadius: radius.md,
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.surface,
-      marginBottom: 8,
+      marginBottom: 6,
     },
     left: {
       marginRight: 12,

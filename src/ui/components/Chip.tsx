@@ -29,8 +29,8 @@ export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     base: {
-      minHeight: 42,
-      paddingHorizontal: 15,
+      minHeight: 34,
+      paddingHorizontal: 12,
       borderRadius: radius.pill,
       borderWidth: 1,
       borderColor: colors.borderSoft,

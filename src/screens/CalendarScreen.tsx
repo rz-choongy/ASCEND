@@ -482,27 +482,27 @@ export function CalendarScreen() {
   );
 }
 
-const DAY_CELL_SIZE = 34;
+const DAY_CELL_SIZE = 28;
 
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.sm,
   },
 
   screenTitle: {
     ...typography.title,
-    fontSize: 24,
+    fontSize: 19,
     color: colors.textSecondary,
     paddingHorizontal: spacing.sm,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
 
   viewSwitcher: {
     paddingHorizontal: spacing.sm,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     alignItems: 'flex-start',
   },
 
@@ -512,7 +512,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: 4,
   },
   navBtn: {
     padding: 4,
@@ -531,7 +531,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   weekdayCell: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   weekdayText: {
     ...typography.meta,
@@ -547,7 +547,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   dayCell: {
     width: `${100 / 7}%`,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
     paddingHorizontal: 2,
   },
   dayNumberWrapper: {
@@ -577,7 +577,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     width: 4,
     height: 4,
     borderRadius: 2,
-    marginTop: 3,
+    marginTop: 2,
     backgroundColor: 'transparent',
   },
   dayDotVisible: {
@@ -588,7 +588,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   divider: {
     height: 1,
     backgroundColor: colors.border,
-    marginTop: spacing.xs,
+    marginTop: 4,
     marginHorizontal: spacing.sm,
   },
 
@@ -598,8 +598,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   sessionPanelContent: {
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   panelHeader: {
     marginBottom: spacing.xs,
@@ -613,8 +613,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   panelDateLabel: {
     ...typography.title,
-    fontSize: 19,
-    marginBottom: spacing.sm,
+    fontSize: 17,
+    marginBottom: spacing.xs,
   },
   filterChips: {
     flexDirection: 'row',
@@ -653,8 +653,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sessRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 14,
-    paddingVertical: 16,
+    gap: 10,
+    paddingVertical: 10,
   },
   sessRowBorder: {
     borderTopWidth: 1,

@@ -186,7 +186,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     content: {
       paddingHorizontal: spacing.md,
       paddingTop: spacing.sm,
-      gap: spacing.md,
+      gap: spacing.sm,
     },
     sectionLabel: {
       ...typography.section,
@@ -241,7 +241,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     footer: {
       alignItems: 'center',
       gap: 6,
-      paddingTop: spacing.lg,
+      paddingTop: spacing.md,
       paddingBottom: spacing.sm,
     },
     footerWord: {

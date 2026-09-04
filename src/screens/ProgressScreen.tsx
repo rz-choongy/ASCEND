@@ -317,7 +317,7 @@ export function ProgressScreen() {
           <View style={[styles.subSection, styles.subSectionBordered]}>
             <Text style={styles.eyebrow}>Strength volume</Text>
             <BarChart
-              height={100}
+              height={80}
               valueFormatter={(value) => `${Math.round(value)}kg`}
               bars={volumeTrend.map((bar) => ({
                 label: bar.label,
@@ -361,8 +361,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   content: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   screenTitle: {
     ...typography.display,
@@ -374,12 +374,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   seg: {
     flex: 1,
     alignItems: 'center',
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   segText: {
     fontSize: 13,
@@ -403,7 +403,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.s,
   },
   monthNavButton: {
     width: 32,
@@ -441,7 +441,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   // Hero
   hero: {
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   heroLabel: {
     fontSize: 10.5,
@@ -452,8 +452,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   heroNum: {
     ...typography.display,
-    fontSize: 72,
-    lineHeight: 74,
+    fontSize: 52,
+    lineHeight: 54,
     color: colors.accent,
     marginTop: 4,
   },
@@ -468,11 +468,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: spacing.sm,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   miniStat: {
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.s,
   },
   miniStatDivider: {
     borderLeftWidth: 1,
@@ -495,11 +495,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   analysis: {
     backgroundColor: colors.surfaceRaised,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.lg,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
   },
   subSection: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   subSectionBordered: {
     borderTopWidth: 1,
@@ -539,7 +539,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   pyrRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   pyrGrade: {
     ...typography.numeric,
@@ -552,7 +552,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flex: 1,
   },
   pyrBar: {
-    height: 15,
+    height: 13,
     backgroundColor: colors.borderSoft,
   },
   pyrCount: {
@@ -565,7 +565,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   // Sparkline
   sparkWrap: {
     marginTop: spacing.xs,
-    height: 52,
+    height: 44,
     position: 'relative',
   },
   sparkPeakLbl: {
@@ -578,7 +578,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   spark: {
     width: '100%',
-    height: 52,
+    height: 44,
   },
   sparkDot: {
     position: 'absolute',
@@ -608,7 +608,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    paddingVertical: 9,
+    paddingVertical: 7,
   },
   pbRowBordered: {
     borderTopWidth: 1,
