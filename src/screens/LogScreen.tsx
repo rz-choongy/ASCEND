@@ -11,12 +11,33 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { formatDuration, formatLocalDate } from '../domain/dateUtils';
+import { addDays, formatLocalDate } from '../domain/dateUtils';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
-import { createSession, getActiveSession, getSessionStreak, getSessionsForDate, getAllCompletedSessionCount } from '../domain/sessionStore';
+import {
+  buildRecentSends,
+  buildWeekCompletion,
+  findHardestSendThisWeek,
+  type RecentSend,
+} from '../domain/progressInsights';
+import {
+  createSession,
+  getActiveSession,
+  getAllCompletedSessionCount,
+  getSessionStreak,
+  getSessionsForDate,
+  getSessionsForDateRange,
+} from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Button, Card, PressableScale, spacing, useTheme } from '../ui';
+import {
+  ArrowRightIcon,
+  Button,
+  Card,
+  PressableScale,
+  SettingsSlidersIcon,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -41,19 +62,13 @@ function formatHeaderDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 }
 
-function formatTime(ts: number): string {
-  const d = new Date(ts);
+function formatRecentSendMeta(send: RecentSend): string {
+  const d = new Date(send.createdAt);
   const h = `${d.getHours()}`.padStart(2, '0');
   const min = `${d.getMinutes()}`.padStart(2, '0');
-  return `${h}:${min}`;
-}
-
-function sessionTypeLabel(type: SessionType): string {
-  return type === 'climb' ? 'Climbing' : 'Strength';
-}
-
-function sessionDisplayLabel(session: SessionRow): string {
-  return session.title?.trim() || sessionTypeLabel(session.type);
+  const time = `${h}:${min}`;
+  if (send.isToday) return time;
+  return `${DAY_NAMES[d.getDay()].slice(0, 3)}, ${time}`;
 }
 
 const SettingsButton = ({
@@ -68,18 +83,11 @@ const SettingsButton = ({
   <PressableScale
     onPress={onPress}
     scaleTo={0.88}
-    style={styles.settingsButton}
+    style={styles.iconBtn}
     accessibilityLabel="Settings"
     hitSlop={6}
   >
-    <View style={styles.sliderStack}>
-      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
-        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '18%' }]} />
-      </View>
-      <View style={[styles.sliderTrack, { backgroundColor: colors.borderSoft }]}>
-        <View style={[styles.sliderKnob, { backgroundColor: colors.textPrimary, left: '58%' }]} />
-      </View>
-    </View>
+    <SettingsSlidersIcon color={colors.textSecondary} />
   </PressableScale>
 );
 
@@ -90,7 +98,7 @@ const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnTy
     <PressableScale
       onPress={() => setMode(isDark ? 'light' : 'dark')}
       scaleTo={0.88}
-      style={styles.themeToggle}
+      style={styles.iconBtn}
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       hitSlop={6}
     >
@@ -114,20 +122,32 @@ export function LogScreen() {
   const today = new Date();
 
   const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
-  const [todaySessions, setTodaySessions] = useState<SessionRow[]>([]);
   const [selectedGym, setSelectedGym] = useState<GymLike | null>(null);
   const [streak, setStreak] = useState(0);
+  const [weekDots, setWeekDots] = useState<ReturnType<typeof buildWeekCompletion>>([]);
+  const [hardestThisWeek, setHardestThisWeek] = useState<ReturnType<typeof findHardestSendThisWeek>>(null);
+  const [recentSends, setRecentSends] = useState<RecentSend[]>([]);
   const [hasEverLogged, setHasEverLogged] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
-      const todayStr = formatLocalDate(new Date());
       const active = getActiveSession();
       setActiveSession(active);
-      setTodaySessions(getSessionsForDate(todayStr));
       setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
       setStreak(getSessionStreak());
       setHasEverLogged(getAllCompletedSessionCount() > 0 || active !== null);
+
+      const now = new Date();
+      const last7Start = addDays(now, -6);
+      last7Start.setHours(0, 0, 0, 0);
+      const last7 = getSessionsForDateRange(last7Start.getTime(), now.getTime() + 1);
+      setWeekDots(buildWeekCompletion(last7));
+      setHardestThisWeek(findHardestSendThisWeek(last7));
+
+      const recentWindowStart = addDays(now, -30);
+      recentWindowStart.setHours(0, 0, 0, 0);
+      const recentSessions = getSessionsForDateRange(recentWindowStart.getTime(), now.getTime() + 1);
+      setRecentSends(buildRecentSends(recentSessions, 4));
     }, [])
   );
 
@@ -163,16 +183,11 @@ export function LogScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-      {/* Date header */}
+      {/* Header */}
       <View style={styles.headerBlock}>
         <View style={styles.headerRow}>
           <Text style={styles.screenTitle}>Today</Text>
           <View style={styles.headerRight}>
-            {streak > 0 ? (
-              <View style={styles.streakPill}>
-                <Text style={styles.streakText}>{streak} day streak</Text>
-              </View>
-            ) : null}
             <ThemeToggle colors={colors} styles={styles} />
             <SettingsButton
               colors={colors}
@@ -182,6 +197,22 @@ export function LogScreen() {
           </View>
         </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
+
+        {/* Streak numeral + week dot strip */}
+        <View style={styles.streakRow}>
+          <View style={styles.streakNumWrap}>
+            <Text style={styles.streakNum}>{streak}</Text>
+            <Text style={styles.streakLabel}>Day{'\n'}Streak</Text>
+          </View>
+          <View style={styles.weekStrip}>
+            {weekDots.map((day, i) => (
+              <View key={i} style={styles.weekCell}>
+                <View style={[styles.weekDot, day.done ? styles.weekDotDone : null]} />
+                <Text style={styles.weekDayLabel}>{day.weekdayLabel}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
 
       {/* Active session banner */}
@@ -192,7 +223,7 @@ export function LogScreen() {
             <View style={styles.bannerTextCol}>
               <Text style={styles.bannerLabel}>Session in progress</Text>
               <Text style={styles.bannerType}>
-                {sessionDisplayLabel(activeSession)}
+                {activeSession.title?.trim() || (activeSession.type === 'climb' ? 'Climbing' : 'Strength')}
               </Text>
             </View>
             <Button
@@ -227,18 +258,20 @@ export function LogScreen() {
               </View>
               <Text style={styles.chevron}>{'>'}</Text>
             </TouchableOpacity>
-            <Button
-              label="Start climbing"
-              variant="primary"
-              onPress={() => handleLog('climb')}
-              style={styles.ctaButton}
-            />
-            <Button
-              label="Start strength"
-              variant="secondary"
-              onPress={() => handleLog('strength')}
-              style={styles.ctaButton}
-            />
+            <View style={styles.ctaRow}>
+              <Button
+                label="Start Climbing"
+                variant="primary"
+                onPress={() => handleLog('climb')}
+                style={styles.ctaPrimary}
+              />
+              <Button
+                label="Strength"
+                variant="secondary"
+                onPress={() => handleLog('strength')}
+                style={styles.ctaSecondary}
+              />
+            </View>
           </>
         )}
       </View>
@@ -248,51 +281,61 @@ export function LogScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateTitle}>Start your first session</Text>
           <Text style={styles.emptyStateCopy}>
-            Tap "Start climbing" or "Start strength" above to log your first session. It'll show up here.
+            Tap "Start Climbing" or "Strength" above to log your first session. It'll show up here.
           </Text>
         </View>
       ) : null}
 
-      {/* Today's sessions */}
-      {todaySessions.length > 0 ? (
+      {/* This week's hardest send */}
+      {hardestThisWeek ? (
+        <View style={styles.prCallout}>
+          <Text style={styles.prGrade}>{hardestThisWeek.gradeLabel}</Text>
+          <View style={styles.prInfo}>
+            <Text style={styles.prLabel}>This week's hardest send</Text>
+            <Text style={styles.prGym}>{hardestThisWeek.gymName}</Text>
+            <Text style={styles.prMeta}>
+              {formatRecentSendMeta({ ...hardestThisWeek, eventId: '', isToday: false })}
+              {hardestThisWeek.result === 'FLASH' ? ' · Flash' : ''}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      {/* Recent sends */}
+      {recentSends.length > 0 ? (
         <View style={styles.sessionSection}>
-          <Text style={styles.sectionLabel}>Logged today</Text>
-          {todaySessions.map((session) => (
-            <TouchableOpacity
-              key={session.id}
-              style={styles.sessionRow}
-              onPress={() =>
-                navigation.navigate('SessionDetail', { sessionId: session.id })
-              }
-              activeOpacity={0.75}
-            >
-              <View style={styles.sessionRowLeft}>
-                <View
-                  style={[
-                    styles.sessionDot,
-                    {
-                      backgroundColor:
-                        session.type === 'climb' ? colors.accent : colors.success,
-                    },
-                  ]}
-                />
-                <Text style={styles.sessionTypeText}>
-                  {sessionDisplayLabel(session)}
-                </Text>
-              </View>
-              <View style={styles.sessionRowRight}>
-                <Text style={styles.sessionTime}>
-                  {formatTime(session.started_at)}
-                </Text>
-                {session.completed_at != null ? (
-                  <Text style={styles.sessionDuration}>
-                    {formatDuration(session.started_at, session.completed_at)}
-                  </Text>
+          <Text style={styles.sectionLabel}>Recent sends</Text>
+          <View>
+            {recentSends.map((send) => (
+              <View key={send.eventId} style={styles.sendRow}>
+                <View style={styles.gradeChip}>
+                  <Text style={styles.gradeChipText}>{send.gradeLabel}</Text>
+                </View>
+                <View style={styles.sendInfo}>
+                  <View style={styles.sendGymRow}>
+                    <Text style={styles.sendGym}>{send.gymName}</Text>
+                    {send.isToday ? (
+                      <View style={styles.todayChip}>
+                        <Text style={styles.todayChipText}>Today</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
+                </View>
+                {send.result === 'FLASH' ? (
+                  <Text style={styles.sendResult}>Flash</Text>
                 ) : null}
-                <Text style={styles.chevron}>{'>'}</Text>
               </View>
-            </TouchableOpacity>
-          ))}
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.viewAll}
+            onPress={() => navigation.navigate('Calendar')}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.viewAllText}>View all sessions</Text>
+            <ArrowRightIcon color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       ) : null}
       </ScrollView>
@@ -316,9 +359,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     gap: spacing.md,
   },
 
-  // Date header
+  // Header
   headerBlock: {
-    gap: 2,
+    gap: 8,
     marginBottom: spacing.xs,
   },
   headerRow: {
@@ -337,23 +380,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   dateHeader: {
     ...typography.bodyMuted,
   },
-  streakPill: {
-    backgroundColor: colors.accentMuted,
-    borderRadius: 99,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  streakText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  themeToggle: {
+  iconBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.surfaceRaised,
@@ -383,33 +413,59 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     height: 12,
     borderRadius: 6,
   },
-  settingsButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surfaceRaised,
+
+  // Streak module
+  streakRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
-  sliderStack: {
-    width: 16,
-    height: 14,
+  streakNumWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    flexShrink: 0,
+    paddingBottom: 2,
+  },
+  streakNum: {
+    ...typography.display,
+    fontSize: 42,
+    lineHeight: 40,
+  },
+  streakLabel: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+    lineHeight: 13,
+  },
+  weekStrip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  sliderTrack: {
-    width: 16,
-    height: 2,
-    borderRadius: 1,
-    justifyContent: 'center',
+  weekCell: {
+    alignItems: 'center',
+    gap: 6,
   },
-  sliderKnob: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    top: -2,
+  weekDot: {
+    width: 13,
+    height: 13,
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
+  },
+  weekDotDone: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  weekDayLabel: {
+    fontSize: 8.5,
+    fontWeight: '600',
+    color: colors.textMuted,
   },
 
   // Active session banner
@@ -446,53 +502,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     minWidth: 126,
   },
 
-  // Today's sessions section
-  sessionSection: {
-    gap: 0,
-  },
-  sectionLabel: {
-    ...typography.section,
-    marginBottom: spacing.xs,
-  },
-  sessionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  sessionRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  sessionDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  sessionTypeText: {
-    ...typography.body,
-    fontSize: 15,
-  },
-  sessionRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sessionTime: {
-    ...typography.bodyMuted,
-  },
-  sessionDuration: {
-    ...typography.meta,
-    color: colors.textMuted,
-  },
-  chevron: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-
   // CTA buttons
   ctaSection: {
     gap: spacing.sm,
@@ -501,7 +510,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   activeLockBox: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: 0,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: 12,
@@ -520,7 +529,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: 0,
     backgroundColor: colors.surfaceAlt,
     paddingHorizontal: spacing.sm,
     paddingVertical: 12,
@@ -534,12 +543,23 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontWeight: '700',
     marginTop: 2,
   },
-  ctaButton: {
-    width: '100%',
+  chevron: {
+    color: colors.textMuted,
+    fontSize: 14,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  ctaPrimary: {
+    flex: 2.6,
+  },
+  ctaSecondary: {
+    flex: 1,
   },
 
   emptyState: {
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,
@@ -556,5 +576,124 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     ...typography.bodyMuted,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  // PR callout
+  prCallout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: 16,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  prGrade: {
+    ...typography.display,
+    fontSize: 34,
+    lineHeight: 34,
+    color: colors.accent,
+    flexShrink: 0,
+  },
+  prInfo: {
+    flex: 1,
+  },
+  prLabel: {
+    ...typography.meta,
+    fontSize: 9.5,
+  },
+  prGym: {
+    ...typography.body,
+    fontSize: 13.5,
+    marginTop: 3,
+  },
+  prMeta: {
+    ...typography.bodyMuted,
+    fontSize: 11.5,
+    marginTop: 1,
+  },
+
+  // Recent sends section
+  sessionSection: {
+    gap: 0,
+  },
+  sectionLabel: {
+    ...typography.section,
+    marginBottom: spacing.xs,
+  },
+  sendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 11,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  gradeChip: {
+    ...typography.numeric,
+    minWidth: 32,
+    height: 32,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  gradeChipText: {
+    ...typography.numeric,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  sendInfo: {
+    flex: 1,
+  },
+  sendGymRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  sendGym: {
+    ...typography.body,
+    fontSize: 13.5,
+  },
+  todayChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+  },
+  todayChipText: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+  },
+  sendMeta: {
+    ...typography.bodyMuted,
+    fontSize: 11.5,
+    marginTop: 2,
+  },
+  sendResult: {
+    ...typography.meta,
+    fontSize: 11.5,
+    color: colors.accent,
+    flexShrink: 0,
+  },
+  viewAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    paddingTop: 14,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  viewAllText: {
+    ...typography.bodyMuted,
+    fontSize: 11.5,
+    fontWeight: '600',
   },
   });

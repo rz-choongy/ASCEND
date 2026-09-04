@@ -15,16 +15,7 @@ import { appendEvent, getSessionById, setSessionStatus, setSessionTitle } from '
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
-import {
-  Button,
-  Divider,
-  PressableScale,
-  ScreenHeader,
-  getContrastText,
-  radius,
-  spacing,
-  useTheme,
-} from '../ui';
+import { Button, CloseIcon, PressableScale, getContrastText, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -108,6 +99,26 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
+
+  const sessionStats = useMemo(() => {
+    if (logs.length === 0) return null;
+    let bestLabel = logs[0].gradeLabel;
+    let bestValue = -Infinity;
+    let sum = 0;
+    logs.forEach((log) => {
+      if (log.gradeMax > bestValue) {
+        bestValue = log.gradeMax;
+        bestLabel = log.gradeLabel;
+      }
+      sum += (log.gradeMin + log.gradeMax) / 2;
+    });
+    return {
+      count: logs.length,
+      bestLabel,
+      bestValue,
+      avg: (sum / logs.length).toFixed(1),
+    };
+  }, [logs]);
 
   useFocusEffect(
     useCallback(() => {
@@ -209,24 +220,40 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <ScreenHeader title="Log climb" onClose={() => navigation.navigate('Tabs')} />
-
-      {showTimer && session.status === 'active' ? (
-        <View style={styles.timerCard}>
-          <Text style={styles.timerLabel}>Session length</Text>
-          <Text style={styles.timerValue}>{formatElapsed(elapsedMs)}</Text>
-        </View>
-      ) : null}
+      {/* Header — close, gym name, and elapsed timer bound into one row */}
+      <View style={styles.headerRow}>
+        <PressableScale
+          onPress={() => navigation.navigate('Tabs')}
+          style={styles.closeBtn}
+          accessibilityLabel="Close"
+          hitSlop={8}
+        >
+          <CloseIcon color={colors.textSecondary} />
+        </PressableScale>
+        <Text style={styles.headerGym} numberOfLines={1}>
+          {currentGym?.name ?? 'Boulder gym'}
+        </Text>
+        {showTimer && session.status === 'active' ? (
+          <View style={styles.timerCol}>
+            <View style={styles.timerLabelRow}>
+              <View style={styles.liveDot} />
+              <Text style={styles.timerLabel}>Elapsed</Text>
+            </View>
+            <Text style={styles.timerValue}>{formatElapsed(elapsedMs)}</Text>
+          </View>
+        ) : (
+          <View style={styles.closeBtn} />
+        )}
+      </View>
 
       <View style={styles.titleBlock}>
-        <Text style={styles.titleLabel}>Session name</Text>
         <TextInput
           style={styles.titleInput}
           value={title}
           onChangeText={setTitle}
           onBlur={handleSaveTitle}
           onSubmitEditing={handleSaveTitle}
-          placeholder="Climbing session"
+          placeholder="Session name"
           placeholderTextColor={colors.textMuted}
           returnKeyType="done"
         />
@@ -243,83 +270,102 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         <Text style={styles.gymSelectorAction}>Change</Text>
       </Pressable>
 
-      <Text style={styles.sectionLabel}>Grade</Text>
+      {/* Grade grid — unboxed, neutral tiles, tonal amber ring on the active tile.
+          The wireframe's own critique loop A/B-tested per-grade coloring on this
+          grid and found it read worse than a neutral grid with color reserved for
+          the log below, so this grid is intentionally neutral (not gradePalette). */}
       <View style={styles.gradeGrid}>
-        {gradeOptions.map((grade, index) => {
-          const color = grade.color ?? colors.gradePalette[index % colors.gradePalette.length];
+        {gradeOptions.map((grade) => {
           const active = selectedGrade.label === grade.label;
           return (
             <PressableScale
               key={grade.id ?? grade.label}
-              scaleTo={0.92}
-              style={[
-                styles.gradeTile,
-                { backgroundColor: color },
-                active ? styles.gradeTileActive : null,
-              ]}
+              scaleTo={0.94}
+              style={[styles.gradeTile, active ? styles.gradeTileActive : null]}
               onPress={() => {
                 void Haptics.selectionAsync();
                 setSelectedGrade(grade);
               }}
             >
-              <Text style={[styles.gradeText, { color: getContrastText(color) }]}>{grade.label}</Text>
+              <Text style={[styles.gradeText, active ? styles.gradeTextActive : null]}>{grade.label}</Text>
             </PressableScale>
           );
         })}
       </View>
 
       <View style={styles.actionRow}>
-        <Button label="Send" variant="success" onPress={() => handleLog('SEND')} style={styles.actionButton} />
-        <Button label="Flash" variant="warning" onPress={() => handleLog('FLASH')} style={styles.actionButton} />
+        <Button
+          label={`Send ${selectedGrade.label}`}
+          variant="primary"
+          onPress={() => handleLog('SEND')}
+          style={styles.actionButtonPrimary}
+        />
+        <Button
+          label={`Flash ${selectedGrade.label}`}
+          variant="secondary"
+          onPress={() => handleLog('FLASH')}
+          style={styles.actionButtonSecondary}
+        />
       </View>
 
-      <View style={styles.logHeaderRow}>
-        <Text style={styles.sectionLabel}>
-          Logged{recentLogs.length > 0 ? ` (${recentLogs.length})` : ''}
-        </Text>
-        {hasLogs ? (
-          <Button
-            label="Undo"
-            variant="ghost"
-            onPress={handleUndo}
-            style={styles.undoButton}
-            textStyle={styles.undoText}
-          />
-        ) : null}
-      </View>
-      <Divider style={styles.divider} />
+      <View style={styles.panel}>
+        <View style={styles.panelHeaderRow}>
+          <Text style={styles.panelHd}>This session</Text>
+          {hasLogs ? (
+            <Button
+              label="Undo"
+              variant="ghost"
+              onPress={handleUndo}
+              style={styles.undoButton}
+              textStyle={styles.undoText}
+            />
+          ) : null}
+        </View>
 
-      <ScrollView style={styles.logList} contentContainerStyle={styles.logListContent}>
-        {recentLogs.length === 0 ? (
-          <Text style={styles.emptyText}>No climbs logged yet. Hit Send or Flash to start.</Text>
-        ) : null}
-        {recentLogs.map((log, index) => {
-          const gradeColor = log.gradeColor;
-          return (
-            <View key={`${log.gradeLabel}-${log.createdAt}-${index}`} style={styles.logRow}>
+        <ScrollView style={styles.logList} contentContainerStyle={styles.logListContent}>
+          {recentLogs.length === 0 ? (
+            <Text style={styles.emptyText}>No climbs logged yet. Hit Send or Flash to start.</Text>
+          ) : null}
+          {recentLogs.map((log, index) => {
+            const chipColor = log.gradeColor ?? colors.surfaceRaised;
+            const isPB = sessionStats != null && log.gradeMax === sessionStats.bestValue;
+            const isLatest = index === 0;
+            return (
               <View
-                style={[
-                  styles.logAccent,
-                  log.result === 'SEND' ? styles.logAccentSend : styles.logAccentFlash,
-                  gradeColor ? { backgroundColor: gradeColor } : null,
-                ]}
-              />
-              <View style={styles.logBody}>
-                <Text style={styles.logGrade}>{log.gradeLabel}</Text>
-                <Text
-                  style={[
-                    styles.logResult,
-                    log.result === 'SEND' ? styles.logResultSend : styles.logResultFlash,
-                  ]}
-                >
-                  {log.result}
+                key={`${log.gradeLabel}-${log.createdAt}-${index}`}
+                style={[styles.logRow, index % 2 === 1 ? styles.logRowAlt : null]}
+              >
+                <View style={[styles.gradeChip, { backgroundColor: chipColor }]}>
+                  <Text style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}>
+                    {log.gradeLabel}
+                  </Text>
+                </View>
+                {isPB ? (
+                  <View style={styles.pbBadge}>
+                    <Text style={styles.pbBadgeText}>PB</Text>
+                  </View>
+                ) : null}
+                <Text style={[styles.logTime, isLatest ? styles.logTimeLatest : null]}>
+                  {formatElapsed(log.createdAt - session.started_at)}
+                  {isLatest ? ' · just now' : ''}
+                  {log.result === 'FLASH' ? ' · Flash' : ''}
                 </Text>
               </View>
-              <Text style={styles.logTime}>{formatElapsed(log.createdAt - session.started_at)}</Text>
+            );
+          })}
+        </ScrollView>
+
+        {sessionStats ? (
+          <View style={styles.statBar}>
+            <View style={styles.statNums}>
+              <Text style={styles.statNum}>{sessionStats.count}</Text>
+              <Text style={styles.statNum}>{sessionStats.bestLabel}</Text>
+              <Text style={styles.statNum}>{sessionStats.avg}</Text>
             </View>
-          );
-        })}
-      </ScrollView>
+            <Text style={styles.statCaps}>sends      best      avg grade</Text>
+          </View>
+        ) : null}
+      </View>
 
       {hasLogs ? (
         <View style={styles.finishBar}>
@@ -339,48 +385,62 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  timerCard: {
-    backgroundColor: colors.accentMuted,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.accentSoft,
-    paddingHorizontal: spacing.sm,
+
+  // Header — close / gym name / elapsed timer as one row
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.xs,
     marginBottom: spacing.sm,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerGym: {
+    ...typography.title,
+    fontSize: 16,
+    flex: 1,
+    textAlign: 'center',
+  },
+  timerCol: {
+    alignItems: 'flex-end',
+    gap: 1,
+    minWidth: 64,
+  },
+  timerLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  liveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.success,
   },
   timerLabel: {
-    ...typography.meta,
-    color: colors.accent,
+    fontSize: 10,
+    fontWeight: '500',
+    color: colors.textSecondary,
   },
   timerValue: {
-    color: colors.textPrimary,
-    fontSize: 30,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginTop: 2,
+    ...typography.title,
+    fontSize: 19,
     fontVariant: ['tabular-nums'],
   },
+
   titleBlock: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
     marginBottom: spacing.sm,
   },
-  titleLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: 2,
-    textTransform: 'uppercase',
-  },
   titleInput: {
+    ...typography.body,
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '800',
     minHeight: 30,
     padding: 0,
   },
@@ -390,10 +450,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: 0,
     backgroundColor: colors.surface,
     padding: spacing.sm,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   gymSelectorLabel: {
     ...typography.meta,
@@ -412,119 +472,155 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  sectionLabel: {
-    ...typography.section,
-    marginBottom: spacing.xs,
-  },
+
+  // Grade grid — unboxed, no section label, neutral surface, tonal-ring active state
   gradeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: 7,
     marginBottom: spacing.sm,
   },
   gradeTile: {
-    width: '22%',
-    minHeight: 64,
-    borderRadius: radius.md,
+    width: '22.5%',
+    minHeight: 56,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
   },
   gradeTileActive: {
+    backgroundColor: colors.accentMuted,
+    borderWidth: 3,
     borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 4,
   },
   gradeText: {
+    ...typography.body,
     fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  gradeTextActive: {
+    color: colors.accent,
     fontWeight: '700',
   },
+
   actionRow: {
     flexDirection: 'row',
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
-  actionButton: {
+  actionButtonPrimary: {
+    flex: 1.4,
+  },
+  actionButtonSecondary: {
     flex: 1,
   },
-  logHeaderRow: {
+
+  // Session panel
+  panel: {
+    flex: 1,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  panelHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+  panelHd: {
+    ...typography.section,
   },
   undoButton: {
-    minHeight: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 32,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   undoText: {
     fontSize: 10,
-  },
-  divider: {
-    marginVertical: spacing.xs,
   },
   logList: {
     flex: 1,
   },
   logListContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xs,
   },
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    marginBottom: spacing.xs,
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  logAccent: {
-    width: 4,
-    height: '70%',
-    borderRadius: radius.pill,
-    marginRight: 12,
+  logRowAlt: {
+    backgroundColor: colors.surfaceAlt,
   },
-  logAccentSend: {
-    backgroundColor: colors.success,
+  gradeChip: {
+    ...typography.numeric,
+    width: 36,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logAccentFlash: {
-    backgroundColor: colors.warning,
-  },
-  logBody: {
-    flex: 1,
-  },
-  logGrade: {
-    color: colors.textPrimary,
+  gradeChipText: {
+    ...typography.numeric,
     fontSize: 14,
+  },
+  pbBadge: {
+    backgroundColor: colors.danger,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+  },
+  pbBadgeText: {
+    fontSize: 10,
     fontWeight: '700',
-  },
-  logResult: {
-    marginTop: 4,
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  logResultSend: {
-    color: colors.success,
-  },
-  logResultFlash: {
-    color: colors.warning,
+    color: colors.textInverse,
+    letterSpacing: 0.4,
   },
   logTime: {
-    color: colors.textMuted,
-    fontSize: 11,
+    ...typography.bodyMuted,
+    fontSize: 13,
+    marginLeft: 'auto',
+    textAlign: 'right',
+  },
+  logTimeLatest: {
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   emptyText: {
     color: colors.textMuted,
     fontSize: 12,
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.sm,
   },
+
+  statBar: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surfaceRaised,
+  },
+  statNums: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 26,
+    marginBottom: 4,
+  },
+  statNum: {
+    ...typography.numeric,
+    fontSize: 24,
+  },
+  statCaps: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+
   finishBar: {
     paddingTop: spacing.xs,
   },

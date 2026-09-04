@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ascend-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "-c", "--port", "8090"],
+      "port": 8090
+    },
+    {
+      "name": "ascend-web-coi",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/web-coi-proxy.js", "8091", "8090"],
+      "port": 8091
+    }
+  ]
+}

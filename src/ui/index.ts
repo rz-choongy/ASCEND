@@ -15,6 +15,17 @@ export { Button } from './components/Button';
 export { Card } from './components/Card';
 export { Chip } from './components/Chip';
 export { Divider } from './components/Divider';
+export {
+  ArrowRightIcon,
+  CalendarTabIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  LogTabIcon,
+  MountainMarkIcon,
+  ProgressTabIcon,
+  SettingsSlidersIcon,
+} from './components/Icon';
 export { ListRow } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';

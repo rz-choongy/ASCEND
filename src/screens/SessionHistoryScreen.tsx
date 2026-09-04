@@ -592,7 +592,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   titleInput: {
     ...typography.title,
     minHeight: 44,
-    borderRadius: 8,
+    borderRadius: 0,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -624,13 +624,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeSwatch: {
     width: 10,
     height: 36,
-    borderRadius: 5,
+    borderRadius: 0,
   },
   notesInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 0,
     color: colors.textPrimary,
     fontSize: 14,
     padding: spacing.sm,
@@ -640,7 +640,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginTop: spacing.md,
     borderWidth: 1,
     borderColor: colors.danger,
-    borderRadius: 10,
+    borderRadius: 0,
     backgroundColor: colors.surfaceRaised,
     padding: spacing.sm,
     gap: spacing.xs,

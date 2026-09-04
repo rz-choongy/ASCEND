@@ -1,23 +1,29 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import Svg, { Polyline } from 'react-native-svg';
+import { applyClimbEvents } from '../domain/climbLogUtils';
 import { firstOfMonth } from '../domain/dateUtils';
 import {
   buildAllTimeStats,
   buildGradeDistribution,
   buildStrengthVolumeTrend,
   buildWeeklyFrequency,
+  findFirstReachedDate,
+  findFlashRate,
+  findLongestStreakEver,
+  findMostSessionsInAWeek,
   getAvailableClimbGyms,
 } from '../domain/progressInsights';
-import { getCompletedSessions, getSessionStreak } from '../domain/sessionStore';
+import { getCompletedSessions, getSessionEvents, getSessionStreak } from '../domain/sessionStore';
 import { getProgressGradeGymId, setProgressGradeGymId } from '../domain/settingsStore';
 import type { SessionRow } from '../domain/types';
-import { BarChart, Chip, PressableScale, SegmentedControl, StatRow, spacing, useTheme } from '../ui';
+import { BarChart, Chip, PressableScale, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
-const WEEKS_SHOWN = 10;
+const WEEKS_SHOWN = 8;
 const STRENGTH_SESSIONS_SHOWN = 10;
 const MONTHS_BACK_LIMIT = 12;
 
@@ -25,6 +31,7 @@ const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
+const MONTH_SHORT = MONTH_NAMES.map((m) => m.slice(0, 3));
 
 type ProgressView = 'all' | 'month';
 
@@ -105,6 +112,37 @@ export function ProgressScreen() {
     [scopedSessions]
   );
 
+  const sendsLogged = useMemo(() => {
+    let count = 0;
+    scopedSessions
+      .filter((s) => s.type === 'climb')
+      .forEach((s) => {
+        count += applyClimbEvents(getSessionEvents(s.id)).length;
+      });
+    return count;
+  }, [scopedSessions]);
+
+  const firstReached = useMemo(
+    () => findFirstReachedDate(scopedSessions, allTimeStats.hardestGradeLabel),
+    [scopedSessions, allTimeStats.hardestGradeLabel]
+  );
+
+  // Personal bests are historical records -- always computed over full history,
+  // independent of the All time / By month toggle above.
+  const longestStreakEver = useMemo(() => findLongestStreakEver(sessions), [sessions]);
+  const mostSessionsInWeek = useMemo(() => findMostSessionsInAWeek(sessions), [sessions]);
+  const flashRate = useMemo(() => findFlashRate(sessions), [sessions]);
+
+  const pyramidMax = Math.max(1, ...gradeDistribution.map((bar) => bar.count));
+  const weekTotals = weeklyFrequency.map((w) => w.climbCount + w.strengthCount);
+  const weekMax = Math.max(1, ...weekTotals);
+  const sparkPoints = weekTotals
+    .map((total, i) => {
+      const x = weekTotals.length > 1 ? (i / (weekTotals.length - 1)) * 100 : 50;
+      const y = 100 - (total / weekMax) * 90 - 5;
+      return { x, y };
+    });
+
   if (sessions.length === 0) {
     return (
       <SafeAreaView edges={['top']} style={[styles.root, styles.content]}>
@@ -125,15 +163,18 @@ export function ProgressScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <Text style={styles.screenTitle}>Progress</Text>
 
-      <View style={styles.viewToggleRow}>
-        <SegmentedControl
-          options={[
-            { value: 'all', label: 'All time' },
-            { value: 'month', label: 'By month' },
-          ]}
-          value={view}
-          onChange={setView}
-        />
+      {/* Ghost-underline segmented control -- deliberately distinct from Settings'
+          filled-pill style; ordinary state never uses amber here (reserved for
+          record/peak data only). */}
+      <View style={styles.segmented}>
+        <TouchableOpacity style={styles.seg} onPress={() => setView('all')} activeOpacity={0.7}>
+          <Text style={[styles.segText, view === 'all' && styles.segTextActive]}>All time</Text>
+          {view === 'all' ? <View style={styles.segUnderline} /> : null}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.seg} onPress={() => setView('month')} activeOpacity={0.7}>
+          <Text style={[styles.segText, view === 'month' && styles.segTextActive]}>By month</Text>
+          {view === 'month' ? <View style={styles.segUnderline} /> : null}
+        </TouchableOpacity>
       </View>
 
       {view === 'month' ? (
@@ -170,78 +211,140 @@ export function ProgressScreen() {
         </View>
       ) : null}
 
-      <StatRow
-        style={styles.statsRow}
-        items={[
-          { value: `${allTimeStats.totalSessions}`, label: 'Sessions' },
-          { value: `${streak}`, label: 'Streak' },
-          { value: allTimeStats.hardestGradeLabel ?? '—', label: 'Hardest' },
-          {
-            value:
-              allTimeStats.totalStrengthVolume > 0
-                ? `${allTimeStats.totalStrengthVolume}kg`
-                : '—',
-            label: 'Volume',
-          },
-        ]}
-      />
+      {/* Hero -- the one dominant metric, off the grid */}
+      {allTimeStats.hardestGradeLabel ? (
+        <View style={styles.hero}>
+          <Text style={styles.heroLabel}>Hardest send</Text>
+          <Text style={styles.heroNum}>{allTimeStats.hardestGradeLabel}</Text>
+          {firstReached ? (
+            <Text style={styles.heroSub}>
+              First reached {MONTH_SHORT[new Date(firstReached).getMonth()]}{' '}
+              {new Date(firstReached).getDate()}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
-      <Text style={styles.sectionLabel}>Session frequency</Text>
-      <BarChart
-        height={110}
-        legend={[
-          { label: 'Climb', color: colors.accent },
-          { label: 'Strength', color: colors.success },
-        ]}
-        bars={weeklyFrequency.map((week) => ({
-          label: week.weekLabel,
-          segments: [
-            { value: week.strengthCount, color: colors.success },
-            { value: week.climbCount, color: colors.accent },
-          ],
-        }))}
-      />
+      <View style={styles.miniStats}>
+        <View style={styles.miniStat}>
+          <Text style={styles.miniStatNum}>{allTimeStats.totalSessions}</Text>
+          <Text style={styles.miniStatLabel}>Sessions</Text>
+        </View>
+        <View style={[styles.miniStat, styles.miniStatDivider]}>
+          <Text style={styles.miniStatNum}>{streak}</Text>
+          <Text style={styles.miniStatLabel}>Current streak</Text>
+        </View>
+        <View style={[styles.miniStat, styles.miniStatDivider]}>
+          <Text style={styles.miniStatNum}>{sendsLogged}</Text>
+          <Text style={styles.miniStatLabel}>Sends logged</Text>
+        </View>
+      </View>
 
-      {availableGyms.length > 0 ? (
-        <>
-          <View style={[styles.gradeDistributionHeader, styles.sectionSpacing]}>
-            <Text style={styles.sectionLabel}>Grade distribution</Text>
-            {availableGyms.length > 1 ? (
-              <View style={styles.gradingTypeChips}>
-                {availableGyms.map((gym) => (
-                  <Chip
-                    key={gym.gymId ?? '__unspecified__'}
-                    label={gym.gymName}
-                    selected={gym.gymId === activeGymId}
-                    onPress={() => handleSelectGym(gym.gymId)}
-                  />
+      {/* One elevated surface holding every chart/list -- two zones on the page
+          (hero, floating) + (this card), not a stack of separately-boxed widgets. */}
+      <View style={styles.analysis}>
+        {gradeDistribution.length > 0 ? (
+          <View style={styles.subSection}>
+            <View style={styles.gradeDistributionHeader}>
+              <Text style={styles.eyebrow}>Grade pyramid</Text>
+              {availableGyms.length > 1 ? (
+                <View style={styles.gradingTypeChips}>
+                  {availableGyms.map((gym) => (
+                    <Chip
+                      key={gym.gymId ?? '__unspecified__'}
+                      label={gym.gymName}
+                      selected={gym.gymId === activeGymId}
+                      onPress={() => handleSelectGym(gym.gymId)}
+                    />
+                  ))}
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.pyramid}>
+              {gradeDistribution
+                .slice()
+                .reverse()
+                .map((bar) => (
+                  <View key={bar.label} style={styles.pyrRow}>
+                    <Text style={styles.pyrGrade}>{bar.label}</Text>
+                    <View style={styles.pyrTrack}>
+                      <View
+                        style={[
+                          styles.pyrBar,
+                          { width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.pyrCount}>{bar.count}</Text>
+                  </View>
                 ))}
-              </View>
-            ) : null}
+            </View>
           </View>
-          <BarChart
-            height={110}
-            bars={gradeDistribution.map((bar) => ({
-              label: bar.label,
-              segments: [{ value: bar.count, color: bar.color }],
-            }))}
-          />
-        </>
-      ) : null}
+        ) : null}
 
-      {volumeTrend.length > 0 ? (
-        <>
-          <Text style={[styles.sectionLabel, styles.sectionSpacing]}>Strength volume</Text>
-          <BarChart
-            height={110}
-            valueFormatter={(value) => `${Math.round(value)}kg`}
-            bars={volumeTrend.map((bar) => ({
-              label: bar.label,
-              segments: [{ value: bar.volume, color: colors.accent }],
-            }))}
-          />
-        </>
-      ) : null}
+        <View style={[styles.subSection, styles.subSectionBordered]}>
+          <Text style={styles.eyebrow}>
+            Session frequency <Text style={styles.eyebrowMuted}>— last {WEEKS_SHOWN} weeks</Text>
+          </Text>
+          <View style={styles.sparkWrap}>
+            <Text style={styles.sparkPeakLbl}>{weekMax}</Text>
+            <Svg style={styles.spark} viewBox="0 0 100 50" preserveAspectRatio="none">
+              <Polyline
+                points={sparkPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+                fill="none"
+                stroke={colors.textMuted}
+                strokeWidth={1.6}
+                vectorEffect="non-scaling-stroke"
+              />
+            </Svg>
+            {sparkPoints.map((p, i) => (
+              <View
+                key={i}
+                style={[styles.sparkDot, { left: `${p.x}%`, top: `${(p.y / 50) * 100}%` }]}
+              />
+            ))}
+          </View>
+          <View style={styles.sparkLbls}>
+            {weeklyFrequency.map((w) => (
+              <Text key={w.weekLabel} style={styles.sparkLblText}>
+                {w.weekLabel}
+              </Text>
+            ))}
+          </View>
+        </View>
+
+        {volumeTrend.length > 0 ? (
+          <View style={[styles.subSection, styles.subSectionBordered]}>
+            <Text style={styles.eyebrow}>Strength volume</Text>
+            <BarChart
+              height={100}
+              valueFormatter={(value) => `${Math.round(value)}kg`}
+              bars={volumeTrend.map((bar) => ({
+                label: bar.label,
+                segments: [{ value: bar.volume, color: colors.textMuted }],
+              }))}
+            />
+          </View>
+        ) : null}
+
+        <View style={[styles.subSection, styles.subSectionBordered]}>
+          <Text style={styles.eyebrow}>Personal bests</Text>
+          <View style={styles.pbList}>
+            <View style={styles.pbRow}>
+              <Text style={styles.pbLabel}>Longest streak</Text>
+              <Text style={styles.pbValue}>{longestStreakEver} day{longestStreakEver === 1 ? '' : 's'}</Text>
+            </View>
+            <View style={[styles.pbRow, styles.pbRowBordered]}>
+              <Text style={styles.pbLabel}>Most sessions in a week</Text>
+              <Text style={styles.pbValue}>{mostSessionsInWeek}</Text>
+            </View>
+            <View style={[styles.pbRow, styles.pbRowBordered]}>
+              <Text style={styles.pbLabel}>Flash rate</Text>
+              <Text style={styles.pbValue}>{flashRate}%</Text>
+            </View>
+          </View>
+        </View>
+      </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -263,12 +366,38 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   screenTitle: {
     ...typography.display,
+    fontSize: 28,
     marginBottom: spacing.sm,
   },
-  viewToggleRow: {
+
+  segmented: {
     flexDirection: 'row',
-    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: spacing.md,
   },
+  seg: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: 10,
+  },
+  segText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  segTextActive: {
+    color: colors.textPrimary,
+  },
+  segUnderline: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -1,
+    height: 2,
+    backgroundColor: colors.textPrimary,
+  },
+
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,7 +426,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     textAlign: 'center',
   },
   emptyMonth: {
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,
@@ -308,12 +437,86 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   emptyMonthText: {
     ...typography.bodyMuted,
   },
-  statsRow: {
+
+  // Hero
+  hero: {
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  heroLabel: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+  },
+  heroNum: {
+    ...typography.display,
+    fontSize: 72,
+    lineHeight: 74,
+    color: colors.accent,
+    marginTop: 4,
+  },
+  heroSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 8,
+  },
+
+  // Mini stats
+  miniStats: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
-  sectionLabel: {
-    ...typography.section,
-    marginBottom: spacing.sm,
+  miniStat: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  miniStatDivider: {
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
+  miniStatNum: {
+    ...typography.numeric,
+    fontSize: 18,
+  },
+  miniStatLabel: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: 5,
+    fontWeight: '600',
+  },
+
+  // Analysis card
+  analysis: {
+    backgroundColor: colors.surfaceRaised,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  subSection: {
+    paddingVertical: spacing.sm,
+  },
+  subSectionBordered: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: 2,
+  },
+  eyebrow: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+  },
+  eyebrowMuted: {
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontWeight: '500',
   },
   gradeDistributionHeader: {
     flexDirection: 'row',
@@ -321,17 +524,107 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   gradingTypeChips: {
     flexDirection: 'row',
     gap: spacing.xxs,
   },
-  sectionSpacing: {
-    marginTop: spacing.lg,
+
+  // Grade pyramid
+  pyramid: {
+    marginTop: spacing.xs,
+    gap: 5,
   },
+  pyrRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pyrGrade: {
+    ...typography.numeric,
+    width: 26,
+    fontSize: 11,
+    textAlign: 'right',
+    color: colors.textSecondary,
+  },
+  pyrTrack: {
+    flex: 1,
+  },
+  pyrBar: {
+    height: 15,
+    backgroundColor: colors.borderSoft,
+  },
+  pyrCount: {
+    ...typography.numeric,
+    width: 18,
+    fontSize: 10.5,
+    color: colors.textMuted,
+  },
+
+  // Sparkline
+  sparkWrap: {
+    marginTop: spacing.xs,
+    height: 52,
+    position: 'relative',
+  },
+  sparkPeakLbl: {
+    position: 'absolute',
+    right: 0,
+    top: -14,
+    ...typography.numeric,
+    fontSize: 10.5,
+    color: colors.textSecondary,
+  },
+  spark: {
+    width: '100%',
+    height: 52,
+  },
+  sparkDot: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.textMuted,
+    transform: [{ translateX: -2 }, { translateY: -2 }],
+  },
+  sparkLbls: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  sparkLblText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 9.5,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+
+  // Personal bests
+  pbList: {
+    marginTop: spacing.xs,
+  },
+  pbRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingVertical: 9,
+  },
+  pbRowBordered: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  pbLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  pbValue: {
+    ...typography.numeric,
+    fontSize: 17,
+  },
+
   emptyState: {
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,

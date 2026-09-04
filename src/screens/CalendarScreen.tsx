@@ -23,7 +23,8 @@ import {
 } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { Chip, SegmentedControl, getContrastText, spacing, useTheme } from '../ui';
+import { ChevronLeftIcon, ChevronRightIcon, Chip, SegmentedControl, useTheme } from '../ui';
+import { spacing } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -263,54 +264,61 @@ export function CalendarScreen() {
     return `${WEEKDAY_FULL[date.getDay()]} · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
   }
 
-  function renderSessionItem(session: SessionRow, replayById: Map<string, SessionReplay>) {
+  /** A single bar-row for one session, matching Direction A's `.sess-row`/`.sess-bar`. */
+  function renderSessionRow(
+    session: SessionRow,
+    replayById: Map<string, SessionReplay>,
+    isFirst: boolean
+  ) {
     const replay = replayById.get(session.id);
-    const nodeColor = replay?.dotColor ?? (session.type === 'climb' ? DOT_CLIMB : DOT_STRENGTH);
+    const barColor = session.type === 'climb' ? colors.textPrimary : colors.textSecondary;
     const hardestGradeLabel = session.type === 'climb' ? replay?.hardestGradeLabel : undefined;
 
     return (
-      <View key={session.id} style={styles.timelineItem}>
-        <View style={[styles.timelineNode, { backgroundColor: nodeColor }]} />
-        <TouchableOpacity
-          style={styles.timelineCard}
-          onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
-          activeOpacity={0.75}
-        >
-          <View style={styles.timelineCardLeft}>
+      <TouchableOpacity
+        key={session.id}
+        style={[styles.sessRow, !isFirst && styles.sessRowBorder]}
+        onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
+        activeOpacity={0.75}
+      >
+        <View style={[styles.sessBar, { backgroundColor: barColor }]} />
+        <View style={styles.sessBody}>
+          <Text style={styles.sessType}>{formatSessionTitle(session)}</Text>
+          <Text style={styles.sessMeta}>
             {hardestGradeLabel ? (
-              <View style={[styles.gradeBadge, { backgroundColor: nodeColor }]}>
-                <Text style={styles.gradeBadgeText}>{hardestGradeLabel}</Text>
-              </View>
-            ) : (
-              <View style={[styles.sessionTypeDot, { backgroundColor: nodeColor }]} />
-            )}
-            <Text style={styles.sessionTypeLabel}>{formatSessionTitle(session)}</Text>
-          </View>
-          <View style={styles.sessionRowRight}>
-            <Text style={styles.sessionTime}>{formatTime(session.started_at)}</Text>
-            {session.completed_at != null ? (
-              <Text style={styles.sessionDuration}>
-                {formatDuration(session.started_at, session.completed_at)}
-              </Text>
+              <Text style={styles.sessGradeChip}> {hardestGradeLabel} </Text>
             ) : null}
-            <Text style={styles.sessionChevron}>{'>'}</Text>
-          </View>
-        </TouchableOpacity>
+            {' '}
+            {formatTime(session.started_at)}
+          </Text>
+        </View>
+        {session.completed_at != null ? (
+          <Text style={styles.sessDur}>{formatDuration(session.started_at, session.completed_at)}</Text>
+        ) : null}
+      </TouchableOpacity>
+    );
+  }
+
+  /** One bordered card containing all of a day's sessions as bar-rows. */
+  function renderDayCard(sessions: SessionRow[], replayById: Map<string, SessionReplay>) {
+    if (sessions.length === 0) {
+      return <Text style={styles.noSessions}>No sessions on this day</Text>;
+    }
+    return (
+      <View style={styles.dayCard}>
+        {sessions.map((session, i) => renderSessionRow(session, replayById, i === 0))}
       </View>
     );
   }
 
-  function renderGroupedTimeline(groups: SessionGroup[], replayById: Map<string, SessionReplay>) {
+  function renderGroupedList(groups: SessionGroup[], replayById: Map<string, SessionReplay>) {
     if (groups.length === 0) {
       return <Text style={styles.noSessions}>No sessions here yet</Text>;
     }
     return groups.map((group) => (
       <View key={group.dateKey} style={styles.groupBlock}>
         <Text style={styles.groupDateLabel}>{formatGroupLabel(group.date)}</Text>
-        <View style={styles.timeline}>
-          <View style={styles.timelineLine} />
-          {group.sessions.map((session) => renderSessionItem(session, replayById))}
-        </View>
+        {renderDayCard(group.sessions, replayById)}
       </View>
     ));
   }
@@ -325,6 +333,8 @@ export function CalendarScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
+      <Text style={styles.screenTitle}>Calendar</Text>
+
       <View style={styles.viewSwitcher}>
         <SegmentedControl
           options={[
@@ -346,7 +356,7 @@ export function CalendarScreen() {
               style={styles.navBtn}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={[styles.navArrow, !canGoPrev && styles.navArrowDisabled]}>{'<'}</Text>
+              <ChevronLeftIcon color={canGoPrev ? colors.textSecondary : colors.textMuted} />
             </TouchableOpacity>
 
             <Text style={styles.monthLabel}>
@@ -359,7 +369,7 @@ export function CalendarScreen() {
               style={styles.navBtn}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={[styles.navArrow, !canGoNext && styles.navArrowDisabled]}>{'>'}</Text>
+              <ChevronRightIcon color={canGoNext ? colors.textSecondary : colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -381,8 +391,7 @@ export function CalendarScreen() {
               const daySessions = sessionsByDate.get(key) ?? [];
               const isToday = sameDay(day, today);
               const isSelected = sameDay(day, selectedDate);
-              const visibleChips = daySessions.slice(0, 2);
-              const overflowCount = daySessions.length - visibleChips.length;
+              const hasSessions = daySessions.length > 0;
 
               return (
                 <TouchableOpacity
@@ -395,7 +404,6 @@ export function CalendarScreen() {
                     style={[
                       styles.dayNumberWrapper,
                       isSelected && styles.dayNumberSelected,
-                      isToday && !isSelected && styles.dayNumberToday,
                     ]}
                   >
                     <Text
@@ -408,26 +416,7 @@ export function CalendarScreen() {
                       {day.getDate()}
                     </Text>
                   </View>
-                  <View style={styles.dayChipsCol}>
-                    {visibleChips.map((session) => {
-                      const replay = sessionReplayById.get(session.id);
-                      const isClimb = session.type === 'climb';
-                      const chipColor = isClimb ? (replay?.dotColor ?? DOT_CLIMB) : DOT_STRENGTH;
-                      return (
-                        <View key={session.id} style={[styles.dayChip, { backgroundColor: chipColor }]}>
-                          <Text
-                            style={[styles.dayChipText, { color: getContrastText(chipColor) }]}
-                            numberOfLines={1}
-                          >
-                            {formatSessionTitle(session)}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                    {overflowCount > 0 ? (
-                      <Text style={styles.dayChipOverflow}>+{overflowCount}</Text>
-                    ) : null}
-                  </View>
+                  <View style={[styles.dayDot, hasSessions && !isSelected ? styles.dayDotVisible : null]} />
                 </TouchableOpacity>
               );
             })}
@@ -436,22 +425,18 @@ export function CalendarScreen() {
           <View style={styles.divider} />
 
           <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
-            <View style={styles.panelHeader}>
-              <Text style={styles.panelDateLabel}>
-                {selectedDate.getDate()} {MONTH_NAMES[selectedDate.getMonth()].slice(0, 3)}{' '}
-                {selectedDate.getFullYear()}
-              </Text>
-              {filterChips}
-            </View>
+            <Text style={styles.panelDateLabel}>
+              {WEEKDAY_FULL[selectedDate.getDay()]}, {MONTH_NAMES[selectedDate.getMonth()]}{' '}
+              {selectedDate.getDate()}
+            </Text>
 
-            {selectedSessions.length === 0 ? (
-              <Text style={styles.noSessions}>No sessions on this day</Text>
-            ) : (
-              <View style={styles.timeline}>
-                <View style={styles.timelineLine} />
-                {selectedSessions.map((session) => renderSessionItem(session, sessionReplayById))}
-              </View>
-            )}
+            {renderDayCard(selectedSessions, sessionReplayById)}
+
+            <View style={styles.panelHeaderBelow}>{filterChips}</View>
+
+            <Text style={styles.monthCountFooter}>
+              {monthSessions.length} session{monthSessions.length === 1 ? '' : 's'} logged this month
+            </Text>
           </ScrollView>
         </>
       ) : null}
@@ -465,7 +450,7 @@ export function CalendarScreen() {
               style={styles.navBtn}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={[styles.navArrow, !canGoPrevWeek && styles.navArrowDisabled]}>{'<'}</Text>
+              <ChevronLeftIcon color={canGoPrevWeek ? colors.textSecondary : colors.textMuted} />
             </TouchableOpacity>
 
             <Text style={styles.monthLabel}>{formatWeekRangeLabel(weekStart)}</Text>
@@ -476,13 +461,13 @@ export function CalendarScreen() {
               style={styles.navBtn}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              <Text style={[styles.navArrow, !canGoNextWeek && styles.navArrowDisabled]}>{'>'}</Text>
+              <ChevronRightIcon color={canGoNextWeek ? colors.textSecondary : colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
             <View style={styles.panelHeader}>{filterChips}</View>
-            {renderGroupedTimeline(weekGroups, weekSessionReplayById)}
+            {renderGroupedList(weekGroups, weekSessionReplayById)}
           </ScrollView>
         </>
       ) : null}
@@ -490,14 +475,14 @@ export function CalendarScreen() {
       {viewMode === 'list' ? (
         <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
           <View style={[styles.panelHeader, styles.listPanelHeader]}>{filterChips}</View>
-          {renderGroupedTimeline(allGroups, allSessionReplayById)}
+          {renderGroupedList(allGroups, allSessionReplayById)}
         </ScrollView>
       ) : null}
     </SafeAreaView>
   );
 }
 
-const DAY_CELL_SIZE = 30;
+const DAY_CELL_SIZE = 34;
 
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
@@ -505,6 +490,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: spacing.lg,
+  },
+
+  screenTitle: {
+    ...typography.title,
+    fontSize: 24,
+    color: colors.textSecondary,
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.sm,
   },
 
   viewSwitcher: {
@@ -524,17 +517,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   navBtn: {
     padding: 4,
   },
-  navArrow: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  navArrowDisabled: {
-    color: colors.textMuted,
-  },
   monthLabel: {
     ...typography.title,
-    fontSize: 18,
+    fontSize: 17,
   },
 
   // Weekday labels
@@ -561,26 +546,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   dayCell: {
     width: `${100 / 7}%`,
-    alignItems: 'stretch',
+    alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 2,
   },
   dayNumberWrapper: {
-    alignSelf: 'center',
     width: DAY_CELL_SIZE,
     height: DAY_CELL_SIZE,
     borderRadius: DAY_CELL_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayNumberToday: {
-    backgroundColor: colors.accentSoft,
-  },
   dayNumberSelected: {
     backgroundColor: colors.accent,
   },
   dayNumber: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: colors.textSecondary,
   },
@@ -592,25 +573,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textInverse,
     fontWeight: '700',
   },
-  dayChipsCol: {
+  dayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     marginTop: 3,
-    gap: 2,
-    minHeight: 34,
+    backgroundColor: 'transparent',
   },
-  dayChip: {
-    borderRadius: 4,
-    paddingHorizontal: 3,
-    paddingVertical: 2,
-  },
-  dayChipText: {
-    fontSize: 8.5,
-    fontWeight: '700',
-  },
-  dayChipOverflow: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textAlign: 'center',
+  dayDotVisible: {
+    backgroundColor: colors.accent,
   },
 
   // Divider
@@ -627,18 +598,23 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   sessionPanelContent: {
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
   panelHeader: {
     marginBottom: spacing.xs,
     gap: spacing.xs,
   },
+  panelHeaderBelow: {
+    marginTop: spacing.md,
+  },
   listPanelHeader: {
     marginTop: spacing.xs,
   },
   panelDateLabel: {
-    ...typography.section,
+    ...typography.title,
+    fontSize: 19,
+    marginBottom: spacing.sm,
   },
   filterChips: {
     flexDirection: 'row',
@@ -648,6 +624,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     ...typography.bodyMuted,
     color: colors.textMuted,
     paddingVertical: spacing.sm,
+  },
+  monthCountFooter: {
+    ...typography.bodyMuted,
+    fontSize: 12.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
 
   groupBlock: {
@@ -659,81 +643,52 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.xs,
   },
 
-  timeline: {
-    position: 'relative',
-    paddingLeft: 20,
-  },
-  timelineLine: {
-    position: 'absolute',
-    left: 5,
-    top: 6,
-    bottom: 6,
-    width: 2,
-    backgroundColor: colors.border,
-  },
-  timelineItem: {
-    position: 'relative',
-    marginBottom: spacing.xs,
-  },
-  timelineNode: {
-    position: 'absolute',
-    left: -20,
-    top: 14,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: colors.background,
-  },
-  timelineCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  // Day card of bar-rows
+  dayCard: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    backgroundColor: colors.surfaceRaised,
+    paddingHorizontal: spacing.sm,
   },
-  timelineCardLeft: {
+  sessRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'stretch',
+    gap: 14,
+    paddingVertical: 16,
   },
-  gradeBadge: {
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  sessRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  gradeBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textInverse,
+  sessBar: {
+    width: 3,
+    flexShrink: 0,
   },
-  sessionTypeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  sessBody: {
+    flex: 1,
   },
-  sessionTypeLabel: {
+  sessType: {
     ...typography.body,
     fontSize: 15,
+    fontWeight: '700',
   },
-  sessionRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sessionTime: {
+  sessMeta: {
     ...typography.bodyMuted,
+    fontSize: 12,
+    marginTop: 4,
   },
-  sessionDuration: {
+  sessGradeChip: {
     ...typography.meta,
-    color: colors.textMuted,
+    fontSize: 10,
+    color: colors.textPrimary,
+    backgroundColor: colors.border,
   },
-  sessionChevron: {
-    color: colors.textMuted,
+  sessDur: {
+    ...typography.numeric,
     fontSize: 14,
+    color: colors.textSecondary,
+    marginLeft: 'auto',
+    flexShrink: 0,
+    alignSelf: 'center',
   },
 });

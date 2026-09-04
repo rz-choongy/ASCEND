@@ -23,26 +23,26 @@ const gradePalette = [
   '#3f473f',
 ];
 
-/** "Soft black" -- a neutral near-black, chosen over the earlier navy-tinted dark background. */
+/** Navy-slate -- ported from the Direction A wireframe (deep navy ground, amber accent). */
 export const darkColors = {
-  background: '#121212',
-  backgroundWarm: '#161616',
-  surface: '#1c1c1c',
-  surfaceAlt: '#202020',
-  surfaceRaised: '#262626',
-  border: '#2e2e2e',
-  borderSoft: '#3d3d3d',
-  textPrimary: '#ececec',
-  textSecondary: '#adadad',
-  textMuted: '#7a7a7a',
-  textInverse: '#0a0a0a',
-  accent: '#2f8fff',
-  accentMuted: '#152238',
-  accentSoft: '#1d3a5c',
+  background: '#141a24',
+  backgroundWarm: '#18202c',
+  surface: '#1c2432',
+  surfaceAlt: '#1f2836',
+  surfaceRaised: '#242e40',
+  border: '#303c52',
+  borderSoft: '#3a4766',
+  textPrimary: '#f2f0ea',
+  textSecondary: '#a6acbc',
+  textMuted: '#6b7385',
+  textInverse: '#141a24',
+  accent: '#eac60f',
+  accentMuted: '#2b260f',
+  accentSoft: '#4d431a',
   success: '#3ecf6e',
   warning: '#f2c45f',
   danger: '#f2564a',
-  overlay: 'rgba(0, 0, 0, 0.78)',
+  overlay: 'rgba(6, 9, 15, 0.78)',
   gradePalette,
 };
 
@@ -72,7 +72,7 @@ export const lightColors = {
 export type ThemeColors = typeof darkColors;
 export type ThemeMode = 'light' | 'dark';
 
-export type AccentColorId = 'blue' | 'teal' | 'purple' | 'orange' | 'rose';
+export type AccentColorId = 'blue' | 'teal' | 'purple' | 'orange' | 'rose' | 'amber';
 
 type AccentTint = { accent: string; accentMuted: string; accentSoft: string };
 
@@ -102,9 +102,14 @@ export const ACCENT_PALETTE: Record<AccentColorId, { label: string; dark: Accent
     dark: { accent: '#fb7185', accentMuted: '#2b141a', accentSoft: '#4a1f29' },
     light: { accent: '#e11d48', accentMuted: '#fde8ec', accentSoft: '#fac0cb' },
   },
+  amber: {
+    label: 'Amber',
+    dark: { accent: '#eac60f', accentMuted: '#2b260f', accentSoft: '#4d431a' },
+    light: { accent: '#b8860a', accentMuted: '#fdf6df', accentSoft: '#f5e5ad' },
+  },
 };
 
-export const DEFAULT_ACCENT_ID: AccentColorId = 'blue';
+export const DEFAULT_ACCENT_ID: AccentColorId = 'amber';
 
 export const applyAccent = (base: ThemeColors, accentId: AccentColorId, mode: ThemeMode): ThemeColors => {
   const tint = ACCENT_PALETTE[accentId]?.[mode] ?? ACCENT_PALETTE[DEFAULT_ACCENT_ID][mode];

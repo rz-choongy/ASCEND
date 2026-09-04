@@ -662,14 +662,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   currentSwatch: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 0,
     borderWidth: 1,
     borderColor: colors.borderSoft,
   },
   deleteButton: {
     width: 32,
     height: 32,
-    borderRadius: radius.pill,
+    borderRadius: 0,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     alignItems: 'center',
@@ -718,7 +718,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   colorGridSwatch: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 0,
     borderWidth: 2,
     borderColor: 'transparent',
   },

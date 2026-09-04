@@ -1,6 +1,17 @@
 import { StatusBar } from 'expo-status-bar';
 import * as Updates from 'expo-updates';
 import { useEffect, useMemo, useState } from 'react';
+import { useFonts } from 'expo-font';
+import {
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import {
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+  WorkSans_700Bold,
+  WorkSans_800ExtraBold,
+} from '@expo-google-fonts/work-sans';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,7 +28,14 @@ import { ProgressScreen } from './src/screens/ProgressScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
-import { ThemeProvider, useTheme, type ThemeColors } from './src/ui';
+import {
+  CalendarTabIcon,
+  LogTabIcon,
+  ProgressTabIcon,
+  ThemeProvider,
+  useTheme,
+  type ThemeColors,
+} from './src/ui';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -28,50 +46,22 @@ type TabIconProps = {
   focused: boolean;
 };
 
+// Icon set is Main.dc.html's (Direction A) tab bar, used as the canonical
+// version -- Direction A's own screens draw their tab icons slightly
+// differently from each other, so this picks one consistent set for the app.
 const TabIcon = ({ name, color, focused }: TabIconProps) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  if (name === 'Calendar') {
-    return (
-      <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
-        <View style={[styles.calendarTop, { backgroundColor: color }]} />
-        <View style={styles.calendarGrid}>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.calendarDot,
-                {
-                  backgroundColor: index === 1 || index === 4 ? color : colors.borderSoft,
-                },
-              ]}
-            />
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  if (name === 'Progress') {
-    return (
-      <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
-        <View style={styles.progressBars}>
-          <View style={[styles.progressBar, { height: 8, backgroundColor: color }]} />
-          <View style={[styles.progressBar, { height: 14, backgroundColor: color }]} />
-          <View style={[styles.progressBar, { height: 11, backgroundColor: color }]} />
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
-      <View style={[styles.logCardBack, { borderColor: color }]} />
-      <View style={[styles.logCardFront, { borderColor: color }]}>
-        <View style={[styles.logLine, { backgroundColor: color }]} />
-        <View style={[styles.logLineShort, { backgroundColor: color }]} />
-      </View>
+      {name === 'Calendar' ? (
+        <CalendarTabIcon color={color} />
+      ) : name === 'Progress' ? (
+        <ProgressTabIcon color={color} />
+      ) : (
+        <LogTabIcon color={color} />
+      )}
     </View>
   );
 };
@@ -142,11 +132,19 @@ function AppContent() {
 
 // Matches darkColors.background — used only before the DB (and therefore ThemeProvider,
 // which reads the persisted theme preference from it) is confirmed ready.
-const FALLBACK_BACKGROUND = '#121212';
+const FALLBACK_BACKGROUND = '#141a24';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    WorkSans_700Bold,
+    WorkSans_800ExtraBold,
+  });
 
   useEffect(() => {
     try {
@@ -156,6 +154,12 @@ export default function App() {
       setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');
     }
   }, []);
+
+  useEffect(() => {
+    if (fontError) {
+      setInitError(fontError.message);
+    }
+  }, [fontError]);
 
   useEffect(() => {
     // Fetch and apply an OTA update immediately on launch, instead of
@@ -187,7 +191,7 @@ export default function App() {
     );
   }
 
-  if (!isReady) {
+  if (!isReady || !fontsLoaded) {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: FALLBACK_BACKGROUND }} />
@@ -210,76 +214,9 @@ const createStyles = (colors: ThemeColors) =>
       height: 34,
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 17,
+      borderRadius: 0,
     },
     tabIconFocused: {
       backgroundColor: colors.accentMuted,
-    },
-    logCardBack: {
-      position: 'absolute',
-      width: 15,
-      height: 17,
-      borderRadius: 4,
-      borderWidth: 1.5,
-      opacity: 0.45,
-      transform: [{ translateX: -3 }, { translateY: -2 }],
-    },
-    logCardFront: {
-      width: 16,
-      height: 18,
-      borderRadius: 4,
-      borderWidth: 1.5,
-      backgroundColor: colors.background,
-      paddingHorizontal: 3,
-      justifyContent: 'center',
-      gap: 3,
-      transform: [{ translateX: 2 }, { translateY: 2 }],
-    },
-    logLine: {
-      width: '100%',
-      height: 2,
-      borderRadius: 1,
-    },
-    logLineShort: {
-      width: '65%',
-      height: 2,
-      borderRadius: 1,
-    },
-    calendarTop: {
-      width: 17,
-      height: 4,
-      borderTopLeftRadius: 4,
-      borderTopRightRadius: 4,
-    },
-    calendarGrid: {
-      width: 17,
-      height: 15,
-      borderWidth: 1.5,
-      borderTopWidth: 0,
-      borderColor: colors.borderSoft,
-      borderBottomLeftRadius: 4,
-      borderBottomRightRadius: 4,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignContent: 'center',
-      justifyContent: 'center',
-      gap: 2,
-      paddingTop: 2,
-    },
-    calendarDot: {
-      width: 3,
-      height: 3,
-      borderRadius: 1.5,
-    },
-    progressBars: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      gap: 3,
-      height: 16,
-    },
-    progressBar: {
-      width: 4,
-      borderTopLeftRadius: 2,
-      borderTopRightRadius: 2,
     },
   });

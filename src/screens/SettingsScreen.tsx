@@ -1,11 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
 import { getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { ACCENT_PALETTE, ListRow, PressableScale, SegmentedControl, spacing, useTheme } from '../ui';
+import {
+  ACCENT_PALETTE,
+  ChevronLeftIcon,
+  ListRow,
+  MountainMarkIcon,
+  PressableScale,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { AccentColorId, ThemeColors, ThemeMode } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -18,7 +26,7 @@ type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 // drives EAS's runtimeVersion (policy: "appVersion") -- bumping that would
 // break OTA updates for already-installed builds, since it changes what
 // runtime an `eas update` targets.
-const APP_VERSION = '1.5';
+const APP_VERSION = '1.6';
 
 export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const { colors, typography, mode, setMode, accentId, setAccentId } = useTheme();
@@ -48,7 +56,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
         <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={8}>
-          <View style={styles.backChevron} />
+          <ChevronLeftIcon size={20} color={colors.textPrimary} strokeWidth={1.8} />
         </PressableScale>
         <Text style={styles.title}>Settings</Text>
       </View>
@@ -59,14 +67,29 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           <ListRow
             title="Theme"
             right={
-              <SegmentedControl
-                options={[
-                  { value: 'light', label: 'Light' },
-                  { value: 'dark', label: 'Dark' },
-                ]}
-                value={mode}
-                onChange={setThemeMode}
-              />
+              // Deliberately pill-shaped -- Direction A's wireframe carves this
+              // control out as the one intentional exception to its otherwise
+              // fully-sharp corner language.
+              <View style={styles.pillSegmented}>
+                <TouchableOpacity
+                  style={[styles.pillSeg, mode === 'light' && styles.pillSegActive]}
+                  onPress={() => setThemeMode('light')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.pillSegText, mode === 'light' && styles.pillSegTextActive]}>
+                    Light
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.pillSeg, mode === 'dark' && styles.pillSegActive]}
+                  onPress={() => setThemeMode('dark')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.pillSegText, mode === 'dark' && styles.pillSegTextActive]}>
+                    Dark
+                  </Text>
+                </TouchableOpacity>
+              </View>
             }
           />
           <ListRow
@@ -123,6 +146,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <View style={styles.group}>
           <ListRow title="Version" meta={APP_VERSION} />
         </View>
+
+        <View style={styles.footer}>
+          <MountainMarkIcon size={18} color={colors.accent} strokeWidth={2} />
+          <Text style={styles.footerWord}>ASCEND</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -145,19 +173,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backButton: {
       width: 36,
       height: 36,
-      borderRadius: 18,
-    },
-    backChevron: {
-      width: 9,
-      height: 9,
-      borderLeftWidth: 2,
-      borderBottomWidth: 2,
-      borderColor: colors.textPrimary,
-      transform: [{ rotate: '45deg' }],
-      marginLeft: 4,
+      borderRadius: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     title: {
       ...typography.title,
+      fontSize: 20,
+      letterSpacing: 0.4,
+      textTransform: 'uppercase',
     },
     content: {
       paddingHorizontal: spacing.md,
@@ -169,6 +193,35 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginBottom: spacing.xs,
     },
     group: {},
+
+    pillSegmented: {
+      flexDirection: 'row',
+      gap: 2,
+      borderWidth: 1,
+      borderColor: colors.textMuted,
+      padding: 2,
+      borderRadius: 13,
+      marginTop: 4,
+    },
+    pillSeg: {
+      paddingHorizontal: 12,
+      height: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 11,
+    },
+    pillSegActive: {
+      backgroundColor: colors.accent,
+    },
+    pillSegText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    pillSegTextActive: {
+      color: colors.textInverse,
+    },
+
     accentSwatchRow: {
       flexDirection: 'row',
       gap: spacing.xxs,
@@ -177,11 +230,24 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     accentSwatch: {
       width: 24,
       height: 24,
-      borderRadius: 12,
+      borderRadius: 0,
       borderWidth: 2,
       borderColor: 'transparent',
     },
     accentSwatchSelected: {
       borderColor: colors.textPrimary,
+    },
+
+    footer: {
+      alignItems: 'center',
+      gap: 6,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.sm,
+    },
+    footerWord: {
+      ...typography.title,
+      fontSize: 13,
+      letterSpacing: 0.2,
+      color: colors.textSecondary,
     },
   });
