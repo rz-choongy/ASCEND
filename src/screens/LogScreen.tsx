@@ -35,6 +35,7 @@ import {
   Card,
   PressableScale,
   SettingsSlidersIcon,
+  getContrastText,
   spacing,
   useTheme,
 } from '../ui';
@@ -294,7 +295,7 @@ export function LogScreen() {
             <Text style={styles.prLabel}>This week's hardest send</Text>
             <Text style={styles.prGym}>{hardestThisWeek.gymName}</Text>
             <Text style={styles.prMeta}>
-              {formatRecentSendMeta({ ...hardestThisWeek, eventId: '', isToday: false })}
+              {formatRecentSendMeta({ ...hardestThisWeek, eventId: '', gradeColor: null, isToday: false })}
               {hardestThisWeek.result === 'FLASH' ? ' · Flash' : ''}
             </Text>
           </View>
@@ -306,27 +307,38 @@ export function LogScreen() {
         <View style={styles.sessionSection}>
           <Text style={styles.sectionLabel}>Recent sends</Text>
           <View>
-            {recentSends.map((send) => (
-              <View key={send.eventId} style={styles.sendRow}>
-                <View style={styles.gradeChip}>
-                  <Text style={styles.gradeChipText}>{send.gradeLabel}</Text>
-                </View>
-                <View style={styles.sendInfo}>
-                  <View style={styles.sendGymRow}>
-                    <Text style={styles.sendGym}>{send.gymName}</Text>
-                    {send.isToday ? (
-                      <View style={styles.todayChip}>
-                        <Text style={styles.todayChipText}>Today</Text>
-                      </View>
-                    ) : null}
+            {recentSends.map((send) => {
+              const chipColor = send.gradeColor ?? colors.surfaceRaised;
+              return (
+                <View key={send.eventId} style={styles.sendRow}>
+                  <View
+                    style={[styles.gradeChip, { backgroundColor: chipColor, borderColor: chipColor }]}
+                  >
+                    <Text
+                      style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                    >
+                      {send.gradeLabel}
+                    </Text>
                   </View>
-                  <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
+                  <View style={styles.sendInfo}>
+                    <View style={styles.sendGymRow}>
+                      <Text style={styles.sendGym}>{send.gymName}</Text>
+                      {send.isToday ? (
+                        <View style={styles.todayChip}>
+                          <Text style={styles.todayChipText}>Today</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
+                  </View>
+                  {send.result === 'FLASH' ? (
+                    <Text style={styles.sendResult}>Flash</Text>
+                  ) : null}
                 </View>
-                {send.result === 'FLASH' ? (
-                  <Text style={styles.sendResult}>Flash</Text>
-                ) : null}
-              </View>
-            ))}
+              );
+            })}
           </View>
           <TouchableOpacity
             style={styles.viewAll}
@@ -633,11 +645,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     ...typography.numeric,
     minWidth: 32,
     height: 32,
+    maxWidth: 64,
+    paddingHorizontal: 6,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
   },
   gradeChipText: {
     ...typography.numeric,

@@ -240,6 +240,7 @@ export const findHardestSendThisWeek = (sessions: SessionRow[]): HardestSendThis
 export type RecentSend = {
   eventId: string;
   gradeLabel: string;
+  gradeColor: string | null;
   gymName: string;
   result: 'SEND' | 'FLASH';
   createdAt: number;
@@ -259,6 +260,7 @@ export const buildRecentSends = (sessions: SessionRow[], limit: number): RecentS
         all.push({
           eventId: log.eventId,
           gradeLabel: log.gradeLabel,
+          gradeColor: log.gradeColor ?? null,
           gymName: gymNameFor(log.gymId ?? session.gym_id ?? undefined),
           result: log.result,
           createdAt: log.createdAt,

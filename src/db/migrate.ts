@@ -33,7 +33,7 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 4;
+const APP_SCHEMA_VERSION = 5;
 
 type Migration = {
   version: number;
@@ -273,11 +273,33 @@ const addGymParentIdColumn = (): void => {
   }
 };
 
+// Numeric-graded gyms used to seed every grade with color_hex NULL, so every logged climb
+// looked identical (falling back to one neutral color everywhere colors are shown). Backfill
+// existing rows with the same cycle gymStore.ts now assigns to newly created numeric gyms.
+const numericGradeColorCycle = [
+  '#22C55E', '#84CC16', '#EAB308', '#F59E0B', '#F97316',
+  '#EF4444', '#EC4899', '#D946EF', '#A855F7', '#6366F1',
+];
+
+const backfillNumericGradeColors = (): void => {
+  const rows = getAll<{ id: string; sort_order: number }>(
+    `SELECT o.id AS id, o.sort_order AS sort_order
+     FROM gym_grade_options o
+     JOIN gyms g ON g.id = o.gym_id
+     WHERE g.grading_type = 'numeric' AND o.color_hex IS NULL;`
+  );
+  rows.forEach((row) => {
+    const color = numericGradeColorCycle[row.sort_order % numericGradeColorCycle.length];
+    run('UPDATE gym_grade_options SET color_hex = ? WHERE id = ?;', [color, row.id]);
+  });
+};
+
 const migrations: Migration[] = [
   { version: 1, up: ensureBaseSchema },
   { version: 2, up: ensureBetaHardening },
   { version: 3, up: addGymParentIdColumn },
   { version: 4, up: dedupeGymGradeOptions },
+  { version: 5, up: backfillNumericGradeColors },
 ];
 
 export const migrate = (): void => {

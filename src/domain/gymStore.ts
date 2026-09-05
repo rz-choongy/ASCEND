@@ -67,11 +67,18 @@ const defaultVScaleGrades: GymGradeOptionInput[] = [
   { id: 'grade-default-v11-plus', label: 'V11+', gradeMin: 11, gradeMax: 17, colorHex: '#111827', sortOrder: 11 },
 ];
 
+// Same progression as defaultVScaleGrades below -- keeps numeric-graded gyms visually
+// distinguishable per grade instead of every number sharing one fallback color.
+const numericGradeColorCycle = [
+  '#22C55E', '#84CC16', '#EAB308', '#F59E0B', '#F97316',
+  '#EF4444', '#EC4899', '#D946EF', '#A855F7', '#6366F1',
+];
+
 const defaultNumericGrades: GymGradeOptionInput[] = Array.from({ length: 10 }, (_, index) => ({
   label: `${index + 1}`,
   gradeMin: index,
   gradeMax: index,
-  colorHex: null,
+  colorHex: numericGradeColorCycle[index % numericGradeColorCycle.length],
   sortOrder: index,
 }));
 

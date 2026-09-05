@@ -266,12 +266,17 @@ export function ProgressScreen() {
                 .reverse()
                 .map((bar) => (
                   <View key={bar.label} style={styles.pyrRow}>
-                    <Text style={styles.pyrGrade}>{bar.label}</Text>
+                    <Text style={styles.pyrGrade} numberOfLines={1}>
+                      {bar.label}
+                    </Text>
                     <View style={styles.pyrTrack}>
                       <View
                         style={[
                           styles.pyrBar,
-                          { width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%` },
+                          {
+                            width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%`,
+                            backgroundColor: bar.color,
+                          },
                         ]}
                       />
                     </View>
@@ -543,7 +548,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   pyrGrade: {
     ...typography.numeric,
-    width: 26,
+    minWidth: 26,
+    maxWidth: 64,
     fontSize: 11,
     textAlign: 'right',
     color: colors.textSecondary,
@@ -553,7 +559,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   pyrBar: {
     height: 13,
-    backgroundColor: colors.borderSoft,
   },
   pyrCount: {
     ...typography.numeric,

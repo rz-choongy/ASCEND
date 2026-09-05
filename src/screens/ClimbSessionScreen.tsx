@@ -270,24 +270,38 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         <Text style={styles.gymSelectorAction}>Change</Text>
       </Pressable>
 
-      {/* Grade grid — unboxed, neutral tiles, tonal amber ring on the active tile.
-          The wireframe's own critique loop A/B-tested per-grade coloring on this
-          grid and found it read worse than a neutral grid with color reserved for
-          the log below, so this grid is intentionally neutral (not gradePalette). */}
+      {/* Grade grid — each tile tinted with its own grade color (shared with the log
+          list below and the Progress grade pyramid), with a tonal amber ring marking
+          the active tile. */}
       <View style={styles.gradeGrid}>
         {gradeOptions.map((grade) => {
           const active = selectedGrade.label === grade.label;
+          const tileColor = grade.color ?? colors.surface;
           return (
             <PressableScale
               key={grade.id ?? grade.label}
               scaleTo={0.94}
-              style={[styles.gradeTile, active ? styles.gradeTileActive : null]}
+              style={[
+                styles.gradeTile,
+                { backgroundColor: tileColor },
+                active ? styles.gradeTileActive : null,
+              ]}
               onPress={() => {
                 void Haptics.selectionAsync();
                 setSelectedGrade(grade);
               }}
             >
-              <Text style={[styles.gradeText, active ? styles.gradeTextActive : null]}>{grade.label}</Text>
+              <Text
+                style={[
+                  styles.gradeText,
+                  { color: getContrastText(tileColor) },
+                  active ? styles.gradeTextActive : null,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {grade.label}
+              </Text>
             </PressableScale>
           );
         })}
@@ -336,7 +350,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                 style={[styles.logRow, index % 2 === 1 ? styles.logRowAlt : null]}
               >
                 <View style={[styles.gradeChip, { backgroundColor: chipColor }]}>
-                  <Text style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}>
+                  <Text
+                    style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
                     {log.gradeLabel}
                   </Text>
                 </View>
@@ -473,7 +491,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     letterSpacing: 0.8,
   },
 
-  // Grade grid — unboxed, no section label, neutral surface, tonal-ring active state
+  // Grade grid — each tile tinted with its grade's own color, tonal-ring active state
   gradeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -483,12 +501,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeTile: {
     width: '22.5%',
     minHeight: 46,
-    backgroundColor: colors.surface,
+    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gradeTileActive: {
-    backgroundColor: colors.accentMuted,
     borderWidth: 3,
     borderColor: colors.accent,
   },
@@ -496,10 +513,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     ...typography.body,
     fontSize: 15,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   gradeTextActive: {
-    color: colors.accent,
     fontWeight: '700',
   },
 
@@ -561,8 +576,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   gradeChip: {
     ...typography.numeric,
-    width: 36,
+    minWidth: 36,
     height: 26,
+    maxWidth: 64,
+    paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
