@@ -13,7 +13,7 @@ import {
   findFirstReachedDate,
   findFlashRate,
   findLongestStreakEver,
-  findMostSessionsInAWeek,
+  findMostClimbsInSession,
   getAvailableClimbGyms,
 } from '../domain/progressInsights';
 import { getCompletedSessions, getSessionEvents, getSessionStreak } from '../domain/sessionStore';
@@ -130,7 +130,7 @@ export function ProgressScreen() {
   // Personal bests are historical records -- always computed over full history,
   // independent of the All time / By month toggle above.
   const longestStreakEver = useMemo(() => findLongestStreakEver(sessions), [sessions]);
-  const mostSessionsInWeek = useMemo(() => findMostSessionsInAWeek(sessions), [sessions]);
+  const mostClimbsInSession = useMemo(() => findMostClimbsInSession(sessions), [sessions]);
   const flashRate = useMemo(() => findFlashRate(sessions), [sessions]);
 
   const pyramidMax = Math.max(1, ...gradeDistribution.map((bar) => bar.count));
@@ -293,7 +293,7 @@ export function ProgressScreen() {
           </Text>
           <View style={styles.sparkWrap}>
             <Text style={styles.sparkPeakLbl}>{weekMax}</Text>
-            <Svg style={styles.spark} viewBox="0 0 100 50" preserveAspectRatio="none">
+            <Svg style={styles.spark} viewBox="0 0 100 100" preserveAspectRatio="none">
               <Polyline
                 points={sparkPoints.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="none"
@@ -303,10 +303,7 @@ export function ProgressScreen() {
               />
             </Svg>
             {sparkPoints.map((p, i) => (
-              <View
-                key={i}
-                style={[styles.sparkDot, { left: `${p.x}%`, top: `${(p.y / 50) * 100}%` }]}
-              />
+              <View key={i} style={[styles.sparkDot, { left: `${p.x}%`, top: `${p.y}%` }]} />
             ))}
           </View>
           <View style={styles.sparkLbls}>
@@ -340,8 +337,8 @@ export function ProgressScreen() {
               <Text style={styles.pbValue}>{longestStreakEver} day{longestStreakEver === 1 ? '' : 's'}</Text>
             </View>
             <View style={[styles.pbRow, styles.pbRowBordered]}>
-              <Text style={styles.pbLabel}>Most sessions in a week</Text>
-              <Text style={styles.pbValue}>{mostSessionsInWeek}</Text>
+              <Text style={styles.pbLabel}>Most climbs in a session</Text>
+              <Text style={styles.pbValue}>{mostClimbsInSession}</Text>
             </View>
             <View style={[styles.pbRow, styles.pbRowBordered]}>
               <Text style={styles.pbLabel}>Flash rate</Text>

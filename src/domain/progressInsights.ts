@@ -322,14 +322,16 @@ export const findLongestStreakEver = (sessions: SessionRow[]): number => {
   return longest;
 };
 
-/** The most sessions logged in any single Mon-Sun week, across all history. */
-export const findMostSessionsInAWeek = (sessions: SessionRow[]): number => {
-  const counts = new Map<number, number>();
-  sessions.forEach((session) => {
-    const weekStart = startOfWeek(new Date(session.started_at)).getTime();
-    counts.set(weekStart, (counts.get(weekStart) ?? 0) + 1);
-  });
-  return counts.size === 0 ? 0 : Math.max(...counts.values());
+/** The most individual climbs (sends + flashes) logged in any single climb session. */
+export const findMostClimbsInSession = (sessions: SessionRow[]): number => {
+  let most = 0;
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => {
+      const logs = applyClimbEvents(getSessionEvents(session.id));
+      most = Math.max(most, logs.length);
+    });
+  return most;
 };
 
 /** Percent of logged climbs that were flashed (first-try sends), 0-100, rounded. */
