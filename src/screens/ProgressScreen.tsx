@@ -266,7 +266,7 @@ export function ProgressScreen() {
                 .reverse()
                 .map((bar) => (
                   <View key={bar.label} style={styles.pyrRow}>
-                    <Text style={styles.pyrGrade} numberOfLines={1}>
+                    <Text style={styles.pyrGrade} numberOfLines={1} adjustsFontSizeToFit>
                       {bar.label}
                     </Text>
                     <View style={styles.pyrTrack}>
@@ -545,8 +545,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   pyrGrade: {
     ...typography.numeric,
-    minWidth: 26,
-    maxWidth: 64,
+    width: 46,
     fontSize: 11,
     textAlign: 'right',
     color: colors.textSecondary,
