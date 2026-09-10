@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -199,6 +201,14 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     setSessionTitle(sessionId, title);
   };
 
+  // Back doesn't rely on onBlur firing before the screen unmounts — save explicitly,
+  // mirroring the safety-net pattern the session screens use before navigating on Done.
+  const handleBack = () => {
+    setSessionTitle(sessionId, title);
+    setSessionNotes(sessionId, notes);
+    navigation.goBack();
+  };
+
   const bump = () => setRefreshKey((key) => key + 1);
 
   const openClimbEdit = (entry: ClimbLog) => {
@@ -308,8 +318,12 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoider}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => navigation.goBack()} style={styles.backRow} hitSlop={12}>
+        <Pressable onPress={handleBack} style={styles.backRow} hitSlop={12}>
           <Text style={styles.backLabel}>← Back</Text>
         </Pressable>
         {/* Session metadata header */}
@@ -425,6 +439,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           </View>
         ) : null}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         animationType="fade"
@@ -568,6 +583,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  keyboardAvoider: {
+    flex: 1,
   },
   content: {
     padding: spacing.sm,

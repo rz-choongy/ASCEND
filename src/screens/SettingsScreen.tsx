@@ -130,7 +130,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           />
           <ListRow
             title="Session timer"
-            subtitle="Show elapsed time while logging"
+            subtitle="Show elapsed time in climbing sessions"
             right={
               <Switch
                 value={timerEnabled}
