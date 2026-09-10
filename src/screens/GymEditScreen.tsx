@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -383,41 +386,46 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
       <SafeAreaView edges={['top']} style={styles.screen}>
         <ScreenHeader eyebrow={eyebrow} title={title} onClose={() => navigation.goBack()} />
 
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Branch name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="City Road"
-            placeholderTextColor={colors.textMuted}
-            style={styles.input}
-            autoFocus
-          />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoider}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <Text style={styles.label}>Branch name</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="City Road"
+              placeholderTextColor={colors.textMuted}
+              style={styles.input}
+              autoFocus
+            />
 
-          <View style={styles.inheritedNotice}>
-            <Text style={styles.inheritedIcon}>↗</Text>
-            <View style={styles.inheritedText}>
-              <Text style={styles.inheritedTitle}>Grade system inherited</Text>
-              <Text style={styles.inheritedBody}>
-                This branch uses the grades defined on {parentGym?.name ?? 'the parent gym'}.
-                To change grades, edit the parent gym.
-              </Text>
+            <View style={styles.inheritedNotice}>
+              <Text style={styles.inheritedIcon}>↗</Text>
+              <View style={styles.inheritedText}>
+                <Text style={styles.inheritedTitle}>Grade system inherited</Text>
+                <Text style={styles.inheritedBody}>
+                  This branch uses the grades defined on {parentGym?.name ?? 'the parent gym'}.
+                  To change grades, edit the parent gym.
+                </Text>
+              </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
 
-        <View style={styles.footer}>
-          <Button
-            label={editingGym ? 'Save branch' : 'Add branch'}
-            onPress={handleSave}
-            disabled={!name.trim() || isSaving}
-          />
-          {editingGym ? (
-            <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
-              <Text style={styles.deleteLinkText}>Delete branch</Text>
-            </Pressable>
-          ) : null}
-        </View>
+          <View style={styles.footer}>
+            <Button
+              label={editingGym ? 'Save branch' : 'Add branch'}
+              onPress={handleSave}
+              disabled={!name.trim() || isSaving}
+            />
+            {editingGym ? (
+              <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
+                <Text style={styles.deleteLinkText}>Delete branch</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -431,6 +439,10 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         onClose={() => navigation.goBack()}
       />
 
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoider}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Gym name</Text>
         <TextInput
@@ -439,6 +451,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           placeholder="Boulder Lab"
           placeholderTextColor={colors.textMuted}
           style={styles.input}
+          autoFocus={!editingGym}
         />
 
         <Text style={styles.label}>Grading type</Text>
@@ -524,12 +537,15 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           </Pressable>
         ) : null}
       </View>
+      </KeyboardAvoidingView>
 
-      {colorPickerIndex !== null ? (
-        <Pressable
-          style={[styles.modalBackdrop, styles.modalOverlay]}
-          onPress={() => setColorPickerIndex(null)}
-        >
+      <Modal
+        transparent
+        animationType="fade"
+        visible={colorPickerIndex !== null}
+        onRequestClose={() => setColorPickerIndex(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setColorPickerIndex(null)}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Grade color</Text>
             <View style={styles.colorGrid}>
@@ -560,7 +576,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             <Button label="Close" variant="ghost" onPress={() => setColorPickerIndex(null)} />
           </Pressable>
         </Pressable>
-      ) : null}
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -573,6 +589,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  keyboardAvoider: {
+    flex: 1,
   },
   content: {
     gap: spacing.xs,
@@ -687,15 +706,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'center',
     backgroundColor: colors.overlay,
     padding: spacing.md,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    elevation: 20,
-    zIndex: 20,
   },
   modalCard: {
     width: '100%',

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
+  Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -103,15 +105,43 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   // See ClimbSessionScreen for why this listener exists: any exit path (header back,
   // hardware back, swipe, or Done) must never leave a session stuck 'active' forever.
+  // An empty session (nothing logged) abandons silently; one with real sets asks
+  // first, since 'abandoned' sessions are excluded from every stats query and a
+  // mis-tap would otherwise erase logged sets with no way back.
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', () => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
       const current = getSessionById(sessionId);
-      if (current?.status === 'active') {
+      if (current?.status !== 'active') return;
+
+      const hasUnsavedLogs = applySetEvents(getSessionEvents(sessionId)).length > 0;
+      if (!hasUnsavedLogs) {
         setSessionStatus(sessionId, 'abandoned');
+        return;
       }
+
+      e.preventDefault();
+      Alert.alert('Leave this session?', 'You have logged sets in this session.', [
+        { text: 'Keep logging', style: 'cancel' },
+        {
+          text: 'Finish session',
+          onPress: () => {
+            setSessionTitle(sessionId, title.trim());
+            setSessionStatus(sessionId, 'completed');
+            navigation.dispatch(e.data.action);
+          },
+        },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => {
+            setSessionStatus(sessionId, 'abandoned');
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
     });
     return unsubscribe;
-  }, [navigation, sessionId]);
+  }, [navigation, sessionId, title]);
 
   const bump = () => setRefreshKey((k) => k + 1);
   const displayTitle = title.trim() || 'Gym Session';
@@ -168,8 +198,15 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     setIsAddExerciseOpen(false);
   };
 
+  // See ClimbSessionScreen.handleLog for why this guard exists.
+  const isLoggingRef = useRef(false);
+
   const handleLogSet = () => {
-    if (session?.status !== 'active' || !selectedExercise) return;
+    if (session?.status !== 'active' || !selectedExercise || isLoggingRef.current) return;
+    isLoggingRef.current = true;
+    setTimeout(() => {
+      isLoggingRef.current = false;
+    }, 400);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'SET_LOGGED', {
       exerciseId: selectedExercise.id,
@@ -187,6 +224,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const handleUndo = () => {
     if (session?.status !== 'active') return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     appendEvent(sessionId, 'SET_UNDONE', { at: Date.now() });
     bump();
   };
@@ -233,11 +271,13 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         />
       </View>
 
-      {isAddExerciseOpen ? (
-        <Pressable
-          style={[styles.modalBackdrop, styles.modalOverlay]}
-          onPress={() => setIsAddExerciseOpen(false)}
-        >
+      <Modal
+        transparent
+        animationType="fade"
+        visible={isAddExerciseOpen}
+        onRequestClose={() => setIsAddExerciseOpen(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setIsAddExerciseOpen(false)}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Add exercise</Text>
             <TextInput
@@ -269,7 +309,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             </View>
           </Pressable>
         </Pressable>
-      ) : null}
+      </Modal>
 
       {!selectedExercise ? (
         <View style={styles.emptyExerciseBox}>
@@ -424,15 +464,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'center',
     backgroundColor: colors.overlay,
     padding: spacing.md,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    elevation: 20,
-    zIndex: 20,
   },
   modalCard: {
     width: '100%',

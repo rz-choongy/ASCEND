@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
@@ -10,8 +10,16 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
+import { applyClimbEvents } from '../domain/climbLogUtils';
 import { formatElapsed } from '../domain/dateUtils';
-import { appendEvent, getSessionById, setSessionStatus, setSessionTitle } from '../domain/sessionStore';
+import {
+  appendEvent,
+  canChangeSessionGym,
+  getSessionById,
+  getSessionEvents,
+  setSessionStatus,
+  setSessionTitle,
+} from '../domain/sessionStore';
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -151,16 +159,43 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   // Any way of leaving this screen — header back, Android hardware back, swipe, or the
   // Done flow above — should never leave a session stuck 'active' forever. If Done already
-  // completed it, this is a no-op; otherwise it silently saves as abandoned.
+  // completed it, this is a no-op. An empty session (nothing logged) abandons silently;
+  // one with real logs asks first, since 'abandoned' sessions are excluded from every
+  // stats query and a mis-tap would otherwise erase logged climbs with no way back.
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', () => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
       const current = getSessionById(sessionId);
-      if (current?.status === 'active') {
+      if (current?.status !== 'active') return;
+
+      const hasUnsavedLogs = applyClimbEvents(getSessionEvents(sessionId)).length > 0;
+      if (!hasUnsavedLogs) {
         setSessionStatus(sessionId, 'abandoned');
+        return;
       }
+
+      e.preventDefault();
+      Alert.alert('Leave this session?', 'You have logged climbs in this session.', [
+        { text: 'Keep logging', style: 'cancel' },
+        {
+          text: 'Finish session',
+          onPress: () => {
+            setSessionTitle(sessionId, title.trim());
+            setSessionStatus(sessionId, 'completed');
+            navigation.dispatch(e.data.action);
+          },
+        },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => {
+            setSessionStatus(sessionId, 'abandoned');
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
     });
     return unsubscribe;
-  }, [navigation, sessionId]);
+  }, [navigation, sessionId, title]);
 
   // Ticks the live session-length display; only runs while there's something to show.
   useEffect(() => {
@@ -175,8 +210,17 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     setSessionTitle(sessionId, title.trim());
   };
 
+  // Plain ref, not state: guards against a fast double-tap firing twice before React
+  // re-renders, since appendEvent runs synchronously. Short window — long enough to
+  // absorb an accidental double-tap, short enough not to block a deliberate repeat log.
+  const isLoggingRef = useRef(false);
+
   const handleLog = (result: 'SEND' | 'FLASH') => {
-    if (session?.status !== 'active') return;
+    if (session?.status !== 'active' || isLoggingRef.current) return;
+    isLoggingRef.current = true;
+    setTimeout(() => {
+      isLoggingRef.current = false;
+    }, 400);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeId: selectedGrade.id,
@@ -192,6 +236,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   const handleUndo = () => {
     if (session?.status !== 'active') return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     appendEvent(sessionId, 'CLIMB_UNDONE', { at: Date.now() });
     bump();
   };
@@ -261,7 +306,16 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
       <Pressable
         style={styles.gymSelector}
-        onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
+        onPress={() => {
+          if (!canChangeSessionGym(sessionId)) {
+            Alert.alert(
+              'Gym locked for this session',
+              'Finish this climbing session before switching gyms. Logged climbs keep their original gym and grade colors.'
+            );
+            return;
+          }
+          navigation.navigate('GymSelect', { returnToSessionId: sessionId });
+        }}
       >
         <View>
           <Text style={styles.gymSelectorLabel}>Climb grades</Text>

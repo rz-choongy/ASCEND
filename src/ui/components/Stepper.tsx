@@ -1,10 +1,16 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { spacing } from '../tokens/spacing';
 import { PressableScale } from './PressableScale';
+
+const withHaptic = (fn: () => void) => () => {
+  void Haptics.selectionAsync();
+  fn();
+};
 
 type StepperProps = {
   value: string;
@@ -35,7 +41,7 @@ export const Stepper = ({
     <View style={[styles.row, style]}>
       {onBigDecrement ? (
         <PressableScale
-          onPress={onBigDecrement}
+          onPress={withHaptic(onBigDecrement)}
           scaleTo={0.88}
           style={[buttonStyle, styles.bigButton]}
           hitSlop={4}
@@ -43,16 +49,16 @@ export const Stepper = ({
           <Text style={styles.bigText}>-{bigStepLabel}</Text>
         </PressableScale>
       ) : null}
-      <PressableScale onPress={onDecrement} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
+      <PressableScale onPress={withHaptic(onDecrement)} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>-</Text>
       </PressableScale>
       <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
-      <PressableScale onPress={onIncrement} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
+      <PressableScale onPress={withHaptic(onIncrement)} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>+</Text>
       </PressableScale>
       {onBigIncrement ? (
         <PressableScale
-          onPress={onBigIncrement}
+          onPress={withHaptic(onBigIncrement)}
           scaleTo={0.88}
           style={[buttonStyle, styles.bigButton]}
           hitSlop={4}
