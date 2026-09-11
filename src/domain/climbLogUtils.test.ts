@@ -1,4 +1,4 @@
-import { applyClimbEvents } from './climbLogUtils';
+import { applyClimbEvents, midpointGrade, spansMultipleGrades } from './climbLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
   id,
@@ -80,5 +80,32 @@ describe('applyClimbEvents', () => {
     ]);
 
     expect(logs).toEqual([]);
+  });
+});
+
+describe('spansMultipleGrades', () => {
+  it('leaves exact grades and two-grade bands alone', () => {
+    expect(spansMultipleGrades(4, 4)).toBe(false);
+    expect(spansMultipleGrades(4, 5)).toBe(false);
+  });
+
+  it('flags bands covering three or more grades', () => {
+    expect(spansMultipleGrades(4, 6)).toBe(true);
+    expect(spansMultipleGrades(6, 9)).toBe(true);
+  });
+});
+
+describe('midpointGrade', () => {
+  it('returns the exact middle of an odd-width band', () => {
+    expect(midpointGrade(4, 6)).toBe(5);
+  });
+
+  it('floors an even-width band so it never inflates a personal best', () => {
+    // V6-V9 resolves to V7, not V8 — guessing upward would invent a harder send.
+    expect(midpointGrade(6, 9)).toBe(7);
+  });
+
+  it('is a no-op on an already-exact grade', () => {
+    expect(midpointGrade(5, 5)).toBe(5);
   });
 });

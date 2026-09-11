@@ -4,6 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
+import {
+  countWideGradeBandClimbs,
+  narrowWideGradeBands,
+  type WideBandSummary,
+} from '../domain/sessionStore';
 import { getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -38,12 +43,14 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [wideBands, setWideBands] = useState<WideBandSummary>({ sessions: 0, climbs: 0 });
 
   useFocusEffect(
     useCallback(() => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
+      setWideBands(countWideGradeBandClimbs());
     }, [])
   );
 
@@ -86,6 +93,31 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   const setThemeMode = (next: ThemeMode) => {
     if (next !== mode) setMode(next);
+  };
+
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+  const handleRefineGrades = () => {
+    if (wideBands.climbs === 0) return;
+    Alert.alert(
+      'Refine old grade ranges?',
+      `${plural(wideBands.climbs, 'climb')} across ${plural(wideBands.sessions, 'session')} ` +
+        'were logged as a range, like V4–V6. This sets each one to the middle grade so they ' +
+        'pool correctly in Progress.\n\n' +
+        "It's an estimate, not what you actually climbed — your original entries stay on " +
+        'record as corrections rather than being overwritten.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Refine',
+          onPress: () => {
+            const done = narrowWideGradeBands();
+            setWideBands(countWideGradeBandClimbs());
+            Alert.alert('Grades refined', `Updated ${plural(done.climbs, 'climb')}.`);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -181,6 +213,20 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
                 thumbColor="#ffffff"
               />
             }
+          />
+        </View>
+
+        <Text style={styles.sectionLabel}>Data</Text>
+        <View style={styles.group}>
+          <ListRow
+            title="Refine old grade ranges"
+            subtitle={
+              wideBands.climbs > 0
+                ? 'Set range-graded climbs to their middle grade'
+                : 'Every logged climb already has an exact grade'
+            }
+            meta={wideBands.climbs > 0 ? `${wideBands.climbs}` : undefined}
+            onPress={wideBands.climbs > 0 ? handleRefineGrades : undefined}
           />
         </View>
 

@@ -19,7 +19,7 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
-import { applyClimbEvents } from '../domain/climbLogUtils';
+import { applyClimbEvents, spansMultipleGrades } from '../domain/climbLogUtils';
 import { formatElapsed } from '../domain/dateUtils';
 import {
   appendEvent,
@@ -93,16 +93,6 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
 const GRADE_OPTIONS: GradeOption[] = defaultOptionsForType('v_scale')
   .map(normalizeGradeOption)
   .filter((grade): grade is GradeOption => grade !== null);
-
-/**
- * A band this wide (V4-V6 covers three grades) can't be pooled across gyms
- * meaningfully, so logging one asks which grade it actually was. Narrower bands
- * (V4, or V4-V5) log straight through — not worth a tap.
- */
-const WIDE_BAND_MIN_SPAN = 2;
-
-const spansMultipleGrades = (grade: GradeOption): boolean =>
-  grade.max - grade.min >= WIDE_BAND_MIN_SPAN;
 
 /** Every whole V grade inside a band, e.g. V4-V6 -> [4, 5, 6]. */
 const gradesInBand = (grade: GradeOption): number[] => {
@@ -291,7 +281,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     // gyms, so ask which one it actually was instead of silently storing the range.
     // Opening the picker is idempotent, so it needs no double-tap guard of its own —
     // commitLog owns that, covering both this path and the picker tiles.
-    if (spansMultipleGrades(selectedGrade)) {
+    if (spansMultipleGrades(selectedGrade.min, selectedGrade.max)) {
       void Haptics.selectionAsync();
       setPendingLog({ result, grade: selectedGrade });
       return;
