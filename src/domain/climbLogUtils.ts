@@ -1,3 +1,20 @@
+/**
+ * A band covering this many grades or more (V4-V6 spans 2) is too coarse to pool
+ * across gyms, since "Red" at one gym and "Red" at another cover different ranges.
+ * Logging one asks for the exact grade; older entries can be narrowed after the fact.
+ */
+export const WIDE_BAND_MIN_SPAN = 2;
+
+export const spansMultipleGrades = (gradeMin: number, gradeMax: number): boolean =>
+  gradeMax - gradeMin >= WIDE_BAND_MIN_SPAN;
+
+/**
+ * Representative single grade for a band. Floors the midpoint, so an even-width band
+ * settles on the easier grade — guessing upward would silently inflate personal bests.
+ */
+export const midpointGrade = (gradeMin: number, gradeMax: number): number =>
+  Math.floor((gradeMin + gradeMax) / 2);
+
 export type ClimbLog = {
   eventId: string;
   gradeLabel: string;

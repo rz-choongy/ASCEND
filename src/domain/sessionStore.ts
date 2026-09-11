@@ -1,6 +1,11 @@
 import * as Crypto from 'expo-crypto';
 import { getAll, getFirst, run } from '../db/db';
-import { applyClimbEvents } from './climbLogUtils';
+import {
+  applyClimbEvents,
+  midpointGrade,
+  spansMultipleGrades,
+  type ClimbLog,
+} from './climbLogUtils';
 import type {
   ActiveSessionEventType,
   EventRow,
@@ -217,6 +222,63 @@ export const setSessionGymId = (sessionId: string, gymId: string | null): boolea
   }
   run('UPDATE sessions SET gym_id = ? WHERE id = ?;', [gymId, sessionId]);
   return true;
+};
+
+export type WideBandSummary = {
+  sessions: number;
+  climbs: number;
+};
+
+/** Completed/abandoned climb sessions holding at least one too-wide grade band. */
+const findWideBandClimbs = (): { sessionId: string; climbs: ClimbLog[] }[] => {
+  const rows = getAll<SessionRow>(
+    "SELECT * FROM sessions WHERE status IN ('completed', 'abandoned') AND type = 'climb';"
+  );
+  const found: { sessionId: string; climbs: ClimbLog[] }[] = [];
+  rows.forEach((session) => {
+    const wide = applyClimbEvents(getSessionEvents(session.id)).filter((log) =>
+      spansMultipleGrades(log.gradeMin, log.gradeMax)
+    );
+    if (wide.length > 0) {
+      found.push({ sessionId: session.id, climbs: wide });
+    }
+  });
+  return found;
+};
+
+const summarize = (found: { climbs: ClimbLog[] }[]): WideBandSummary => ({
+  sessions: found.length,
+  climbs: found.reduce((sum, entry) => sum + entry.climbs.length, 0),
+});
+
+/** How much history a refine pass would touch, for confirming before running it. */
+export const countWideGradeBandClimbs = (): WideBandSummary => summarize(findWideBandClimbs());
+
+/**
+ * Narrows already-logged wide bands to their midpoint grade.
+ *
+ * Appends CLIMB_EDITED corrections rather than rewriting the original events — the
+ * log stays append-only, so the band a climb was actually logged at is still on
+ * record and this stays inspectable (and undoable) after the fact.
+ */
+export const narrowWideGradeBands = (): WideBandSummary => {
+  const found = findWideBandClimbs();
+  found.forEach(({ sessionId, climbs }) => {
+    climbs.forEach((log) => {
+      const value = midpointGrade(log.gradeMin, log.gradeMax);
+      appendSessionCorrectionEvent(sessionId, 'CLIMB_EDITED', {
+        eventId: log.eventId,
+        gradeLabel: log.gradeLabel,
+        gradeMin: value,
+        gradeMax: value,
+        gradeColor: log.gradeColor ?? null,
+        gradeId: log.gradeId,
+        gymId: log.gymId,
+        result: log.result,
+      });
+    });
+  });
+  return summarize(found);
 };
 
 export function getSessionsForMonth(
