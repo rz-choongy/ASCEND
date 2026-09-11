@@ -8,6 +8,7 @@ import { firstOfMonth } from '../domain/dateUtils';
 import {
   buildAllTimeStats,
   buildGradeDistribution,
+  buildGradeDistributionAcrossGyms,
   buildStrengthVolumeTrend,
   buildWeeklyFrequency,
   findFirstReachedDate,
@@ -36,6 +37,9 @@ const WEEKS_SHOWN = 8;
 const STRENGTH_SESSIONS_SHOWN = 10;
 const MONTHS_BACK_LIMIT = 12;
 
+/** Sentinel scope meaning "pool every gym", stored alongside real gym ids. */
+const ALL_GYMS = '__all__';
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -49,8 +53,9 @@ export function ProgressScreen() {
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [streak, setStreak] = useState(0);
-  // undefined = user hasn't picked one this session yet -- fall back to the persisted setting.
-  const [selectedGymId, setSelectedGymId] = useState<string | null | undefined>(undefined);
+  // undefined = user hasn't picked one this session yet -- fall back to the persisted
+  // setting. A string is either a gym id or the ALL_GYMS sentinel.
+  const [selectedScope, setSelectedScope] = useState<string | null | undefined>(undefined);
   const [view, setView] = useState<ProgressView>('all');
   const [currentMonth, setCurrentMonth] = useState<Date>(() => firstOfMonth(new Date()));
 
@@ -95,26 +100,36 @@ export function ProgressScreen() {
     [sessions]
   );
   const availableGyms = useMemo(() => getAvailableClimbGyms(scopedSessions), [scopedSessions]);
-  const activeGymId = useMemo(() => {
+  const activeScope = useMemo(() => {
     const availableIds = availableGyms.map((gym) => gym.gymId);
-    if (selectedGymId !== undefined && availableIds.includes(selectedGymId)) {
-      return selectedGymId;
+    const isValid = (value: string | null) => value === ALL_GYMS || availableIds.includes(value);
+    if (selectedScope !== undefined && isValid(selectedScope)) {
+      return selectedScope;
     }
     const persisted = getProgressGradeGymId();
-    if (persisted && availableIds.includes(persisted)) {
+    if (persisted && isValid(persisted)) {
       return persisted;
     }
     return availableGyms[0]?.gymId ?? null;
-  }, [availableGyms, selectedGymId]);
+  }, [availableGyms, selectedScope]);
 
-  function handleSelectGym(gymId: string | null) {
-    setSelectedGymId(gymId);
-    if (gymId) setProgressGradeGymId(gymId);
+  const isAllScope = activeScope === ALL_GYMS;
+
+  function handleSelectScope(scope: string | null) {
+    setSelectedScope(scope);
+    if (scope) setProgressGradeGymId(scope);
   }
 
-  const gradeDistribution = useMemo(
-    () => (availableGyms.length > 0 ? buildGradeDistribution(scopedSessions, activeGymId) : []),
-    [scopedSessions, activeGymId, availableGyms.length]
+  const gradeDistribution = useMemo(() => {
+    if (availableGyms.length === 0) return [];
+    return isAllScope
+      ? buildGradeDistributionAcrossGyms(scopedSessions, colors.gradePalette)
+      : buildGradeDistribution(scopedSessions, activeScope);
+  }, [scopedSessions, activeScope, isAllScope, availableGyms.length, colors.gradePalette]);
+
+  const totalPyramidSends = useMemo(
+    () => gradeDistribution.reduce((sum, bar) => sum + bar.count, 0),
+    [gradeDistribution]
   );
   const volumeTrend = useMemo(
     () => buildStrengthVolumeTrend(scopedSessions, STRENGTH_SESSIONS_SHOWN),
@@ -262,19 +277,28 @@ export function ProgressScreen() {
           <View style={styles.subSection}>
             <View style={styles.gradeDistributionHeader}>
               <Text style={styles.eyebrow}>Grade pyramid</Text>
-              {availableGyms.length > 1 ? (
-                <View style={styles.gradingTypeChips}>
-                  {availableGyms.map((gym) => (
-                    <Chip
-                      key={gym.gymId ?? '__unspecified__'}
-                      label={gym.gymName}
-                      selected={gym.gymId === activeGymId}
-                      onPress={() => handleSelectGym(gym.gymId)}
-                    />
-                  ))}
-                </View>
-              ) : null}
+              <Text style={styles.pyramidTotal}>
+                {totalPyramidSends} send{totalPyramidSends === 1 ? '' : 's'}
+              </Text>
             </View>
+
+            {availableGyms.length > 1 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.scopeChips}
+              >
+                <Chip label="All" selected={isAllScope} onPress={() => handleSelectScope(ALL_GYMS)} />
+                {availableGyms.map((gym) => (
+                  <Chip
+                    key={gym.gymId ?? '__unspecified__'}
+                    label={gym.gymName}
+                    selected={!isAllScope && gym.gymId === activeScope}
+                    onPress={() => handleSelectScope(gym.gymId)}
+                  />
+                ))}
+              </ScrollView>
+            ) : null}
             <View style={styles.pyramid}>
               {gradeDistribution
                 .slice()
@@ -299,6 +323,12 @@ export function ProgressScreen() {
                   </View>
                 ))}
             </View>
+            {isAllScope ? (
+              <Text style={styles.scopeNote}>
+                Pooled by V-scale across {availableGyms.length} gyms — grade names differ per gym,
+                the numeric grade doesn't.
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
@@ -524,13 +554,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },
-  gradingTypeChips: {
+  pyramidTotal: {
+    ...typography.meta,
+    color: colors.textSecondary,
+  },
+  // Scrolls rather than wraps: the row stays one clean line however many gyms
+  // the user has climbed at.
+  scopeChips: {
     flexDirection: 'row',
     gap: spacing.xxs,
+    paddingBottom: spacing.xs,
+  },
+  scopeNote: {
+    ...typography.bodyMuted,
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+    lineHeight: 15,
   },
 
   // Grade pyramid

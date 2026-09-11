@@ -24,7 +24,7 @@ export {
   LogTabIcon,
   MountainMarkIcon,
   ProgressTabIcon,
-  SettingsSlidersIcon,
+  SettingsGearIcon,
 } from './components/Icon';
 export { IconButton } from './components/IconButton';
 export { ListRow } from './components/ListRow';
