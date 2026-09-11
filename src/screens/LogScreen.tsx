@@ -34,7 +34,7 @@ import {
   Button,
   Card,
   IconButton,
-  SettingsSlidersIcon,
+  SettingsGearIcon,
   getContrastText,
   radius,
   spacing,
@@ -75,7 +75,7 @@ function formatRecentSendMeta(send: RecentSend): string {
 
 const SettingsButton = ({ colors, onPress }: { colors: ThemeColors; onPress: () => void }) => (
   <IconButton onPress={onPress} accessibilityLabel="Settings">
-    <SettingsSlidersIcon color={colors.textSecondary} />
+    <SettingsGearIcon color={colors.textSecondary} />
   </IconButton>
 );
 

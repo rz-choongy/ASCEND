@@ -132,6 +132,44 @@ export const buildGradeDistribution = (
     .map(({ label, count, color }) => ({ label, count, color }));
 };
 
+/**
+ * Grade distribution pooled across every gym.
+ *
+ * Buckets by the numeric gradeMin/gradeMax band rather than by label: two gyms
+ * can both call a grade "Purple" and mean different things, so the label is not
+ * comparable across gyms but the numeric band is. Colors come from the caller's
+ * grade palette for the same reason -- one gym's "Purple" hex would be an
+ * arbitrary choice to represent a band several gyms contributed to.
+ */
+export const buildGradeDistributionAcrossGyms = (
+  sessions: SessionRow[],
+  palette: string[]
+): GradeDistributionBar[] => {
+  const byBand = new Map<string, { count: number; min: number; max: number }>();
+
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => {
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        const key = `${log.gradeMin}-${log.gradeMax}`;
+        const existing = byBand.get(key);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          byBand.set(key, { count: 1, min: log.gradeMin, max: log.gradeMax });
+        }
+      });
+    });
+
+  return Array.from(byBand.values())
+    .sort((a, b) => (a.min + a.max) / 2 - (b.min + b.max) / 2)
+    .map((band) => ({
+      label: band.min === band.max ? `V${band.min}` : `V${band.min}-${band.max}`,
+      count: band.count,
+      color: palette.length > 0 ? palette[band.min % palette.length] : '#3ecf6e',
+    }));
+};
+
 export const buildStrengthVolumeTrend = (sessions: SessionRow[], limit: number): VolumeTrendBar[] => {
   const strengthSessions = sessions
     .filter((session) => session.type === 'strength')

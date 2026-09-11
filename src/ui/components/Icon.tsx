@@ -45,19 +45,30 @@ export const CloseIcon = ({ size = 19, color, strokeWidth = 2.2 }: IconProps) =>
   </Svg>
 );
 
-/** Settings sliders/equalizer glyph from Main.dc.html's icon-btn. */
-export const SettingsSlidersIcon = ({ size = 19, color, strokeWidth = 1.8 }: IconProps) => (
+/**
+ * Settings gear. Drawn as a 6-tooth cog from straight segments only (flat tooth
+ * tops, flat valleys, miter joins) so it reads unmistakably as a gear while
+ * staying in the app's angular language rather than the usual soft round cog.
+ * The hub is a square, echoing the square-knob motif.
+ */
+export const SettingsGearIcon = ({ size = 19, color, strokeWidth = 1.6 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
-      d="M4 6h9M17 6h3M4 12h3M9 12h11M4 18h13M21 18h-1"
+      d="M21.06 9.91 L21.06 14.09 L17.92 14.15 L16.83 16.05 L18.34 18.80 L14.72 20.89 L13.09 18.20 L10.91 18.20 L9.28 20.89 L5.66 18.80 L7.17 16.05 L6.08 14.15 L2.94 14.09 L2.94 9.91 L6.08 9.85 L7.17 7.95 L5.66 5.20 L9.28 3.11 L10.91 5.80 L13.09 5.80 L14.72 3.11 L18.34 5.20 L16.83 7.95 L17.92 9.85 Z"
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="square"
       strokeLinejoin="miter"
     />
-    <Rect x={9} y={4} width={4} height={4} fill={color} stroke="none" />
-    <Rect x={3} y={10} width={4} height={4} fill={color} stroke="none" />
-    <Rect x={15} y={16} width={4} height={4} fill={color} stroke="none" />
+    <Rect
+      x={9.4}
+      y={9.4}
+      width={5.2}
+      height={5.2}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      fill="none"
+    />
   </Svg>
 );
 
