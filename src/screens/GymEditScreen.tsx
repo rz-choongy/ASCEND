@@ -26,6 +26,7 @@ import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
+  IconButton,
   PressableScale,
   ScreenHeader,
   Stepper,
@@ -512,14 +513,13 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                 style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
                 hitSlop={6}
               />
-              <PressableScale
+              <IconButton
                 onPress={() => removeRow(index)}
-                scaleTo={0.88}
-                style={styles.deleteButton}
+                accessibilityLabel={`Remove ${row.label || 'grade'}`}
                 hitSlop={8}
               >
                 <Text style={styles.deleteGlyph}>×</Text>
-              </PressableScale>
+              </IconButton>
             </View>
           );
         })}
@@ -608,7 +608,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     borderColor: colors.border,
     backgroundColor: colors.surface,
     color: colors.textPrimary,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.s,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -681,18 +681,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   currentSwatch: {
     width: 32,
     height: 32,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.borderSoft,
-  },
-  deleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   deleteGlyph: {
     color: colors.textMuted,
@@ -728,7 +719,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   colorGridSwatch: {
     width: 44,
     height: 44,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 2,
     borderColor: 'transparent',
   },

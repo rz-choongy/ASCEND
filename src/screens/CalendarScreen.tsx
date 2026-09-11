@@ -24,7 +24,15 @@ import {
 } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { ChevronLeftIcon, ChevronRightIcon, Chip, SegmentedControl, useTheme } from '../ui';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Chip,
+  IconButton,
+  SegmentedControl,
+  radius,
+  useTheme,
+} from '../ui';
 import { spacing } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -275,6 +283,31 @@ export function CalendarScreen() {
     return `${WEEKDAY_FULL[date.getDay()]} · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
   }
 
+  /**
+   * Color for a day's marker: the grade color of the hardest climb logged that day.
+   * Reuses `SessionReplay.dotColor` (already "hardest climb's gradeColor, else the
+   * type color") rather than deriving grade colors a second way.
+   */
+  function gradeAccentFor(
+    daySessions: SessionRow[],
+    replayById: Map<string, SessionReplay>
+  ): string {
+    let bestColor: string | null = null;
+    let bestGrade = -Infinity;
+    let fallback: string | null = null;
+    for (const session of daySessions) {
+      const replay = replayById.get(session.id);
+      if (!replay) continue;
+      fallback = fallback ?? replay.dotColor;
+      const hardest = replay.climbs.reduce((max, climb) => Math.max(max, climb.gradeMax), -Infinity);
+      if (hardest > bestGrade) {
+        bestGrade = hardest;
+        bestColor = replay.dotColor;
+      }
+    }
+    return bestColor ?? fallback ?? DOT_CLIMB;
+  }
+
   /** A single bar-row for one session, matching Direction A's `.sess-row`/`.sess-bar`. */
   function renderSessionRow(
     session: SessionRow,
@@ -282,7 +315,10 @@ export function CalendarScreen() {
     isFirst: boolean
   ) {
     const replay = replayById.get(session.id);
-    const barColor = session.type === 'climb' ? colors.textPrimary : colors.textSecondary;
+    // The rule down the left of each row carries the session's hardest grade color,
+    // extending the grade palette out of the chips and into the timeline.
+    const barColor =
+      session.type === 'climb' ? replay?.dotColor ?? colors.textPrimary : colors.textSecondary;
     const hardestGradeLabel = session.type === 'climb' ? replay?.hardestGradeLabel : undefined;
 
     return (
@@ -382,27 +418,29 @@ export function CalendarScreen() {
       {viewMode === 'month' ? (
         <>
           <View style={styles.header}>
-            <TouchableOpacity
+            <IconButton
+              variant="bare"
               onPress={prevMonth}
               disabled={!canGoPrev}
-              style={styles.navBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Previous month"
+              hitSlop={12}
             >
               <ChevronLeftIcon color={canGoPrev ? colors.textSecondary : colors.textMuted} />
-            </TouchableOpacity>
+            </IconButton>
 
             <Text style={styles.monthLabel}>
               {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </Text>
 
-            <TouchableOpacity
+            <IconButton
+              variant="bare"
               onPress={nextMonth}
               disabled={!canGoNext}
-              style={styles.navBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Next month"
+              hitSlop={12}
             >
               <ChevronRightIcon color={canGoNext ? colors.textSecondary : colors.textMuted} />
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           <View style={styles.weekdayRow}>
@@ -448,7 +486,14 @@ export function CalendarScreen() {
                       {day.getDate()}
                     </Text>
                   </View>
-                  <View style={[styles.dayDot, hasSessions && !isSelected ? styles.dayDotVisible : null]} />
+                  <View
+                    style={[
+                      styles.dayDot,
+                      hasSessions && !isSelected
+                        ? { backgroundColor: gradeAccentFor(daySessions, sessionReplayById) }
+                        : null,
+                    ]}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -477,25 +522,27 @@ export function CalendarScreen() {
       {viewMode === 'week' ? (
         <>
           <View style={styles.header}>
-            <TouchableOpacity
+            <IconButton
+              variant="bare"
               onPress={prevWeek}
               disabled={!canGoPrevWeek}
-              style={styles.navBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Previous week"
+              hitSlop={12}
             >
               <ChevronLeftIcon color={canGoPrevWeek ? colors.textSecondary : colors.textMuted} />
-            </TouchableOpacity>
+            </IconButton>
 
             <Text style={styles.monthLabel}>{formatWeekRangeLabel(weekStart)}</Text>
 
-            <TouchableOpacity
+            <IconButton
+              variant="bare"
               onPress={nextWeek}
               disabled={!canGoNextWeek}
-              style={styles.navBtn}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Next week"
+              hitSlop={12}
             >
               <ChevronRightIcon color={canGoNextWeek ? colors.textSecondary : colors.textMuted} />
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
@@ -558,9 +605,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.sm,
     marginBottom: 4,
   },
-  navBtn: {
-    padding: 4,
-  },
   monthLabel: {
     ...typography.title,
     fontSize: 17,
@@ -594,10 +638,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingVertical: 2,
     paddingHorizontal: 2,
   },
+  // Square selection marker, not a circle: matches the grade tiles and the
+  // square-knob icon language rather than the default rounded-pill calendar look.
   dayNumberWrapper: {
     width: DAY_CELL_SIZE,
     height: DAY_CELL_SIZE,
-    borderRadius: DAY_CELL_SIZE / 2,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -620,12 +666,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   dayDot: {
     width: 4,
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.sm,
     marginTop: 2,
     backgroundColor: 'transparent',
-  },
-  dayDotVisible: {
-    backgroundColor: colors.accent,
   },
 
   // Divider

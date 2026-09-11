@@ -39,8 +39,8 @@ export const CloseIcon = ({ size = 19, color, strokeWidth = 2.2 }: IconProps) =>
       d="M5 5l14 14M19 5 5 19"
       stroke={color}
       strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
     />
   </Svg>
 );
@@ -52,8 +52,8 @@ export const SettingsSlidersIcon = ({ size = 19, color, strokeWidth = 1.8 }: Ico
       d="M4 6h9M17 6h3M4 12h3M9 12h11M4 18h13M21 18h-1"
       stroke={color}
       strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
     />
     <Rect x={9} y={4} width={4} height={4} fill={color} stroke="none" />
     <Rect x={3} y={10} width={4} height={4} fill={color} stroke="none" />
@@ -64,29 +64,29 @@ export const SettingsSlidersIcon = ({ size = 19, color, strokeWidth = 1.8 }: Ico
 /** "View all" chevron, small right-pointing arrow used at list ends. */
 export const ArrowRightIcon = ({ size = 13, color, strokeWidth = 2 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
   </Svg>
 );
 
 /** Tab bar icon set, canonical per Main.dc.html. */
 export const LogTabIcon = ({ size = 20, color, strokeWidth = 1.8 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect x={4} y={4} width={16} height={16} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M12 8v8M8 12h8" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <Rect x={4} y={4} width={16} height={16} stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
+    <Path d="M12 8v8M8 12h8" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
   </Svg>
 );
 
 export const CalendarTabIcon = ({ size = 20, color, strokeWidth = 1.8 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Rect x={3} y={5} width={18} height={16} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M3 10h18M8 3v4M16 3v4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <Rect x={3} y={5} width={18} height={16} stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
+    <Path d="M3 10h18M8 3v4M16 3v4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
   </Svg>
 );
 
 export const ProgressTabIcon = ({ size = 20, color, strokeWidth = 1.8 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M3 18 9 11l4 3 8-9" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M15 5h6v6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M3 18 9 11l4 3 8-9" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
+    <Path d="M15 5h6v6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter" />
   </Svg>
 );
 

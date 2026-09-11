@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
+import { spacing } from '../tokens/spacing';
 import { PressableScale } from './PressableScale';
 
 type SegmentedControlOption<T extends string> = {
@@ -45,19 +46,21 @@ export function SegmentedControl<T extends string>({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
+    // Pill, not sharp: the system reserves radius.pill for switchable selectors
+    // (Chip, Settings' theme toggle, this) so shape alone signals "pick one of these".
     segmented: {
       flexDirection: 'row',
       backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       padding: 3,
       gap: 2,
     },
     segment: {
-      paddingHorizontal: 12,
+      paddingHorizontal: spacing.s,
       paddingVertical: 6,
-      borderRadius: radius.md - 3,
+      borderRadius: radius.pill,
     },
     segmentActive: {
       backgroundColor: colors.accent,

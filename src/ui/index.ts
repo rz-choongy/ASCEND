@@ -26,6 +26,7 @@ export {
   ProgressTabIcon,
   SettingsSlidersIcon,
 } from './components/Icon';
+export { IconButton } from './components/IconButton';
 export { ListRow } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';

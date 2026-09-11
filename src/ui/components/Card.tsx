@@ -34,13 +34,10 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
     },
     surface: {},
+    // Depth is carried by the surface tone alone -- the flat bordered look is the
+    // system's differentiator, so `raised` shifts background, never elevation.
     raised: {
       backgroundColor: colors.surfaceAlt,
-      shadowColor: '#050806',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.18,
-      shadowRadius: 18,
-      elevation: 2,
     },
     accentBar: {
       position: 'absolute',
@@ -48,7 +45,6 @@ const createStyles = (colors: ThemeColors) =>
       top: 1,
       bottom: 1,
       width: 4,
-      borderTopLeftRadius: radius.lg - 1,
-      borderBottomLeftRadius: radius.lg - 1,
+      borderRadius: radius.sm,
     },
   });

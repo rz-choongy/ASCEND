@@ -51,10 +51,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       alignItems: 'center',
       gap: 2,
     },
+    // Space Grotesk numeric: these are the headline figures of the session detail
+    // screen, so they get the same face as the streak/PR/session-stat hero numbers.
     value: {
-      color: colors.textPrimary,
-      fontSize: 20,
-      fontWeight: '800',
+      ...typography.numeric,
+      fontSize: 22,
     },
     label: {
       ...typography.meta,
@@ -63,6 +64,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     divider: {
       width: 1,
       backgroundColor: colors.border,
-      marginVertical: 4,
+      marginVertical: spacing.xxs,
     },
   });

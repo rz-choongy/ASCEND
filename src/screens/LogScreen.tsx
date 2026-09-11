@@ -33,9 +33,10 @@ import {
   ArrowRightIcon,
   Button,
   Card,
-  PressableScale,
+  IconButton,
   SettingsSlidersIcon,
   getContrastText,
+  radius,
   spacing,
   useTheme,
 } from '../ui';
@@ -72,36 +73,19 @@ function formatRecentSendMeta(send: RecentSend): string {
   return `${DAY_NAMES[d.getDay()].slice(0, 3)}, ${time}`;
 }
 
-const SettingsButton = ({
-  styles,
-  colors,
-  onPress,
-}: {
-  styles: ReturnType<typeof createStyles>;
-  colors: ThemeColors;
-  onPress: () => void;
-}) => (
-  <PressableScale
-    onPress={onPress}
-    scaleTo={0.88}
-    style={styles.iconBtn}
-    accessibilityLabel="Settings"
-    hitSlop={6}
-  >
+const SettingsButton = ({ colors, onPress }: { colors: ThemeColors; onPress: () => void }) => (
+  <IconButton onPress={onPress} accessibilityLabel="Settings">
     <SettingsSlidersIcon color={colors.textSecondary} />
-  </PressableScale>
+  </IconButton>
 );
 
 const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnType<typeof createStyles> }) => {
   const { mode, setMode } = useTheme();
   const isDark = mode === 'dark';
   return (
-    <PressableScale
+    <IconButton
       onPress={() => setMode(isDark ? 'light' : 'dark')}
-      scaleTo={0.88}
-      style={styles.iconBtn}
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      hitSlop={6}
     >
       {isDark ? (
         <View style={styles.moonWrap}>
@@ -111,7 +95,7 @@ const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnTy
       ) : (
         <View style={[styles.sunDot, { backgroundColor: colors.warning }]} />
       )}
-    </PressableScale>
+    </IconButton>
   );
 };
 
@@ -190,11 +174,7 @@ export function LogScreen() {
           <Text style={styles.screenTitle}>Today</Text>
           <View style={styles.headerRight}>
             <ThemeToggle colors={colors} styles={styles} />
-            <SettingsButton
-              colors={colors}
-              styles={styles}
-              onPress={() => navigation.navigate('Settings')}
-            />
+            <SettingsButton colors={colors} onPress={() => navigation.navigate('Settings')} />
           </View>
         </View>
         <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
@@ -392,16 +372,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   dateHeader: {
     ...typography.bodyMuted,
   },
-  iconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    backgroundColor: colors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // Sun/moon stay circular: they're celestial pictographs, where the round form
+  // carries the meaning -- unlike UI surfaces, which are uniformly sharp.
   moonWrap: {
     width: 14,
     height: 14,
@@ -430,13 +402,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   streakRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 4,
+    gap: spacing.s,
+    marginTop: spacing.xxs,
   },
   streakNumWrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: spacing.xs,
     flexShrink: 0,
     paddingBottom: 2,
   },
@@ -495,7 +467,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   bannerDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radius.sm,
     backgroundColor: colors.accent,
   },
   bannerTextCol: {
@@ -522,10 +494,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   activeLockBox: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 12,
+    paddingVertical: spacing.s,
   },
   activeLockTitle: {
     ...typography.body,
@@ -541,10 +513,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     backgroundColor: colors.surfaceAlt,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 10,
+    paddingVertical: spacing.s,
   },
   gymLabel: {
     ...typography.meta,
@@ -561,7 +533,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   ctaRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: spacing.xs,
   },
   ctaPrimary: {
     flex: 2.6,
@@ -571,7 +543,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   emptyState: {
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,
@@ -595,7 +567,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: 12,
+    padding: spacing.s,
     backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
@@ -636,8 +608,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
+    gap: spacing.s,
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -697,9 +669,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    marginTop: 4,
+    gap: spacing.xs,
+    paddingVertical: spacing.s,
+    marginTop: spacing.xxs,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
