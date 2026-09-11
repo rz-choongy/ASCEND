@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
@@ -85,6 +94,23 @@ const GRADE_OPTIONS: GradeOption[] = defaultOptionsForType('v_scale')
   .map(normalizeGradeOption)
   .filter((grade): grade is GradeOption => grade !== null);
 
+/**
+ * A band this wide (V4-V6 covers three grades) can't be pooled across gyms
+ * meaningfully, so logging one asks which grade it actually was. Narrower bands
+ * (V4, or V4-V5) log straight through — not worth a tap.
+ */
+const WIDE_BAND_MIN_SPAN = 2;
+
+const spansMultipleGrades = (grade: GradeOption): boolean =>
+  grade.max - grade.min >= WIDE_BAND_MIN_SPAN;
+
+/** Every whole V grade inside a band, e.g. V4-V6 -> [4, 5, 6]. */
+const gradesInBand = (grade: GradeOption): number[] => {
+  const values: number[] = [];
+  for (let value = grade.min; value <= grade.max; value++) values.push(value);
+  return values;
+};
+
 const normalizeGym = (gym: unknown): GymLike | null => {
   if (!gym || typeof gym !== 'object') return null;
   const value = gym as { id?: unknown; name?: unknown };
@@ -113,6 +139,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [title, setTitle] = useState('');
   const [showTimer, setShowTimer] = useState(true);
   const [now, setNow] = useState(() => Date.now());
+  /** Set while waiting for the climber to pin down a wide band's exact grade. */
+  const [pendingLog, setPendingLog] = useState<{
+    result: 'SEND' | 'FLASH';
+    grade: GradeOption;
+  } | null>(null);
 
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
@@ -224,23 +255,56 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   // absorb an accidental double-tap, short enough not to block a deliberate repeat log.
   const isLoggingRef = useRef(false);
 
-  const handleLog = (result: 'SEND' | 'FLASH') => {
-    if (session?.status !== 'active' || isLoggingRef.current) return;
+  /**
+   * Writes the climb. `gradeMin`/`gradeMax` are passed in rather than taken from the
+   * grade option so a wide colour band (e.g. Red = V4-V6) can be logged at the exact
+   * grade the climber picked, while keeping the gym's own label on the entry.
+   */
+  const commitLog = (
+    result: 'SEND' | 'FLASH',
+    grade: GradeOption,
+    gradeMin: number,
+    gradeMax: number
+  ) => {
+    if (isLoggingRef.current) return;
     isLoggingRef.current = true;
     setTimeout(() => {
       isLoggingRef.current = false;
     }, 400);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     appendEvent(sessionId, 'CLIMB_LOGGED', {
-      gradeId: selectedGrade.id,
-      gradeLabel: selectedGrade.label,
-      gradeMin: selectedGrade.min,
-      gradeMax: selectedGrade.max,
-      gradeColor: selectedGrade.color ?? undefined,
+      gradeId: grade.id,
+      gradeLabel: grade.label,
+      gradeMin,
+      gradeMax,
+      gradeColor: grade.color ?? undefined,
       gymId: currentGym?.id,
       result,
     });
     bump();
+  };
+
+  const handleLog = (result: 'SEND' | 'FLASH') => {
+    if (session?.status !== 'active') return;
+
+    // A band covering three or more V grades is too coarse to pool accurately across
+    // gyms, so ask which one it actually was instead of silently storing the range.
+    // Opening the picker is idempotent, so it needs no double-tap guard of its own —
+    // commitLog owns that, covering both this path and the picker tiles.
+    if (spansMultipleGrades(selectedGrade)) {
+      void Haptics.selectionAsync();
+      setPendingLog({ result, grade: selectedGrade });
+      return;
+    }
+
+    commitLog(result, selectedGrade, selectedGrade.min, selectedGrade.max);
+  };
+
+  const handlePickExactGrade = (value: number) => {
+    if (!pendingLog) return;
+    const { result, grade } = pendingLog;
+    setPendingLog(null);
+    commitLog(result, grade, value, value);
   };
 
   const handleUndo = () => {
@@ -453,6 +517,59 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           <Button label="Done" onPress={handleDone} style={styles.finishButton} />
         </View>
       ) : null}
+
+      {/* Wide colour bands get pinned to an exact grade before they're written. */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={pendingLog !== null}
+        onRequestClose={() => setPendingLog(null)}
+      >
+        <Pressable style={styles.pickerBackdrop} onPress={() => setPendingLog(null)}>
+          <Pressable style={styles.pickerCard} onPress={() => {}}>
+            <Text style={styles.pickerEyebrow}>
+              {pendingLog?.result === 'FLASH' ? 'Flash' : 'Send'} · {pendingLog?.grade.label}
+            </Text>
+            <Text style={styles.pickerTitle}>Which grade was it?</Text>
+            <Text style={styles.pickerHint}>
+              {pendingLog?.grade.label} covers V{pendingLog?.grade.min}–V{pendingLog?.grade.max} at
+              this gym. Picking the exact grade keeps your pyramid accurate.
+            </Text>
+
+            <View style={styles.pickerGrid}>
+              {pendingLog
+                ? gradesInBand(pendingLog.grade).map((value) => {
+                    const tileColor = pendingLog.grade.color ?? colors.surface;
+                    return (
+                      <PressableScale
+                        key={value}
+                        scaleTo={0.94}
+                        style={[styles.pickerTile, { backgroundColor: tileColor }]}
+                        onPress={() => handlePickExactGrade(value)}
+                        accessibilityLabel={`Log as V${value}`}
+                      >
+                        <Text
+                          style={[styles.pickerTileText, { color: getContrastText(tileColor) }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                        >
+                          V{value}
+                        </Text>
+                      </PressableScale>
+                    );
+                  })
+                : null}
+            </View>
+
+            <Button
+              label="Cancel"
+              variant="ghost"
+              onPress={() => setPendingLog(null)}
+              style={styles.pickerCancel}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -706,5 +823,58 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   finishButton: {
     width: '100%',
+  },
+
+  // Exact-grade picker
+  pickerBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlay,
+    padding: spacing.md,
+  },
+  pickerCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
+  },
+  pickerEyebrow: {
+    ...typography.meta,
+    color: colors.accent,
+  },
+  pickerTitle: {
+    ...typography.title,
+    fontSize: 20,
+    marginTop: 2,
+  },
+  pickerHint: {
+    ...typography.bodyMuted,
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: spacing.xxs,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  // Big targets: this sits in the middle of a session, so it has to be fast.
+  pickerTile: {
+    flexGrow: 1,
+    flexBasis: 64,
+    minHeight: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerTileText: {
+    ...typography.numeric,
+    fontSize: 22,
+  },
+  pickerCancel: {
+    marginTop: spacing.xxs,
   },
 });
