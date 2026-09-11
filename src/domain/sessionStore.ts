@@ -219,13 +219,17 @@ export const setSessionGymId = (sessionId: string, gymId: string | null): boolea
   return true;
 };
 
-export function getSessionsForMonth(year: number, month: number): SessionRow[] {
+export function getSessionsForMonth(
+  year: number,
+  month: number,
+  status: SessionStatus = 'completed'
+): SessionRow[] {
   // month is 0-indexed (JS Date convention)
   const start = new Date(year, month, 1).getTime();
   const end = new Date(year, month + 1, 1).getTime();
   return getAll<SessionRow>(
     'SELECT * FROM sessions WHERE status = ? AND started_at >= ? AND started_at < ? ORDER BY started_at ASC',
-    ['completed', start, end]
+    [status, start, end]
   );
 }
 
@@ -281,11 +285,29 @@ export function getCompletedSessions(type?: SessionType): SessionRow[] {
   );
 }
 
+/** Sessions left mid-way (closed without finishing) rather than explicitly deleted. */
+export function getAbandonedSessions(type?: SessionType): SessionRow[] {
+  if (type) {
+    return getAll<SessionRow>(
+      'SELECT * FROM sessions WHERE status = ? AND type = ? ORDER BY started_at ASC;',
+      ['abandoned', type]
+    );
+  }
+  return getAll<SessionRow>(
+    'SELECT * FROM sessions WHERE status = ? ORDER BY started_at ASC;',
+    ['abandoned']
+  );
+}
+
 /** startMs inclusive, endMs exclusive. */
-export function getSessionsForDateRange(startMs: number, endMs: number): SessionRow[] {
+export function getSessionsForDateRange(
+  startMs: number,
+  endMs: number,
+  status: SessionStatus = 'completed'
+): SessionRow[] {
   return getAll<SessionRow>(
     'SELECT * FROM sessions WHERE status = ? AND started_at >= ? AND started_at < ? ORDER BY started_at ASC',
-    ['completed', startMs, endMs]
+    [status, startMs, endMs]
   );
 }
 

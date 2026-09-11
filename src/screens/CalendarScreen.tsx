@@ -17,6 +17,7 @@ import {
 } from '../domain/calendarInsights';
 import { addDays, formatDuration, formatLocalDate, startOfWeek } from '../domain/dateUtils';
 import {
+  getAbandonedSessions,
   getCompletedSessions,
   getSessionsForDateRange,
   getSessionsForMonth,
@@ -127,6 +128,8 @@ export function CalendarScreen() {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => firstOfMonth(today));
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [typeFilter, setTypeFilter] = useState<SessionType | null>(null);
+  // Sessions closed without finishing (abandoned) instead of the normal completed ones.
+  const [showDiscarded, setShowDiscarded] = useState(false);
   // Trigger to force refresh when screen re-focuses
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -146,8 +149,12 @@ export function CalendarScreen() {
   const monthSessions = useMemo(() => {
     // refreshKey intentionally used to bust memo on focus
     void refreshKey;
-    return getSessionsForMonth(currentMonth.getFullYear(), currentMonth.getMonth());
-  }, [currentMonth, refreshKey]);
+    return getSessionsForMonth(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      showDiscarded ? 'abandoned' : 'completed'
+    );
+  }, [currentMonth, refreshKey, showDiscarded]);
 
   const sessionReplayById = useMemo(() => {
     return buildSessionReplayMap(monthSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH });
@@ -202,8 +209,12 @@ export function CalendarScreen() {
 
   const weekSessions = useMemo(() => {
     void refreshKey;
-    return getSessionsForDateRange(weekStart.getTime(), addDays(weekStart, 7).getTime());
-  }, [weekStart, refreshKey]);
+    return getSessionsForDateRange(
+      weekStart.getTime(),
+      addDays(weekStart, 7).getTime(),
+      showDiscarded ? 'abandoned' : 'completed'
+    );
+  }, [weekStart, refreshKey, showDiscarded]);
 
   const weekSessionReplayById = useMemo(
     () => buildSessionReplayMap(weekSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH }),
@@ -233,8 +244,8 @@ export function CalendarScreen() {
   // List view (all-time)
   const allSessions = useMemo(() => {
     void refreshKey;
-    return getCompletedSessions();
-  }, [refreshKey]);
+    return showDiscarded ? getAbandonedSessions() : getCompletedSessions();
+  }, [refreshKey, showDiscarded]);
 
   const allSessionReplayById = useMemo(
     () => buildSessionReplayMap(allSessions, { climb: DOT_CLIMB, strength: DOT_STRENGTH }),
@@ -302,7 +313,11 @@ export function CalendarScreen() {
   /** One bordered card containing all of a day's sessions as bar-rows. */
   function renderDayCard(sessions: SessionRow[], replayById: Map<string, SessionReplay>) {
     if (sessions.length === 0) {
-      return <Text style={styles.noSessions}>No sessions on this day</Text>;
+      return (
+        <Text style={styles.noSessions}>
+          {showDiscarded ? 'No discarded sessions on this day' : 'No sessions on this day'}
+        </Text>
+      );
     }
     return (
       <View style={styles.dayCard}>
@@ -313,7 +328,11 @@ export function CalendarScreen() {
 
   function renderGroupedList(groups: SessionGroup[], replayById: Map<string, SessionReplay>) {
     if (groups.length === 0) {
-      return <Text style={styles.noSessions}>No sessions here yet</Text>;
+      return (
+        <Text style={styles.noSessions}>
+          {showDiscarded ? 'No discarded sessions here' : 'No sessions here yet'}
+        </Text>
+      );
     }
     return groups.map((group) => (
       <View key={group.dateKey} style={styles.groupBlock}>
@@ -333,7 +352,14 @@ export function CalendarScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
-      <Text style={styles.screenTitle}>Calendar</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.screenTitle}>Calendar</Text>
+        <Chip
+          label="Discarded"
+          selected={showDiscarded}
+          onPress={() => setShowDiscarded((v) => !v)}
+        />
+      </View>
 
       <View style={styles.viewSwitcher}>
         <SegmentedControl
@@ -346,6 +372,12 @@ export function CalendarScreen() {
           onChange={setViewMode}
         />
       </View>
+
+      {showDiscarded ? (
+        <Text style={styles.discardedBanner}>
+          Showing sessions you closed without finishing — tap one to restore or delete it for good.
+        </Text>
+      ) : null}
 
       {viewMode === 'month' ? (
         <>
@@ -435,7 +467,8 @@ export function CalendarScreen() {
             <View style={styles.panelHeaderBelow}>{filterChips}</View>
 
             <Text style={styles.monthCountFooter}>
-              {monthSessions.length} session{monthSessions.length === 1 ? '' : 's'} logged this month
+              {monthSessions.length} session{monthSessions.length === 1 ? '' : 's'}{' '}
+              {showDiscarded ? 'discarded this month' : 'logged this month'}
             </Text>
           </ScrollView>
         </>
@@ -492,10 +525,21 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingTop: spacing.sm,
   },
 
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.xs,
+  },
   screenTitle: {
     ...typography.title,
     fontSize: 19,
     color: colors.textSecondary,
+  },
+  discardedBanner: {
+    ...typography.bodyMuted,
+    fontSize: 12,
     paddingHorizontal: spacing.sm,
     marginBottom: spacing.xs,
   },

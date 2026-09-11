@@ -21,6 +21,7 @@ import {
   getSessionEvents,
   removeSessionFromHistory,
   setSessionNotes,
+  setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
@@ -316,6 +317,11 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     );
   };
 
+  const handleRestoreSession = () => {
+    setSessionStatus(sessionId, 'completed');
+    bump();
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.container}>
       <KeyboardAvoidingView
@@ -423,7 +429,30 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           textAlignVertical="top"
         />
 
-        {(session.status === 'completed' || session.status === 'abandoned') ? (
+        {session.status === 'abandoned' ? (
+          <View style={styles.dangerBlock}>
+            <Text style={styles.dangerLabel}>Discarded session</Text>
+            <Text style={styles.dangerCopy}>
+              This was closed before you tapped Done, so it doesn't count toward your stats.
+              Restore it to keep the logged entries, or delete it for good.
+            </Text>
+            <Button
+              label="Restore session"
+              variant="secondary"
+              onPress={handleRestoreSession}
+              style={styles.restoreButton}
+            />
+            <Button
+              label="Delete Session"
+              variant="ghost"
+              onPress={handleRemoveSession}
+              style={styles.removeButton}
+              textStyle={styles.removeButtonText}
+            />
+          </View>
+        ) : null}
+
+        {session.status === 'completed' ? (
           <View style={styles.dangerBlock}>
             <Text style={styles.dangerLabel}>Correction</Text>
             <Text style={styles.dangerCopy}>
@@ -672,9 +701,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 13,
     lineHeight: 18,
   },
+  restoreButton: {
+    marginTop: 4,
+  },
   removeButton: {
     borderColor: colors.danger,
-    marginTop: 4,
+    marginTop: 8,
   },
   removeButtonText: {
     color: colors.danger,
