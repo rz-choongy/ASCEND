@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Updates from 'expo-updates';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
 import { getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -34,6 +35,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,6 +48,38 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const handleToggleTimer = (value: boolean) => {
     setTimerEnabled(value);
     setShowSessionTimer(value);
+  };
+
+  // Publishing an OTA update only makes it available for download - by default the app
+  // downloads it in the background on launch but keeps running the old JS until the
+  // *next* cold start, so "did it update?" is otherwise a guessing game. This lets
+  // people fetch + apply immediately instead of force-quitting the app twice.
+  const handleCheckForUpdates = async () => {
+    if (isCheckingUpdate) return;
+    if (!Updates.isEnabled) {
+      Alert.alert(
+        'Updates unavailable',
+        "This build doesn't support over-the-air updates (e.g. Expo Go or a local dev build)."
+      );
+      return;
+    }
+    setIsCheckingUpdate(true);
+    try {
+      const result = await Updates.checkForUpdateAsync();
+      if (!result.isAvailable) {
+        Alert.alert('Up to date', "You're already on the latest version.");
+        return;
+      }
+      await Updates.fetchUpdateAsync();
+      Alert.alert('Update ready', 'Restart now to apply it?', [
+        { text: 'Later', style: 'cancel' },
+        { text: 'Restart', onPress: () => void Updates.reloadAsync() },
+      ]);
+    } catch (e) {
+      Alert.alert("Couldn't check for updates", e instanceof Error ? e.message : 'Something went wrong.');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
   };
 
   const setThemeMode = (next: ThemeMode) => {
@@ -145,6 +179,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <Text style={styles.sectionLabel}>About</Text>
         <View style={styles.group}>
           <ListRow title="Version" meta={APP_VERSION} />
+          <ListRow
+            title="Check for updates"
+            subtitle={isCheckingUpdate ? 'Checking…' : 'Fetch and apply the latest update now'}
+            onPress={handleCheckForUpdates}
+          />
         </View>
 
         <View style={styles.footer}>
