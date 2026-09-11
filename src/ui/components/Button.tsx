@@ -65,11 +65,6 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
         button: {
           backgroundColor: colors.accent,
           borderColor: colors.accent,
-          shadowColor: colors.accent,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.35,
-          shadowRadius: 14,
-          elevation: 4,
         },
         text: {
           color: colors.textInverse,

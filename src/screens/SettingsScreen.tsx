@@ -9,9 +9,11 @@ import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
   ChevronLeftIcon,
+  IconButton,
   ListRow,
   MountainMarkIcon,
   PressableScale,
+  radius,
   spacing,
   useTheme,
 } from '../ui';
@@ -89,9 +91,15 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
-        <PressableScale onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={8}>
+        <IconButton
+          variant="bare"
+          size={36}
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
           <ChevronLeftIcon size={20} color={colors.textPrimary} strokeWidth={1.8} />
-        </PressableScale>
+        </IconButton>
         <Text style={styles.title}>Settings</Text>
       </View>
 
@@ -209,13 +217,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       paddingTop: spacing.xs,
       paddingBottom: spacing.xs,
     },
-    backButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     title: {
       ...typography.title,
       fontSize: 20,
@@ -239,15 +240,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       borderWidth: 1,
       borderColor: colors.textMuted,
       padding: 2,
-      borderRadius: 13,
-      marginTop: 4,
+      borderRadius: radius.pill,
+      marginTop: spacing.xxs,
     },
     pillSeg: {
-      paddingHorizontal: 12,
+      paddingHorizontal: spacing.s,
       height: 22,
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 11,
+      borderRadius: radius.pill,
     },
     pillSegActive: {
       backgroundColor: colors.accent,
@@ -269,7 +270,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     accentSwatch: {
       width: 24,
       height: 24,
-      borderRadius: 0,
+      borderRadius: radius.sm,
       borderWidth: 2,
       borderColor: 'transparent',
     },

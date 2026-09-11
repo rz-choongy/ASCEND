@@ -23,7 +23,16 @@ import {
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, CloseIcon, PressableScale, getContrastText, spacing, useTheme } from '../ui';
+import {
+  Button,
+  CloseIcon,
+  IconButton,
+  PressableScale,
+  getContrastText,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -267,14 +276,14 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     <SafeAreaView edges={['top']} style={styles.screen}>
       {/* Header — close, gym name, and elapsed timer bound into one row */}
       <View style={styles.headerRow}>
-        <PressableScale
+        <IconButton
+          variant="bare"
           onPress={() => navigation.navigate('Tabs')}
-          style={styles.closeBtn}
           accessibilityLabel="Close"
           hitSlop={8}
         >
           <CloseIcon color={colors.textSecondary} />
-        </PressableScale>
+        </IconButton>
         <Text style={styles.headerGym} numberOfLines={1}>
           {currentGym?.name ?? 'Boulder gym'}
         </Text>
@@ -491,7 +500,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   liveDot: {
     width: 5,
     height: 5,
-    borderRadius: 2.5,
+    borderRadius: radius.sm,
     backgroundColor: colors.success,
   },
   timerLabel: {
@@ -522,10 +531,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     backgroundColor: colors.surface,
-    padding: 12,
-    marginBottom: 14,
+    padding: spacing.s,
+    marginBottom: spacing.sm,
   },
   gymSelectorLabel: {
     ...typography.meta,
@@ -549,7 +558,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.xxs,
     marginBottom: spacing.sm,
   },
   gradeTile: {
@@ -574,8 +583,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
   actionRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
+    gap: spacing.xxs,
+    marginBottom: spacing.s,
   },
   actionButtonPrimary: {
     flex: 1.4,

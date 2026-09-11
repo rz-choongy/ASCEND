@@ -11,7 +11,17 @@ import {
 import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, PressableScale, ScreenHeader, radius, spacing, useTheme } from '../ui';
+import {
+  Button,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  IconButton,
+  PressableScale,
+  ScreenHeader,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 
 type GymSelectScreenProps = RootStackScreenProps<'GymSelect'>;
@@ -98,7 +108,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           onClose={() => navigation.goBack()}
           left={
             <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
-              <Text style={styles.backChevron}>‹</Text>
+              <ChevronLeftIcon size={14} color={colors.accent} strokeWidth={2.4} />
               <Text style={styles.backLabel}>All gyms</Text>
             </Pressable>
           }
@@ -128,19 +138,18 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                     {selected ? 'In use' : 'Use'}
                   </Text>
                 </PressableScale>
-                <PressableScale
-                  style={styles.editIconButton}
+                <IconButton
+                  size={36}
                   onPress={() =>
                     navigation.navigate('GymEdit', {
                       returnToSessionId,
                       gymId: branch.id,
                     })
                   }
-                  scaleTo={0.9}
-                  hitSlop={6}
+                  accessibilityLabel={`Edit ${branch.name}`}
                 >
                   <Text style={styles.editIconGlyph}>✎</Text>
-                </PressableScale>
+                </IconButton>
               </View>
             );
           })}
@@ -195,7 +204,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   <Text style={styles.gymName}>{gym.name}</Text>
                   <Text style={styles.gymMeta}>{`${count} branch${count === 1 ? '' : 'es'}`}</Text>
                 </View>
-                <Text style={styles.chevron}>›</Text>
+                <ChevronRightIcon size={16} color={colors.textMuted} />
               </PressableScale>
             );
           }
@@ -215,19 +224,18 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   {selected ? 'In use' : 'Use'}
                 </Text>
               </PressableScale>
-              <PressableScale
-                style={styles.editIconButton}
+              <IconButton
+                size={36}
                 onPress={() =>
                   navigation.navigate('GymEdit', {
                     returnToSessionId,
                     gymId: gym.id,
                   })
                 }
-                scaleTo={0.9}
-                hitSlop={6}
+                accessibilityLabel={`Edit ${gym.name}`}
               >
                 <Text style={styles.editIconGlyph}>✎</Text>
-              </PressableScale>
+              </IconButton>
             </View>
           );
         })}
@@ -257,12 +265,6 @@ const createStyles = (colors: ThemeColors) =>
     alignItems: 'center',
     gap: 4,
     marginBottom: 8,
-  },
-  backChevron: {
-    color: colors.accent,
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 22,
   },
   backLabel: {
     color: colors.accent,
@@ -304,11 +306,6 @@ const createStyles = (colors: ThemeColors) =>
     fontWeight: '600',
     marginTop: 4,
   },
-  chevron: {
-    color: colors.textMuted,
-    fontSize: 22,
-    fontWeight: '700',
-  },
   useButton: {
     minHeight: 36,
     borderRadius: radius.sm,
@@ -329,15 +326,6 @@ const createStyles = (colors: ThemeColors) =>
   },
   useButtonTextSelected: {
     color: colors.textInverse,
-  },
-  editIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   editIconGlyph: {
     color: colors.textSecondary,

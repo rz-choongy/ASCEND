@@ -19,7 +19,16 @@ import {
 import { getCompletedSessions, getSessionEvents, getSessionStreak } from '../domain/sessionStore';
 import { getProgressGradeGymId, setProgressGradeGymId } from '../domain/settingsStore';
 import type { SessionRow } from '../domain/types';
-import { BarChart, Chip, PressableScale, spacing, useTheme } from '../ui';
+import {
+  BarChart,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Chip,
+  IconButton,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -179,29 +188,35 @@ export function ProgressScreen() {
 
       {view === 'month' ? (
         <View style={styles.monthNav}>
-          <PressableScale
+          <IconButton
+            variant="bare"
             onPress={goToPrevMonth}
             disabled={!canGoPrevMonth}
+            accessibilityLabel="Previous month"
             hitSlop={10}
-            style={styles.monthNavButton}
           >
-            <Text style={[styles.monthNavArrow, !canGoPrevMonth && styles.monthNavArrowDisabled]}>
-              {'‹'}
-            </Text>
-          </PressableScale>
+            <ChevronLeftIcon
+              size={16}
+              color={canGoPrevMonth ? colors.accent : colors.textMuted}
+              strokeWidth={2.4}
+            />
+          </IconButton>
           <Text style={styles.monthNavLabel}>
             {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </Text>
-          <PressableScale
+          <IconButton
+            variant="bare"
             onPress={goToNextMonth}
             disabled={!canGoNextMonth}
+            accessibilityLabel="Next month"
             hitSlop={10}
-            style={styles.monthNavButton}
           >
-            <Text style={[styles.monthNavArrow, !canGoNextMonth && styles.monthNavArrowDisabled]}>
-              {'›'}
-            </Text>
-          </PressableScale>
+            <ChevronRightIcon
+              size={16}
+              color={canGoNextMonth ? colors.accent : colors.textMuted}
+              strokeWidth={2.4}
+            />
+          </IconButton>
         </View>
       ) : null}
 
@@ -407,28 +422,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     gap: spacing.md,
     marginBottom: spacing.s,
   },
-  monthNavButton: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monthNavArrow: {
-    color: colors.accent,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  monthNavArrowDisabled: {
-    color: colors.textMuted,
-    opacity: 0.4,
-  },
   monthNavLabel: {
     ...typography.section,
     minWidth: 150,
     textAlign: 'center',
   },
   emptyMonth: {
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,
@@ -585,7 +585,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     position: 'absolute',
     width: 4,
     height: 4,
-    borderRadius: 2,
+    borderRadius: radius.sm,
     backgroundColor: colors.textMuted,
     transform: [{ translateX: -2 }, { translateY: -2 }],
   },
@@ -625,7 +625,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   emptyState: {
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,

@@ -26,7 +26,16 @@ import {
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, Divider, ListRow, StatRow, radius, spacing, useTheme } from '../ui';
+import {
+  Button,
+  ChevronLeftIcon,
+  Divider,
+  ListRow,
+  StatRow,
+  radius,
+  spacing,
+  useTheme,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -330,7 +339,8 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
       >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Pressable onPress={handleBack} style={styles.backRow} hitSlop={12}>
-          <Text style={styles.backLabel}>← Back</Text>
+          <ChevronLeftIcon size={14} color={colors.textMuted} strokeWidth={2.2} />
+          <Text style={styles.backLabel}>Back</Text>
         </Pressable>
         {/* Session metadata header */}
         <View style={styles.metaBlock}>
@@ -621,6 +631,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingBottom: spacing.xxl,
   },
   backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
     marginBottom: spacing.xs,
   },
   backLabel: {
@@ -639,7 +652,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   titleInput: {
     ...typography.title,
     minHeight: 44,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -671,13 +684,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeSwatch: {
     width: 10,
     height: 36,
-    borderRadius: 0,
+    borderRadius: radius.sm,
   },
   notesInput: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     color: colors.textPrimary,
     fontSize: 14,
     padding: spacing.sm,
@@ -687,7 +700,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginTop: spacing.md,
     borderWidth: 1,
     borderColor: colors.danger,
-    borderRadius: 0,
+    borderRadius: radius.sm,
     backgroundColor: colors.surfaceRaised,
     padding: spacing.sm,
     gap: spacing.xs,

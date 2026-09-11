@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
+import { radius } from '../tokens/radius';
 import { spacing } from '../tokens/spacing';
 import type { Typography } from '../tokens/typography';
 
@@ -91,7 +92,6 @@ export const BarChart = ({
                             backgroundColor: segment.color,
                             marginBottom: isTopmost || segmentHeight === 0 ? 0 : SEGMENT_GAP,
                           },
-                          isTopmost ? styles.segmentTop : null,
                         ]}
                       />
                     );
@@ -132,7 +132,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   legendDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: radius.sm,
   },
   legendText: {
     ...typography.meta,
@@ -159,10 +159,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   segment: {
     width: '100%',
-  },
-  segmentTop: {
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
   },
   baseline: {
     height: 1,

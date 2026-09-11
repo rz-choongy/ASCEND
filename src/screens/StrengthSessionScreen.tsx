@@ -548,8 +548,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   undoButton: {
     minHeight: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.xxs,
   },
   undoText: {
     fontSize: 10,
@@ -566,20 +566,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.s,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     marginBottom: spacing.xs,
   },
+  // Square rule, matching Calendar's session bar -- radius.pill is reserved for
+  // switchable selectors (chips, segmented controls), not decorative edges.
   logAccent: {
     width: 4,
     height: '70%',
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     backgroundColor: colors.accent,
-    marginRight: 12,
+    marginRight: spacing.s,
   },
   logBody: {
     flex: 1,
