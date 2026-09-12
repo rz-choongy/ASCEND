@@ -36,6 +36,18 @@ type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 // runtime an `eas update` targets.
 const APP_VERSION = '1.6';
 
+/**
+ * What's actually running, not what was published — the two can disagree if the
+ * device hasn't relaunched since the last `eas update`. The full id is what
+ * `eas update:list` shows, so the first 8 chars are enough to cross-reference
+ * without a wall of text.
+ */
+const runningUpdateLabel = Updates.isEmbeddedLaunch
+  ? 'Embedded (dev/local build)'
+  : Updates.updateId
+    ? `${Updates.updateId.slice(0, 8)} · ${Updates.channel ?? 'no channel'}`
+    : 'Unknown';
+
 export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const { colors, typography, mode, setMode, accentId, setAccentId } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
@@ -238,6 +250,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <Text style={styles.sectionLabel}>About</Text>
         <View style={styles.group}>
           <ListRow title="Version" meta={APP_VERSION} />
+          <ListRow
+            title="Build"
+            subtitle="Which OTA update is actually running right now"
+            meta={runningUpdateLabel}
+          />
           <ListRow
             title="Check for updates"
             subtitle={isCheckingUpdate ? 'Checking…' : 'Fetch and apply the latest update now'}
