@@ -98,7 +98,12 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
   const handleRefineGrades = () => {
-    if (wideBands.climbs === 0) return;
+    // Always give the tap some feedback -- a silent no-op here is indistinguishable
+    // from the button being broken, which is exactly what it looked like before this.
+    if (wideBands.climbs === 0) {
+      Alert.alert('Nothing to refine', 'Every logged climb already has an exact grade.');
+      return;
+    }
     Alert.alert(
       'Refine old grade ranges?',
       `${plural(wideBands.climbs, 'climb')} across ${plural(wideBands.sessions, 'session')} ` +
@@ -226,7 +231,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
                 : 'Every logged climb already has an exact grade'
             }
             meta={wideBands.climbs > 0 ? `${wideBands.climbs}` : undefined}
-            onPress={wideBands.climbs > 0 ? handleRefineGrades : undefined}
+            onPress={handleRefineGrades}
           />
         </View>
 
