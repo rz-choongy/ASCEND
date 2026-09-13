@@ -62,7 +62,16 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
-      setWideBands(countWideGradeBandClimbs());
+      // Surfaced rather than left to crash silently -- an uncaught throw here would
+      // leave wideBands stuck at its zero default with no visible sign anything failed.
+      try {
+        setWideBands(countWideGradeBandClimbs());
+      } catch (e) {
+        Alert.alert(
+          'Grade-range check failed',
+          e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+        );
+      }
     }, [])
   );
 
@@ -128,9 +137,16 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         {
           text: 'Refine',
           onPress: () => {
-            const done = narrowWideGradeBands();
-            setWideBands(countWideGradeBandClimbs());
-            Alert.alert('Grades refined', `Updated ${plural(done.climbs, 'climb')}.`);
+            try {
+              const done = narrowWideGradeBands();
+              setWideBands(countWideGradeBandClimbs());
+              Alert.alert('Grades refined', `Updated ${plural(done.climbs, 'climb')}.`);
+            } catch (e) {
+              Alert.alert(
+                'Refine failed',
+                e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+              );
+            }
           },
         },
       ]
