@@ -1,0 +1,145 @@
+name: EAS Update
+
+# Publishes an over-the-air update to an EAS channel.
+#
+# - Pushing to master publishes to `preview` automatically.
+# - Publishing to `production` is deliberate: run this workflow manually
+#   (Actions -> EAS Update -> Run workflow) and pick the channel. The
+#   production job is pinned to the `production` GitHub Environment, so
+#   adding required reviewers there gates it behind an approval.
+#
+# Requires one repository secret: EXPO_TOKEN (expo.dev -> Access Tokens).
+#
+# Scope: this ships JS and assets only. Anything touching native config --
+# app.json plugins, a new native module, or the `version` field that drives
+# runtimeVersion -- needs a real `eas build`, not an update.
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Which channel to publish to
+        type: choice
+        required: true
+        default: preview
+        options: [preview, production, both]
+
+# Never let two publishes race. A queued run waits rather than cancelling,
+# so an in-flight publish always finishes cleanly.
+concurrency:
+  group: eas-update-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.token.outputs.has_token }}
+    steps:
+      # The `secrets` context isn't available in a job-level `if`, so the
+      # check happens here and the publish jobs gate on the output. Without
+      # this the workflow would go red on every push until the secret exists.
+      - name: Check for EXPO_TOKEN
+        id: token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -n "$EXPO_TOKEN" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::EXPO_TOKEN is not set - skipping publish. Add it under Settings > Secrets and variables > Actions."
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:ci
+
+      # Catches what typechecking can't: a bad import or a missing barrel
+      # export that only fails at bundle time -- before it reaches a device.
+      - name: Bundle check
+        run: npx expo export --platform ios --platform android --output-dir /tmp/bundle-check
+
+  preview:
+    name: Publish to preview
+    needs: verify
+    if: >-
+      needs.verify.outputs.has_token == 'true' &&
+      (github.event_name == 'push' ||
+       contains(fromJSON('["preview", "both"]'), inputs.channel))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: eas update --branch preview
+        # The commit subject goes through an env var rather than being
+        # interpolated into the script, so a crafted commit message cannot
+        # inject shell. Empty on workflow_dispatch, hence the fallback.
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          MESSAGE="${COMMIT_MESSAGE%%$'\n'*}"
+          [ -n "$MESSAGE" ] || MESSAGE="Manual update from ${GITHUB_SHA::7}"
+          npx eas-cli update --branch preview --message "$MESSAGE" --non-interactive
+
+  production:
+    name: Publish to production
+    needs: verify
+    if: >-
+      needs.verify.outputs.has_token == 'true' &&
+      contains(fromJSON('["production", "both"]'), inputs.channel)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: eas update --branch production
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          MESSAGE="${COMMIT_MESSAGE%%$'\n'*}"
+          [ -n "$MESSAGE" ] || MESSAGE="Manual update from ${GITHUB_SHA::7}"
+          npx eas-cli update --branch production --message "$MESSAGE" --non-interactive
