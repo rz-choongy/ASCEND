@@ -1,10 +1,11 @@
-// Fully sharp corners -- chosen after the Direction A wireframe critique loop
-// independently converged on this on every screen. Pills (radius.pill) stay
-// fully rounded -- that's a separate, deliberate choice, not part of this scale.
+// Rounded, iOS-style corners. The scale mirrors the radii UIKit/SwiftUI use for
+// their own surfaces: small controls and swatches (sm), rows and fields (md),
+// grouped cards and prominent buttons (lg), sheets and hero panels (xl).
+// Pills (radius.pill) stay fully rounded for switchable selectors and badges.
 export const radius = {
-  sm: 0,
-  md: 0,
-  lg: 0,
-  xl: 0,
+  sm: 8,
+  md: 12,
+  lg: 14,
+  xl: 20,
   pill: 999,
 };

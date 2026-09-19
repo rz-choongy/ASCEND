@@ -1,18 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import * as Updates from 'expo-updates';
 import { useEffect, useMemo, useState } from 'react';
-import { useFonts } from 'expo-font';
-import {
-  SpaceGrotesk_600SemiBold,
-  SpaceGrotesk_700Bold,
-} from '@expo-google-fonts/space-grotesk';
-import {
-  WorkSans_500Medium,
-  WorkSans_600SemiBold,
-  WorkSans_700Bold,
-  WorkSans_800ExtraBold,
-} from '@expo-google-fonts/work-sans';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, Text, View } from 'react-native';
@@ -34,7 +23,6 @@ import {
   ProgressTabIcon,
   ThemeProvider,
   useTheme,
-  type ThemeColors,
 } from './src/ui';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,27 +31,14 @@ const Tab = createBottomTabNavigator<TabParamList>();
 type TabIconProps = {
   name: keyof TabParamList;
   color: string;
-  focused: boolean;
 };
 
-// Icon set is Main.dc.html's (Direction A) tab bar, used as the canonical
-// version -- Direction A's own screens draw their tab icons slightly
-// differently from each other, so this picks one consistent set for the app.
-const TabIcon = ({ name, color, focused }: TabIconProps) => {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  return (
-    <View style={[styles.tabIconFrame, focused ? styles.tabIconFocused : null]}>
-      {name === 'Calendar' ? (
-        <CalendarTabIcon color={color} />
-      ) : name === 'Progress' ? (
-        <ProgressTabIcon color={color} />
-      ) : (
-        <LogTabIcon color={color} />
-      )}
-    </View>
-  );
+// A UITabBar item carries no chrome of its own -- the tint colour alone says
+// which tab is selected, so the icon is drawn bare.
+const TabIcon = ({ name, color }: TabIconProps) => {
+  if (name === 'Calendar') return <CalendarTabIcon size={25} color={color} />;
+  if (name === 'Progress') return <ProgressTabIcon size={25} color={color} />;
+  return <LogTabIcon size={25} color={color} />;
 };
 
 function TabNavigator() {
@@ -72,18 +47,24 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarShowLabel: false,
+        // Labelled, hairline-topped, system-tinted: the iOS tab bar. Height is
+        // left to the navigator so the home-indicator inset is respected.
+        tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 58,
+          borderTopColor: colors.separator,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: -0.05,
+          marginTop: 1,
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarIcon: ({ color, focused }) => (
-          <TabIcon name={route.name} color={color} focused={focused} />
-        ),
+        tabBarIcon: ({ color }) => <TabIcon name={route.name} color={color} />,
       })}
     >
       <Tab.Screen name="Log" component={LogScreen} />
@@ -94,11 +75,28 @@ function TabNavigator() {
 }
 
 function AppContent() {
-  const { mode } = useTheme();
+  const { colors, mode } = useTheme();
+
+  // Hand the navigator the theme's own ground colour so pushes and modal
+  // presentations never flash the default white between screens.
+  const navTheme = useMemo(() => {
+    const base = mode === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        background: colors.background,
+        card: colors.background,
+        border: colors.separator,
+        text: colors.textPrimary,
+        primary: colors.accent,
+      },
+    };
+  }, [mode, colors]);
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={navTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Tabs" component={TabNavigator} />
           <Stack.Screen
@@ -132,19 +130,11 @@ function AppContent() {
 
 // Matches darkColors.background — used only before the DB (and therefore ThemeProvider,
 // which reads the persisted theme preference from it) is confirmed ready.
-const FALLBACK_BACKGROUND = '#141a24';
+const FALLBACK_BACKGROUND = '#000000';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
-  const [fontsLoaded, fontError] = useFonts({
-    SpaceGrotesk_600SemiBold,
-    SpaceGrotesk_700Bold,
-    WorkSans_500Medium,
-    WorkSans_600SemiBold,
-    WorkSans_700Bold,
-    WorkSans_800ExtraBold,
-  });
 
   useEffect(() => {
     try {
@@ -154,12 +144,6 @@ export default function App() {
       setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');
     }
   }, []);
-
-  useEffect(() => {
-    if (fontError) {
-      setInitError(fontError.message);
-    }
-  }, [fontError]);
 
   useEffect(() => {
     // Fetch and apply an OTA update immediately on launch, instead of
@@ -183,15 +167,15 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: FALLBACK_BACKGROUND, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ color: '#f2564a', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Something went wrong</Text>
-          <Text style={{ color: '#a9b2c3', fontSize: 14, textAlign: 'center' }}>{initError}</Text>
+          <Text style={{ color: '#ff453a', fontSize: 17, fontWeight: '600', marginBottom: 8 }}>Something went wrong</Text>
+          <Text style={{ color: 'rgba(235,235,245,0.62)', fontSize: 15, textAlign: 'center' }}>{initError}</Text>
         </View>
         <StatusBar style="light" />
       </SafeAreaProvider>
     );
   }
 
-  if (!isReady || !fontsLoaded) {
+  if (!isReady) {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: FALLBACK_BACKGROUND }} />
@@ -206,17 +190,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    tabIconFrame: {
-      width: 42,
-      height: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 0,
-    },
-    tabIconFocused: {
-      backgroundColor: colors.accentMuted,
-    },
-  });

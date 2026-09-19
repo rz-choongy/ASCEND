@@ -1,59 +1,64 @@
+import type { TextStyle } from 'react-native';
 import type { ThemeColors } from './colors';
 
-// Space Grotesk carries display/heading roles; Work Sans carries body/label
-// roles -- ported from the Direction A wireframe's type pairing. RN (Android
-// especially) needs the specific loaded weight family, not a generic family
-// name plus `fontWeight`, so each style names its exact loaded font.
+// The type scale follows the iOS text styles (large title / title / headline /
+// body / subhead / footnote), so the app reads as a native SwiftUI screen.
+// No `fontFamily` is set anywhere on purpose: that hands each platform its own
+// UI face -- SF Pro on iOS, Roboto on Android -- which is the whole point of the
+// system look, and sidesteps the RN "weight must name a loaded family" problem
+// that custom families have.
 export const createTypography = (colors: ThemeColors) =>
   ({
+    // Large title. Screen headers that scroll under a nav bar.
     display: {
       fontSize: 34,
-      fontFamily: 'SpaceGrotesk_700Bold',
       fontWeight: '700' as const,
       color: colors.textPrimary,
-      letterSpacing: -0.5,
+      letterSpacing: 0.37,
     },
+    // Title 2/3. Card and section headings.
     title: {
-      fontSize: 23,
-      fontFamily: 'SpaceGrotesk_600SemiBold',
-      fontWeight: '600' as const,
+      fontSize: 22,
+      fontWeight: '700' as const,
       color: colors.textPrimary,
-      letterSpacing: 0.1,
+      letterSpacing: -0.4,
     },
+    // Figures. Tabular so columns of weights and counts stay aligned.
     numeric: {
       fontSize: 24,
-      fontFamily: 'SpaceGrotesk_700Bold',
       fontWeight: '700' as const,
       color: colors.textPrimary,
-      letterSpacing: -0.2,
+      letterSpacing: -0.4,
+      fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     },
+    // Grouped-list section header. Sentence case, not shouted -- modern iOS
+    // dropped the all-caps table headers.
     section: {
-      fontSize: 12,
-      fontFamily: 'WorkSans_800ExtraBold',
-      fontWeight: '800' as const,
-      color: colors.textMuted,
-      letterSpacing: 1.1,
-      textTransform: 'uppercase' as const,
-    },
-    body: {
-      fontSize: 14,
-      fontFamily: 'WorkSans_600SemiBold',
-      fontWeight: '600' as const,
-      color: colors.textPrimary,
-    },
-    bodyMuted: {
       fontSize: 13,
-      fontFamily: 'WorkSans_500Medium',
-      fontWeight: '500' as const,
+      fontWeight: '600' as const,
       color: colors.textSecondary,
+      letterSpacing: -0.08,
     },
+    // Body / headline. The default reading size for row titles and content.
+    body: {
+      fontSize: 16,
+      fontWeight: '500' as const,
+      color: colors.textPrimary,
+      letterSpacing: -0.24,
+    },
+    // Subhead. Supporting copy under a body line.
+    bodyMuted: {
+      fontSize: 14,
+      fontWeight: '400' as const,
+      color: colors.textSecondary,
+      letterSpacing: -0.15,
+    },
+    // Footnote/caption. Timestamps, units, counts.
     meta: {
-      fontSize: 11,
-      fontFamily: 'WorkSans_800ExtraBold',
-      fontWeight: '800' as const,
+      fontSize: 12,
+      fontWeight: '500' as const,
       color: colors.textMuted,
-      letterSpacing: 0.9,
-      textTransform: 'uppercase' as const,
+      letterSpacing: -0.05,
     },
   }) as const;
 

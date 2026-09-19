@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
-import { radius } from '../tokens/radius';
 import { spacing } from '../tokens/spacing';
 import type { Typography } from '../tokens/typography';
 
@@ -29,8 +28,9 @@ type BarChartProps = {
   valueFormatter?: (value: number) => string;
 };
 
-const BAR_MAX_WIDTH = 22;
+const BAR_MAX_WIDTH = 20;
 const SEGMENT_GAP = 2;
+const BAR_RADIUS = 5;
 const MIN_SEGMENT_HEIGHT = 2;
 
 const defaultFormatter = (value: number): string => `${Math.round(value)}`;
@@ -92,6 +92,9 @@ export const BarChart = ({
                             backgroundColor: segment.color,
                             marginBottom: isTopmost || segmentHeight === 0 ? 0 : SEGMENT_GAP,
                           },
+                          // Only the cap of the stack is rounded, so a stacked
+                          // bar still reads as one continuous column.
+                          isTopmost ? styles.segmentCap : null,
                         ]}
                       />
                     );
@@ -132,7 +135,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   legendDot: {
     width: 8,
     height: 8,
-    borderRadius: radius.sm,
+    borderRadius: 4,
   },
   legendText: {
     ...typography.meta,
@@ -148,9 +151,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   valueLabel: {
     color: colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+    marginBottom: 5,
   },
   barColumn: {
     width: BAR_MAX_WIDTH,
@@ -159,10 +163,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   segment: {
     width: '100%',
+    borderBottomLeftRadius: BAR_RADIUS,
+    borderBottomRightRadius: BAR_RADIUS,
+  },
+  segmentCap: {
+    borderTopLeftRadius: BAR_RADIUS,
+    borderTopRightRadius: BAR_RADIUS,
   },
   baseline: {
-    height: 1,
-    backgroundColor: colors.border,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
   },
   labelRow: {
     flexDirection: 'row',
@@ -170,7 +180,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   categoryLabel: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '500',
   },
 });

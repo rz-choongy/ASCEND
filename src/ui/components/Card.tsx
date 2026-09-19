@@ -27,24 +27,26 @@ export const Card = ({ children, tone = 'surface', accentColor, style }: CardPro
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
+    // The iOS inset-grouped card: a rounded panel that reads as a layer above the
+    // ground, with a hairline that only barely resolves -- the surface tone does
+    // the separating, the line just keeps the edge crisp.
     base: {
       borderRadius: radius.lg,
-      borderWidth: 1,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       backgroundColor: colors.surface,
+      overflow: 'hidden',
     },
     surface: {},
-    // Depth is carried by the surface tone alone -- the flat bordered look is the
-    // system's differentiator, so `raised` shifts background, never elevation.
     raised: {
       backgroundColor: colors.surfaceAlt,
+      borderColor: colors.borderSoft,
     },
     accentBar: {
       position: 'absolute',
-      left: 1,
-      top: 1,
-      bottom: 1,
+      left: 0,
+      top: 0,
+      bottom: 0,
       width: 4,
-      borderRadius: radius.sm,
     },
   });

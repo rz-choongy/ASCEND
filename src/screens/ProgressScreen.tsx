@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Polyline } from 'react-native-svg';
@@ -26,6 +26,7 @@ import {
   ChevronRightIcon,
   Chip,
   IconButton,
+  SegmentedControl,
   radius,
   spacing,
   useTheme,
@@ -187,18 +188,15 @@ export function ProgressScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <Text style={styles.screenTitle}>Progress</Text>
 
-      {/* Ghost-underline segmented control -- deliberately distinct from Settings'
-          filled-pill style; ordinary state never uses amber here (reserved for
-          record/peak data only). */}
       <View style={styles.segmented}>
-        <TouchableOpacity style={styles.seg} onPress={() => setView('all')} activeOpacity={0.7}>
-          <Text style={[styles.segText, view === 'all' && styles.segTextActive]}>All time</Text>
-          {view === 'all' ? <View style={styles.segUnderline} /> : null}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.seg} onPress={() => setView('month')} activeOpacity={0.7}>
-          <Text style={[styles.segText, view === 'month' && styles.segTextActive]}>By month</Text>
-          {view === 'month' ? <View style={styles.segUnderline} /> : null}
-        </TouchableOpacity>
+        <SegmentedControl
+          options={[
+            { value: 'all', label: 'All time' },
+            { value: 'month', label: 'By month' },
+          ]}
+          value={view}
+          onChange={setView}
+        />
       </View>
 
       {view === 'month' ? (
@@ -342,8 +340,10 @@ export function ProgressScreen() {
               <Polyline
                 points={sparkPoints.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="none"
-                stroke={colors.textMuted}
-                strokeWidth={1.6}
+                stroke={colors.accent}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
               />
             </Svg>
@@ -368,7 +368,7 @@ export function ProgressScreen() {
               valueFormatter={(value) => `${Math.round(value)}kg`}
               bars={volumeTrend.map((bar) => ({
                 label: bar.label,
-                segments: [{ value: bar.volume, color: colors.textMuted }],
+                segments: [{ value: bar.volume, color: colors.accent }],
               }))}
             />
           </View>
@@ -413,36 +413,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   screenTitle: {
     ...typography.display,
-    fontSize: 28,
-    marginBottom: spacing.sm,
+    fontSize: 34,
+    letterSpacing: -0.8,
+    marginBottom: spacing.s,
   },
 
   segmented: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     marginBottom: spacing.sm,
-  },
-  seg: {
-    flex: 1,
-    alignItems: 'center',
-    paddingBottom: 8,
-  },
-  segText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  segTextActive: {
-    color: colors.textPrimary,
-  },
-  segUnderline: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: -1,
-    height: 2,
-    backgroundColor: colors.textPrimary,
   },
 
   monthNav: {
@@ -453,15 +430,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.s,
   },
   monthNavLabel: {
-    ...typography.section,
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.textPrimary,
     minWidth: 150,
     textAlign: 'center',
   },
   emptyMonth: {
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     padding: spacing.sm,
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -476,23 +453,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.xs,
   },
   heroLabel: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.textMuted,
+    ...typography.section,
+    color: colors.textSecondary,
   },
   heroNum: {
     ...typography.display,
-    fontSize: 52,
-    lineHeight: 54,
+    fontSize: 56,
+    lineHeight: 60,
+    letterSpacing: -1.4,
     color: colors.accent,
-    marginTop: 4,
+    marginTop: 2,
   },
   heroSub: {
-    fontSize: 12,
+    ...typography.bodyMuted,
+    fontSize: 13,
     color: colors.textMuted,
-    marginTop: 8,
+    marginTop: 6,
   },
 
   // Mini stats
@@ -507,48 +483,50 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.s,
   },
   miniStatDivider: {
-    borderLeftWidth: 1,
-    borderLeftColor: colors.border,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: colors.separator,
   },
   miniStatNum: {
     ...typography.numeric,
-    fontSize: 18,
+    fontSize: 20,
   },
   miniStatLabel: {
-    fontSize: 9.5,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: 5,
-    fontWeight: '600',
+    fontSize: 12,
+    color: colors.textSecondary,
+    letterSpacing: -0.05,
+    marginTop: 3,
+    fontWeight: '500',
   },
 
   // Analysis card
+  // One inset-grouped card holding every chart, its sub-sections split by
+  // hairlines -- the same read as a grouped table with multiple rows.
   analysis: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     marginBottom: spacing.md,
+    overflow: 'hidden',
   },
   subSection: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.s,
   },
   subSectionBordered: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
     marginTop: 2,
   },
   eyebrow: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.textMuted,
+    ...typography.body,
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   eyebrowMuted: {
-    textTransform: 'none',
-    letterSpacing: 0,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '400',
+    color: colors.textSecondary,
   },
   gradeDistributionHeader: {
     flexDirection: 'row',
@@ -559,6 +537,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   pyramidTotal: {
     ...typography.meta,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   // Scrolls rather than wraps: the row stays one clean line however many gyms
@@ -570,10 +549,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   scopeNote: {
     ...typography.bodyMuted,
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
     marginTop: spacing.xs,
-    lineHeight: 15,
+    lineHeight: 16,
   },
 
   // Grade pyramid
@@ -589,7 +568,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   pyrGrade: {
     ...typography.numeric,
     width: 46,
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '600',
     textAlign: 'right',
     color: colors.textSecondary,
   },
@@ -597,12 +577,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flex: 1,
   },
   pyrBar: {
-    height: 13,
+    height: 14,
+    borderRadius: 7,
   },
   pyrCount: {
     ...typography.numeric,
-    width: 18,
-    fontSize: 10.5,
+    width: 20,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textMuted,
   },
 
@@ -617,7 +599,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     right: 0,
     top: -14,
     ...typography.numeric,
-    fontSize: 10.5,
+    fontSize: 12,
+    fontWeight: '500',
     color: colors.textSecondary,
   },
   spark: {
@@ -626,11 +609,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   sparkDot: {
     position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: radius.sm,
-    backgroundColor: colors.textMuted,
-    transform: [{ translateX: -2 }, { translateY: -2 }],
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.accent,
+    transform: [{ translateX: -2.5 }, { translateY: -2.5 }],
   },
   sparkLbls: {
     flexDirection: 'row',
@@ -639,9 +622,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sparkLblText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 9.5,
+    fontSize: 11,
     color: colors.textMuted,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 
   // Personal bests
@@ -655,23 +638,23 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingVertical: 7,
   },
   pbRowBordered: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
   },
   pbLabel: {
-    fontSize: 13,
+    ...typography.body,
+    fontSize: 16,
+    fontWeight: '400',
     color: colors.textSecondary,
   },
   pbValue: {
     ...typography.numeric,
-    fontSize: 17,
+    fontSize: 18,
   },
 
   emptyState: {
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
@@ -679,7 +662,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   emptyStateTitle: {
     ...typography.body,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   emptyStateCopy: {

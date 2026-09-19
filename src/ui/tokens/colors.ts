@@ -4,12 +4,12 @@
  */
 export const getContrastText = (hex: string): string => {
   const clean = hex.replace('#', '');
-  if (clean.length !== 6) return '#f2eadc';
+  if (clean.length !== 6) return '#ffffff';
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
   const b = parseInt(clean.slice(4, 6), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.45 ? '#0b1110' : '#f2eadc';
+  return luminance > 0.55 ? '#000000' : '#ffffff';
 };
 
 const gradePalette = [
@@ -23,49 +23,59 @@ const gradePalette = [
   '#3f473f',
 ];
 
-/** Navy-slate -- ported from the Direction A wireframe (deep navy ground, amber accent). */
+/**
+ * iOS dark: a true-black ground with the system's layered greys stacked on top,
+ * so grouped cards read as elevation rather than as outlined boxes. Separators
+ * and fills are translucent (as UIKit's are) so they hold up over any surface.
+ */
 export const darkColors = {
-  background: '#141a24',
-  backgroundWarm: '#18202c',
-  surface: '#1c2432',
-  surfaceAlt: '#1f2836',
-  surfaceRaised: '#242e40',
-  border: '#303c52',
-  borderSoft: '#3a4766',
-  textPrimary: '#f2f0ea',
-  textSecondary: '#a6acbc',
-  textMuted: '#6b7385',
-  textInverse: '#141a24',
+  background: '#000000',
+  backgroundWarm: '#0b0b0d',
+  surface: '#1c1c1e',
+  surfaceAlt: '#2c2c2e',
+  surfaceRaised: '#3a3a3c',
+  border: '#2c2c2e',
+  borderSoft: '#3a3a3c',
+  separator: 'rgba(84, 84, 88, 0.6)',
+  fill: 'rgba(120, 120, 128, 0.24)',
+  fillSoft: 'rgba(120, 120, 128, 0.14)',
+  textPrimary: '#ffffff',
+  textSecondary: 'rgba(235, 235, 245, 0.62)',
+  textMuted: 'rgba(235, 235, 245, 0.4)',
+  textInverse: '#000000',
   accent: '#eac60f',
-  accentMuted: '#2b260f',
-  accentSoft: '#4d431a',
-  success: '#3ecf6e',
-  warning: '#f2c45f',
-  danger: '#f2564a',
-  overlay: 'rgba(6, 9, 15, 0.78)',
+  accentMuted: 'rgba(234, 198, 15, 0.16)',
+  accentSoft: 'rgba(234, 198, 15, 0.28)',
+  success: '#30d158',
+  warning: '#ffd60a',
+  danger: '#ff453a',
+  overlay: 'rgba(0, 0, 0, 0.6)',
   gradePalette,
 };
 
-/** GoClimbr-inspired: warm off-white background, white cards, near-black text. */
+/** iOS light: the grouped-table pairing -- grey ground, white cards floating on it. */
 export const lightColors = {
-  background: '#f7f4ee',
-  backgroundWarm: '#f2ede2',
+  background: '#f2f2f7',
+  backgroundWarm: '#ebebf0',
   surface: '#ffffff',
-  surfaceAlt: '#f4f1ea',
+  surfaceAlt: '#f2f2f7',
   surfaceRaised: '#ffffff',
-  border: '#e6e1d5',
-  borderSoft: '#d6cfc0',
-  textPrimary: '#17181c',
-  textSecondary: '#5b5d66',
-  textMuted: '#8b8d94',
+  border: '#e5e5ea',
+  borderSoft: '#d1d1d6',
+  separator: 'rgba(60, 60, 67, 0.29)',
+  fill: 'rgba(118, 118, 128, 0.12)',
+  fillSoft: 'rgba(118, 118, 128, 0.08)',
+  textPrimary: '#000000',
+  textSecondary: 'rgba(60, 60, 67, 0.6)',
+  textMuted: 'rgba(60, 60, 67, 0.4)',
   textInverse: '#ffffff',
-  accent: '#2f8fff',
-  accentMuted: '#e7f1ff',
-  accentSoft: '#cee3ff',
-  success: '#1f9d55',
-  warning: '#b7791f',
-  danger: '#d64545',
-  overlay: 'rgba(23, 20, 14, 0.45)',
+  accent: '#b8860a',
+  accentMuted: 'rgba(184, 134, 10, 0.12)',
+  accentSoft: 'rgba(184, 134, 10, 0.22)',
+  success: '#34c759',
+  warning: '#ff9f0a',
+  danger: '#ff3b30',
+  overlay: 'rgba(0, 0, 0, 0.4)',
   gradePalette,
 };
 
@@ -76,36 +86,41 @@ export type AccentColorId = 'blue' | 'teal' | 'purple' | 'orange' | 'rose' | 'am
 
 type AccentTint = { accent: string; accentMuted: string; accentSoft: string };
 
+/**
+ * Accent tints. Dark uses the iOS "vivid on black" variant of each hue; light
+ * uses the standard one. Muted/soft are alpha tints of the accent itself rather
+ * than baked-in mixes, so they sit correctly on every surface layer.
+ */
 export const ACCENT_PALETTE: Record<AccentColorId, { label: string; dark: AccentTint; light: AccentTint }> = {
   blue: {
     label: 'Blue',
-    dark: { accent: '#2f8fff', accentMuted: '#152238', accentSoft: '#1d3a5c' },
-    light: { accent: '#2f8fff', accentMuted: '#e7f1ff', accentSoft: '#cee3ff' },
+    dark: { accent: '#0a84ff', accentMuted: 'rgba(10, 132, 255, 0.16)', accentSoft: 'rgba(10, 132, 255, 0.28)' },
+    light: { accent: '#007aff', accentMuted: 'rgba(0, 122, 255, 0.12)', accentSoft: 'rgba(0, 122, 255, 0.22)' },
   },
   teal: {
     label: 'Teal',
-    dark: { accent: '#2dd4bf', accentMuted: '#0f2624', accentSoft: '#164a44' },
-    light: { accent: '#0d9488', accentMuted: '#e3faf6', accentSoft: '#b8f0e7' },
+    dark: { accent: '#64d2ff', accentMuted: 'rgba(100, 210, 255, 0.16)', accentSoft: 'rgba(100, 210, 255, 0.28)' },
+    light: { accent: '#0d9488', accentMuted: 'rgba(13, 148, 136, 0.12)', accentSoft: 'rgba(13, 148, 136, 0.22)' },
   },
   purple: {
     label: 'Purple',
-    dark: { accent: '#a78bfa', accentMuted: '#241f38', accentSoft: '#3b2f5c' },
-    light: { accent: '#7c3aed', accentMuted: '#f1ebfe', accentSoft: '#ddccfb' },
+    dark: { accent: '#bf5af2', accentMuted: 'rgba(191, 90, 242, 0.16)', accentSoft: 'rgba(191, 90, 242, 0.28)' },
+    light: { accent: '#7c3aed', accentMuted: 'rgba(124, 58, 237, 0.12)', accentSoft: 'rgba(124, 58, 237, 0.22)' },
   },
   orange: {
     label: 'Orange',
-    dark: { accent: '#fb923c', accentMuted: '#2b1d10', accentSoft: '#4a2f16' },
-    light: { accent: '#ea580c', accentMuted: '#fdece0', accentSoft: '#fbd0ad' },
+    dark: { accent: '#ff9f0a', accentMuted: 'rgba(255, 159, 10, 0.16)', accentSoft: 'rgba(255, 159, 10, 0.28)' },
+    light: { accent: '#ea580c', accentMuted: 'rgba(234, 88, 12, 0.12)', accentSoft: 'rgba(234, 88, 12, 0.22)' },
   },
   rose: {
     label: 'Rose',
-    dark: { accent: '#fb7185', accentMuted: '#2b141a', accentSoft: '#4a1f29' },
-    light: { accent: '#e11d48', accentMuted: '#fde8ec', accentSoft: '#fac0cb' },
+    dark: { accent: '#ff375f', accentMuted: 'rgba(255, 55, 95, 0.16)', accentSoft: 'rgba(255, 55, 95, 0.28)' },
+    light: { accent: '#e11d48', accentMuted: 'rgba(225, 29, 72, 0.12)', accentSoft: 'rgba(225, 29, 72, 0.22)' },
   },
   amber: {
     label: 'Amber',
-    dark: { accent: '#eac60f', accentMuted: '#2b260f', accentSoft: '#4d431a' },
-    light: { accent: '#b8860a', accentMuted: '#fdf6df', accentSoft: '#f5e5ad' },
+    dark: { accent: '#eac60f', accentMuted: 'rgba(234, 198, 15, 0.16)', accentSoft: 'rgba(234, 198, 15, 0.28)' },
+    light: { accent: '#b8860a', accentMuted: 'rgba(184, 134, 10, 0.12)', accentSoft: 'rgba(184, 134, 10, 0.22)' },
   },
 };
 

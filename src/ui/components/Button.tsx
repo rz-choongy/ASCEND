@@ -1,12 +1,25 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, type TextStyle, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import type { ThemeColors } from '../tokens/colors';
+import { getContrastText, type ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
-import type { Typography } from '../tokens/typography';
 import { PressableScale } from './PressableScale';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'warning';
+/**
+ * Mirrors the SwiftUI button roles:
+ * - `primary`   filled / `.borderedProminent`
+ * - `secondary` tinted  / `.bordered` with a tint
+ * - `ghost`     grey    / `.bordered`
+ * - `plain`     text-only / `.plain` -- nav-bar and toolbar actions
+ * - `success` / `warning` are filled buttons in a semantic colour.
+ */
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'plain'
+  | 'success'
+  | 'warning';
 
 type ButtonProps = {
   label: string;
@@ -21,54 +34,37 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
   switch (variant) {
     case 'secondary':
       return {
-        button: {
-          backgroundColor: colors.surfaceRaised,
-          borderColor: colors.borderSoft,
-        },
-        text: {
-          color: colors.textPrimary,
-        },
+        button: { backgroundColor: colors.accentMuted },
+        text: { color: colors.accent },
       };
     case 'ghost':
       return {
-        button: {
-          backgroundColor: 'transparent',
-          borderColor: colors.borderSoft,
-        },
-        text: {
-          color: colors.textSecondary,
-        },
+        button: { backgroundColor: colors.fill },
+        text: { color: colors.textPrimary },
+      };
+    case 'plain':
+      return {
+        button: { backgroundColor: 'transparent' },
+        text: { color: colors.accent },
       };
     case 'success':
       return {
-        button: {
-          backgroundColor: colors.success,
-          borderColor: colors.success,
-        },
-        text: {
-          color: colors.textInverse,
-        },
+        button: { backgroundColor: colors.success },
+        text: { color: getContrastText(colors.success) },
       };
     case 'warning':
       return {
-        button: {
-          backgroundColor: colors.warning,
-          borderColor: colors.warning,
-        },
-        text: {
-          color: colors.textInverse,
-        },
+        button: { backgroundColor: colors.warning },
+        text: { color: getContrastText(colors.warning) },
       };
     case 'primary':
     default:
       return {
-        button: {
-          backgroundColor: colors.accent,
-          borderColor: colors.accent,
-        },
-        text: {
-          color: colors.textInverse,
-        },
+        button: { backgroundColor: colors.accent },
+        // Derived rather than fixed: the accent is user-selectable, and a
+        // bright tint (amber, teal) needs dark text where a saturated one
+        // (blue, purple) needs white.
+        text: { color: getContrastText(colors.accent) },
       };
   }
 };
@@ -81,54 +77,38 @@ export const Button = ({
   style,
   textStyle,
 }: ButtonProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(typography), [typography]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(), []);
   const variantStyles = getVariantStyles(variant, colors);
-  const loudLabel =
-    variant === 'primary' || variant === 'success' || variant === 'warning';
   return (
     <PressableScale
       onPress={onPress}
       disabled={disabled}
       style={[styles.base, variantStyles.button, disabled ? styles.disabled : null, style]}
     >
-      <Text
-        style={[
-          styles.text,
-          loudLabel ? styles.loudText : styles.quietText,
-          variantStyles.text,
-          textStyle,
-        ]}
-      >
+      <Text style={[styles.text, variantStyles.text, textStyle]} numberOfLines={1}>
         {label}
       </Text>
     </PressableScale>
   );
 };
 
-const createStyles = (typography: Typography) =>
+const createStyles = () =>
   StyleSheet.create({
     base: {
-      minHeight: 44,
+      minHeight: 46,
       borderRadius: radius.lg,
-      borderWidth: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 14,
-      paddingVertical: 8,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
     },
     text: {
-      ...typography.body,
-      fontWeight: '700',
-    },
-    loudText: {
-      textTransform: 'uppercase',
-      letterSpacing: 1.1,
-    },
-    quietText: {
-      letterSpacing: 0.2,
+      fontSize: 16,
+      fontWeight: '600',
+      letterSpacing: -0.3,
     },
     disabled: {
-      opacity: 0.5,
+      opacity: 0.4,
     },
   });

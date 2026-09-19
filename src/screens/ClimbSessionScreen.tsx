@@ -590,7 +590,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   headerGym: {
     ...typography.title,
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '600',
     flex: 1,
     textAlign: 'center',
   },
@@ -605,19 +606,20 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     gap: 5,
   },
   liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: radius.sm,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.success,
   },
   timerLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '500',
     color: colors.textSecondary,
   },
   timerValue: {
     ...typography.title,
     fontSize: 19,
+    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
 
@@ -626,8 +628,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   titleInput: {
     ...typography.body,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: colors.textPrimary,
     minHeight: 30,
     padding: 0,
@@ -636,29 +638,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     padding: spacing.s,
     marginBottom: spacing.sm,
   },
   gymSelectorLabel: {
     ...typography.meta,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   gymSelectorName: {
     color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 2,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 1,
   },
   gymSelectorAction: {
     color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontSize: 16,
+    fontWeight: '400',
   },
 
   // Grade grid — each tile tinted with its grade's own color, tonal-ring active state
@@ -670,7 +669,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   gradeTile: {
     width: '22.5%',
-    minHeight: 46,
+    minHeight: 48,
+    borderRadius: radius.md,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
@@ -681,7 +681,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   gradeText: {
     ...typography.body,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   gradeTextActive: {
@@ -703,9 +703,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   // Session panel
   panel: {
     flex: 1,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
   },
   panelHeaderRow: {
     flexDirection: 'row',
@@ -717,14 +717,18 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   panelHd: {
     ...typography.section,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   undoButton: {
-    minHeight: 32,
-    paddingHorizontal: 10,
+    minHeight: 30,
+    paddingHorizontal: 12,
     paddingVertical: 4,
+    borderRadius: radius.pill,
   },
   undoText: {
-    fontSize: 10,
+    fontSize: 13,
   },
   logList: {
     flex: 1,
@@ -736,37 +740,39 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 8,
+    paddingVertical: 9,
     paddingHorizontal: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
   },
   logRowAlt: {
     backgroundColor: colors.surfaceAlt,
   },
   gradeChip: {
-    ...typography.numeric,
-    minWidth: 36,
-    height: 26,
+    minWidth: 38,
+    height: 28,
     maxWidth: 64,
+    borderRadius: radius.sm,
     paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gradeChipText: {
     ...typography.numeric,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
   },
   pbBadge: {
     backgroundColor: colors.danger,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   pbBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textInverse,
-    letterSpacing: 0.4,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#ffffff',
+    letterSpacing: -0.05,
   },
   logTime: {
     ...typography.bodyMuted,
@@ -780,7 +786,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   emptyText: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 14,
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.sm,
   },
@@ -788,9 +794,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   statBar: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surfaceRaised,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
+    backgroundColor: colors.surfaceAlt,
   },
   statNums: {
     flexDirection: 'row',
@@ -803,9 +809,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 24,
   },
   statCaps: {
-    fontSize: 11,
-    color: colors.textMuted,
-    fontWeight: '500',
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '400',
   },
 
   finishBar: {
@@ -823,15 +829,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backgroundColor: colors.overlay,
     padding: spacing.md,
   },
+  // Centred alert-style sheet, with the corner radius UIAlertController uses.
   pickerCard: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceAlt,
     padding: spacing.sm,
   },
   pickerEyebrow: {
     ...typography.meta,
+    fontSize: 13,
     color: colors.accent,
   },
   pickerTitle: {
@@ -841,8 +848,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   pickerHint: {
     ...typography.bodyMuted,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 19,
     marginTop: spacing.xxs,
   },
   pickerGrid: {
@@ -857,6 +864,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexGrow: 1,
     flexBasis: 64,
     minHeight: 60,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
