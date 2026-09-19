@@ -35,7 +35,7 @@ type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 // drives EAS's runtimeVersion (policy: "appVersion") -- bumping that would
 // break OTA updates for already-installed builds, since it changes what
 // runtime an `eas update` targets.
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 
 /**
  * What's actually running, not what was published — the two can disagree if the
@@ -129,7 +129,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     Alert.alert(
       'Refine old grade ranges?',
       `${plural(wideBands.climbs, 'climb')} across ${plural(wideBands.sessions, 'session')} ` +
-        'were logged as a range, like V4–V6. This sets each one to the middle grade so they ' +
+        'were logged as a range, like V3–V4. This sets each one to the middle grade so they ' +
         'pool correctly in Progress.\n\n' +
         "It's an estimate, not what you actually climbed — your original entries stay on " +
         'record as corrections rather than being overwritten.',

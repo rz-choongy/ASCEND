@@ -86,7 +86,25 @@ describe('countWideGradeBandClimbs / narrowWideGradeBands', () => {
     expect(countWideGradeBandClimbs()).toEqual({ sessions: 1, climbs: 1 });
   });
 
-  it('does not flag an exact grade or a narrow two-grade band', () => {
+  it('leaves exact grades alone', () => {
+    wireDb(
+      [session('s1')],
+      {
+        s1: [
+          eventRow('e1', 'CLIMB_LOGGED', { gradeLabel: 'V5', gradeMin: 5, gradeMax: 5, result: 'SEND' }),
+          eventRow('e2', 'CLIMB_LOGGED', { gradeLabel: 'V2', gradeMin: 2, gradeMax: 2, result: 'FLASH' }),
+        ],
+      }
+    );
+
+    expect(countWideGradeBandClimbs()).toEqual({ sessions: 0, climbs: 0 });
+  });
+
+  // Logging waves a two-grade band through without asking (see spansMultipleGrades),
+  // but it is still a range: it pools with neither V3 nor V4 in the pyramid, so the
+  // refine pass has to offer to resolve it. Reporting "nothing to refine" while such
+  // climbs sat in the history was the bug.
+  it('flags a two-grade band that logging accepted silently', () => {
     wireDb(
       [session('s1')],
       {
@@ -97,7 +115,7 @@ describe('countWideGradeBandClimbs / narrowWideGradeBands', () => {
       }
     );
 
-    expect(countWideGradeBandClimbs()).toEqual({ sessions: 0, climbs: 0 });
+    expect(countWideGradeBandClimbs()).toEqual({ sessions: 1, climbs: 1 });
   });
 
   it('narrows a wide band by appending a CLIMB_EDITED correction, not rewriting the log', () => {

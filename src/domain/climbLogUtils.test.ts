@@ -1,4 +1,9 @@
-import { applyClimbEvents, midpointGrade, spansMultipleGrades } from './climbLogUtils';
+import {
+  applyClimbEvents,
+  isGradeBand,
+  midpointGrade,
+  spansMultipleGrades,
+} from './climbLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
   id,
@@ -92,6 +97,24 @@ describe('spansMultipleGrades', () => {
   it('flags bands covering three or more grades', () => {
     expect(spansMultipleGrades(4, 6)).toBe(true);
     expect(spansMultipleGrades(6, 9)).toBe(true);
+  });
+});
+
+describe('isGradeBand', () => {
+  it('is false only for an exact grade', () => {
+    expect(isGradeBand(4, 4)).toBe(false);
+    expect(isGradeBand(0, 0)).toBe(false);
+  });
+
+  // The regression: a V3-V4 hold is a range, so analytics and the refine pass
+  // have to see it as one even though logging waves it through without asking.
+  it('flags a two-grade band that logging deliberately allows', () => {
+    expect(isGradeBand(3, 4)).toBe(true);
+    expect(spansMultipleGrades(3, 4)).toBe(false);
+  });
+
+  it('flags wider bands too', () => {
+    expect(isGradeBand(4, 6)).toBe(true);
   });
 });
 

@@ -2,8 +2,8 @@ import * as Crypto from 'expo-crypto';
 import { getAll, getFirst, run } from '../db/db';
 import {
   applyClimbEvents,
+  isGradeBand,
   midpointGrade,
-  spansMultipleGrades,
   type ClimbLog,
 } from './climbLogUtils';
 import type {
@@ -229,7 +229,7 @@ export type WideBandSummary = {
   climbs: number;
 };
 
-/** Completed/abandoned climb sessions holding at least one too-wide grade band. */
+/** Completed/abandoned climb sessions holding at least one range-logged climb. */
 const findWideBandClimbs = (): { sessionId: string; climbs: ClimbLog[] }[] => {
   const rows = getAll<SessionRow>(
     "SELECT * FROM sessions WHERE status IN ('completed', 'abandoned') AND type = 'climb';"
@@ -237,7 +237,7 @@ const findWideBandClimbs = (): { sessionId: string; climbs: ClimbLog[] }[] => {
   const found: { sessionId: string; climbs: ClimbLog[] }[] = [];
   rows.forEach((session) => {
     const wide = applyClimbEvents(getSessionEvents(session.id)).filter((log) =>
-      spansMultipleGrades(log.gradeMin, log.gradeMax)
+      isGradeBand(log.gradeMin, log.gradeMax)
     );
     if (wide.length > 0) {
       found.push({ sessionId: session.id, climbs: wide });

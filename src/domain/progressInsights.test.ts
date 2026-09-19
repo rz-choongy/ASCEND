@@ -66,12 +66,40 @@ describe('buildGradeDistributionAcrossGyms', () => {
     expect(bars.map((bar) => bar.label)).toEqual(['V2', 'V4', 'V6']);
   });
 
-  it('labels a spanning band as a range', () => {
+  it('folds a range-logged climb onto its midpoint grade', () => {
     mockGetSessionEvents.mockReturnValue([climbEvent('e1', 'Purple', 3, 5)]);
 
     const bars = buildGradeDistributionAcrossGyms([makeSession('a', 'gym-1')], PALETTE);
 
-    expect(bars[0].label).toBe('V3-5');
+    expect(bars[0].label).toBe('V4');
+  });
+
+  // The regression this chart shipped with: a "V3-4" bar sat between V3 and V4
+  // pooling with neither, so no bar in the pyramid could be read against another.
+  it('pools a two-grade band together with exact sends at the same grade', () => {
+    mockGetSessionEvents.mockReturnValue([
+      climbEvent('e1', 'Green', 3, 4),
+      climbEvent('e2', 'Green', 3, 4),
+      climbEvent('e3', 'V3', 3, 3),
+    ]);
+
+    const bars = buildGradeDistributionAcrossGyms([makeSession('a', 'gym-1')], PALETTE);
+
+    expect(bars).toHaveLength(1);
+    expect(bars[0].label).toBe('V3');
+    expect(bars[0].count).toBe(3);
+  });
+
+  it('never labels a bar as a range', () => {
+    mockGetSessionEvents.mockReturnValue([
+      climbEvent('e1', 'Green', 3, 4),
+      climbEvent('e2', 'Blue', 4, 5),
+      climbEvent('e3', 'Purple', 0, 1),
+    ]);
+
+    const bars = buildGradeDistributionAcrossGyms([makeSession('a', 'gym-1')], PALETTE);
+
+    bars.forEach((bar) => expect(bar.label).not.toContain('-'));
   });
 
   it('colors bands from the supplied palette, not the gym-specific grade color', () => {

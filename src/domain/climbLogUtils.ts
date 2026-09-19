@@ -1,12 +1,26 @@
 /**
- * A band covering this many grades or more (V4-V6 spans 2) is too coarse to pool
- * across gyms, since "Red" at one gym and "Red" at another cover different ranges.
- * Logging one asks for the exact grade; older entries can be narrowed after the fact.
+ * Two separate questions, deliberately kept apart:
+ *
+ * 1. `spansMultipleGrades` -- is this band coarse enough to interrupt logging for?
+ *    Only V4-V6 and wider. A V3-V4 hold colour is by far the most common case, and
+ *    stopping to ask on every one of those would cost a tap on the hot path.
+ * 2. `isGradeBand` -- is this a range at all, rather than one exact grade?
+ *    Anything wider than a single grade. This is what analytics and the refine pass
+ *    care about, because a "V3-4" bucket pools with neither V3 nor V4 and so can't
+ *    be compared against anything.
+ *
+ * Conflating the two is what left range-logged climbs stranded in their own
+ * pyramid rows while Settings reported nothing left to refine.
  */
 export const WIDE_BAND_MIN_SPAN = 2;
 
+/** Coarse enough that logging stops to ask which grade it actually was. */
 export const spansMultipleGrades = (gradeMin: number, gradeMax: number): boolean =>
   gradeMax - gradeMin >= WIDE_BAND_MIN_SPAN;
+
+/** A range rather than one exact grade -- V3-V4 counts, V3 alone does not. */
+export const isGradeBand = (gradeMin: number, gradeMax: number): boolean =>
+  gradeMax > gradeMin;
 
 /**
  * Representative single grade for a band. Floors the midpoint, so an even-width band

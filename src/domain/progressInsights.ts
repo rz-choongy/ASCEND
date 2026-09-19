@@ -1,4 +1,4 @@
-import { applyClimbEvents, type ClimbLog } from './climbLogUtils';
+import { applyClimbEvents, midpointGrade, type ClimbLog } from './climbLogUtils';
 import { addDays, startOfWeek } from './dateUtils';
 import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
@@ -135,38 +135,39 @@ export const buildGradeDistribution = (
 /**
  * Grade distribution pooled across every gym.
  *
- * Buckets by the numeric gradeMin/gradeMax band rather than by label: two gyms
- * can both call a grade "Purple" and mean different things, so the label is not
- * comparable across gyms but the numeric band is. Colors come from the caller's
- * grade palette for the same reason -- one gym's "Purple" hex would be an
- * arbitrary choice to represent a band several gyms contributed to.
+ * Buckets by numeric grade rather than by label: two gyms can both call a grade
+ * "Purple" and mean different things, so the label is not comparable across gyms
+ * but the number is. Colors come from the caller's grade palette for the same
+ * reason -- one gym's "Purple" hex would be an arbitrary choice to represent a
+ * grade several gyms contributed to.
+ *
+ * A range-logged climb is folded onto its midpoint grade rather than getting a
+ * "V3-4" row of its own. Such a row pools with neither V3 nor V4, so it can't be
+ * read against any other bar in the chart -- which is the whole job of a pyramid.
+ * This matches what the Settings refine pass writes, so the chart looks the same
+ * before and after a refine; refining just makes it exact rather than inferred.
  */
 export const buildGradeDistributionAcrossGyms = (
   sessions: SessionRow[],
   palette: string[]
 ): GradeDistributionBar[] => {
-  const byBand = new Map<string, { count: number; min: number; max: number }>();
+  const byGrade = new Map<number, number>();
 
   sessions
     .filter((session) => session.type === 'climb')
     .forEach((session) => {
       applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
-        const key = `${log.gradeMin}-${log.gradeMax}`;
-        const existing = byBand.get(key);
-        if (existing) {
-          existing.count += 1;
-        } else {
-          byBand.set(key, { count: 1, min: log.gradeMin, max: log.gradeMax });
-        }
+        const grade = midpointGrade(log.gradeMin, log.gradeMax);
+        byGrade.set(grade, (byGrade.get(grade) ?? 0) + 1);
       });
     });
 
-  return Array.from(byBand.values())
-    .sort((a, b) => (a.min + a.max) / 2 - (b.min + b.max) / 2)
-    .map((band) => ({
-      label: band.min === band.max ? `V${band.min}` : `V${band.min}-${band.max}`,
-      count: band.count,
-      color: palette.length > 0 ? palette[band.min % palette.length] : '#3ecf6e',
+  return Array.from(byGrade.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([grade, count]) => ({
+      label: `V${grade}`,
+      count,
+      color: palette.length > 0 ? palette[grade % palette.length] : '#3ecf6e',
     }));
 };
 
