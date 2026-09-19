@@ -10,6 +10,7 @@ import { migrate } from './src/db/migrate';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { ClimbSessionScreen } from './src/screens/ClimbSessionScreen';
+import { ExerciseProgressScreen } from './src/screens/ExerciseProgressScreen';
 import { GymEditScreen } from './src/screens/GymEditScreen';
 import { GymSelectScreen } from './src/screens/GymSelectScreen';
 import { LogScreen } from './src/screens/LogScreen';
@@ -120,6 +121,7 @@ function AppContent() {
             options={{ presentation: 'modal' }}
           />
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
+          <Stack.Screen name="ExerciseProgress" component={ExerciseProgressScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>

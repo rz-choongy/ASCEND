@@ -33,5 +33,6 @@ export { ListGroup, ListRow } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';
 export { SegmentedControl } from './components/SegmentedControl';
-export { StatRow } from './components/StatTile';
+export { StatGrid, StatRow, StatTile } from './components/StatTile';
+export { LineChart } from './components/LineChart';
 export { Stepper } from './components/Stepper';
