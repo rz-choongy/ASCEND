@@ -474,3 +474,9 @@ export const deleteGym = (gymId: string): void => {
     run('DELETE FROM gyms WHERE id = ?;', [gymId]);
   });
 };
+
+/** The gym Kilter sends are imported into, created on first use. Matched by name among top-level gyms. */
+export const ensureNamedVScaleGym = (name: string): GymRow => {
+  const existing = getRootGyms().find((gym) => gym.name === name);
+  return existing ?? createGym({ name, gradingType: 'v_scale' });
+};

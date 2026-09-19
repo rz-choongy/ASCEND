@@ -33,7 +33,7 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 5;
+const APP_SCHEMA_VERSION = 6;
 
 type Migration = {
   version: number;
@@ -57,6 +57,20 @@ const ensureColumns = (table: string, columns: { name: string; ddl: string }[]):
       run(`ALTER TABLE ${table} ADD COLUMN ${col.ddl};`);
     }
   });
+};
+
+/** Maps entries imported from another service (e.g. a Kilter logUuid) to the event they became, so re-syncing never duplicates. */
+const createExternalLogsTable = (): void => {
+  run(`
+    CREATE TABLE IF NOT EXISTS external_logs (
+      source TEXT NOT NULL,
+      external_id TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      event_id TEXT NOT NULL,
+      PRIMARY KEY (source, external_id),
+      FOREIGN KEY (session_id) REFERENCES sessions(id)
+    );
+  `);
 };
 
 const ensureSchema = (): void => {
@@ -138,6 +152,8 @@ const ensureSchema = (): void => {
       updated_at INTEGER NOT NULL
     );
   `);
+
+  createExternalLogsTable();
 
   run(`
     CREATE TABLE IF NOT EXISTS exercises (
@@ -300,6 +316,7 @@ const migrations: Migration[] = [
   { version: 3, up: addGymParentIdColumn },
   { version: 4, up: dedupeGymGradeOptions },
   { version: 5, up: backfillNumericGradeColors },
+  { version: 6, up: createExternalLogsTable },
 ];
 
 export const migrate = (): void => {

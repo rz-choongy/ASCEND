@@ -5,6 +5,7 @@ const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 const ACCENT_COLOR_KEY = 'accent_color';
+const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 
 const VALID_ACCENT_IDS: AccentColorId[] = ['blue', 'teal', 'purple', 'orange', 'rose'];
 
@@ -65,4 +66,17 @@ export const getAccentColorId = (): AccentColorId => {
 
 export const setAccentColorId = (accentId: AccentColorId): void => {
   setSetting(ACCENT_COLOR_KEY, accentId);
+};
+
+/** When Kilter sends were last imported (ms since epoch), or null if never. */
+export const getKilterLastSyncedAt = (): number | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    KILTER_LAST_SYNCED_KEY,
+  ]);
+  const value = setting ? Number(setting.value) : NaN;
+  return Number.isFinite(value) ? value : null;
+};
+
+export const setKilterLastSyncedAt = (ms: number): void => {
+  setSetting(KILTER_LAST_SYNCED_KEY, String(ms));
 };

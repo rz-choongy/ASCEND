@@ -8,6 +8,7 @@ import {
 } from './climbLogUtils';
 import type {
   ActiveSessionEventType,
+  ClimbLogPayload,
   EventRow,
   SessionCorrectionEventType,
   SessionEvent,
@@ -383,3 +384,99 @@ export function getSessionsForDate(dateStr: string): SessionRow[] {
     ['completed', start, end]
   );
 }
+
+export type ExternalClimbInput = {
+  /** The other service's id for this send; the dedupe key. */
+  externalId: string;
+  createdAt: number;
+  payload: ClimbLogPayload;
+};
+
+export type ExternalClimbSessionInput = {
+  source: string;
+  gymId: string;
+  title: string;
+  climbs: ExternalClimbInput[];
+};
+
+const inTransaction = (work: () => void): void => {
+  run('BEGIN TRANSACTION;');
+  try {
+    work();
+    run('COMMIT;');
+  } catch (error) {
+    run('ROLLBACK;');
+    throw error;
+  }
+};
+
+/**
+ * Writes sends from another service as already-completed history, with their original
+ * timestamps -- the live-logging path (`createSession`/`appendEvent`) stamps "now" and refuses
+ * to run beside an active session, so it can't do this. Sends already imported (same
+ * `source` + `externalId`) are skipped, and a day that was imported before gets the new sends
+ * appended to its session instead of a second one. Returns how many sends were new.
+ */
+export const importExternalClimbSession = (input: ExternalClimbSessionInput): number => {
+  const fresh = input.climbs
+    .filter(
+      (climb) =>
+        !getFirst<{ found: number }>(
+          'SELECT 1 AS found FROM external_logs WHERE source = ? AND external_id = ? LIMIT 1;',
+          [input.source, climb.externalId]
+        )
+    )
+    .sort((a, b) => a.createdAt - b.createdAt);
+  if (fresh.length === 0) return 0;
+
+  const first = fresh[0].createdAt;
+  const last = fresh[fresh.length - 1].createdAt;
+  const day = new Date(first);
+  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+  const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1).getTime();
+
+  inTransaction(() => {
+    const existing = getFirst<SessionRow>(
+      `SELECT s.* FROM sessions s
+       WHERE s.status = 'completed' AND s.type = 'climb'
+         AND s.started_at >= ? AND s.started_at < ?
+         AND EXISTS (SELECT 1 FROM external_logs l WHERE l.session_id = s.id AND l.source = ?)
+       LIMIT 1;`,
+      [dayStart, dayEnd, input.source]
+    );
+
+    let sessionId: string;
+    if (existing) {
+      sessionId = existing.id;
+      run('UPDATE sessions SET started_at = MIN(started_at, ?), completed_at = MAX(COALESCE(completed_at, 0), ?) WHERE id = ?;', [
+        first,
+        last,
+        sessionId,
+      ]);
+    } else {
+      sessionId = uuid();
+      run(
+        `INSERT INTO sessions (id, type, status, started_at, completed_at, title, gym_id, notes)
+         VALUES (?, 'climb', 'completed', ?, ?, ?, ?, NULL);`,
+        [sessionId, first, last, input.title, input.gymId]
+      );
+    }
+
+    fresh.forEach((climb) => {
+      const eventId = uuid();
+      run(
+        `INSERT INTO events (id, session_id, type, payload_json, schema_version, created_at)
+         VALUES (?, ?, 'CLIMB_LOGGED', ?, ?, ?);`,
+        [eventId, sessionId, JSON.stringify(climb.payload), EVENT_SCHEMA_VERSION, climb.createdAt]
+      );
+      run('INSERT INTO external_logs (source, external_id, session_id, event_id) VALUES (?, ?, ?, ?);', [
+        input.source,
+        climb.externalId,
+        sessionId,
+        eventId,
+      ]);
+    });
+  });
+
+  return fresh.length;
+};

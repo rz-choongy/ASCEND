@@ -4,12 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
+import { KilterAuthError, kilterAuth } from '../integrations/kilter/kilterAuth';
+import { syncKilter } from '../integrations/kilter/kilterSync';
 import {
   countWideGradeBandClimbs,
   narrowWideGradeBands,
   type WideBandSummary,
 } from '../domain/sessionStore';
-import { getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
+import { getKilterLastSyncedAt, getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
+import { formatDaysAgo } from '../domain/strengthProgress';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
@@ -56,6 +59,9 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [kilterUser, setKilterUser] = useState<string | null>(null);
+  const [kilterSyncedAt, setKilterSyncedAt] = useState<number | null>(null);
+  const [isSyncingKilter, setIsSyncingKilter] = useState(false);
   const [wideBands, setWideBands] = useState<WideBandSummary>({ sessions: 0, climbs: 0 });
 
   useFocusEffect(
@@ -63,6 +69,12 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
+      setKilterSyncedAt(getKilterLastSyncedAt());
+      // Storage can be unavailable on a build that predates it -- that just reads as "not connected".
+      kilterAuth
+        .getConnectedUsername()
+        .then(setKilterUser)
+        .catch(() => setKilterUser(null));
       // Surfaced rather than left to crash silently -- an uncaught throw here would
       // leave wideBands stuck at its zero default with no visible sign anything failed.
       try {
@@ -111,6 +123,51 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     } finally {
       setIsCheckingUpdate(false);
     }
+  };
+
+  const handleSyncKilter = async () => {
+    if (isSyncingKilter) return;
+    setIsSyncingKilter(true);
+    try {
+      const result = await syncKilter();
+      setKilterSyncedAt(getKilterLastSyncedAt());
+      Alert.alert(
+        'Kilter synced',
+        result.added === 0
+          ? 'No new sends to import.'
+          : `Imported ${result.added} send${result.added === 1 ? '' : 's'}.`
+      );
+    } catch (e) {
+      if (e instanceof KilterAuthError && e.kind === 'signed_out') setKilterUser(null);
+      Alert.alert(
+        "Couldn't sync Kilter",
+        e instanceof KilterAuthError ? e.message : 'Something went wrong. Try again.'
+      );
+    } finally {
+      setIsSyncingKilter(false);
+    }
+  };
+
+  const handleDisconnectKilter = () => {
+    Alert.alert(
+      'Disconnect Kilter?',
+      'ASCEND will forget your Kilter sign-in. Sends you already imported stay in your history.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => {
+            kilterAuth
+              .disconnect()
+              .then(() => setKilterUser(null))
+              .catch((e: unknown) =>
+                Alert.alert("Couldn't disconnect", e instanceof Error ? e.message : 'Something went wrong.')
+              );
+          },
+        },
+      ]
+    );
   };
 
   const setThemeMode = (next: ThemeMode) => {
@@ -235,6 +292,38 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               />
             }
           />
+        </ListGroup>
+
+        <Text style={styles.sectionLabel}>Kilter Board</Text>
+        <ListGroup>
+          {kilterUser ? (
+            <ListRow
+              title="Sync now"
+              subtitle={
+                isSyncingKilter
+                  ? 'Syncing…'
+                  : kilterSyncedAt
+                    ? `Last synced ${formatDaysAgo(kilterSyncedAt)}`
+                    : 'Not synced yet'
+              }
+              meta={kilterUser}
+              onPress={handleSyncKilter}
+            />
+          ) : null}
+          {kilterUser ? (
+            <ListRow
+              title="Disconnect"
+              subtitle="Keeps sends you've already imported"
+              onPress={handleDisconnectKilter}
+            />
+          ) : null}
+          {kilterUser ? null : (
+            <ListRow
+              title="Connect Kilter Board"
+              subtitle="Import your sends from the Kilter app"
+              onPress={() => navigation.navigate('KilterConnect')}
+            />
+          )}
         </ListGroup>
 
         <Text style={styles.sectionLabel}>Data</Text>

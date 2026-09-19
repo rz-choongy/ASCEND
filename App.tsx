@@ -13,6 +13,7 @@ import { ClimbSessionScreen } from './src/screens/ClimbSessionScreen';
 import { ExerciseProgressScreen } from './src/screens/ExerciseProgressScreen';
 import { GymEditScreen } from './src/screens/GymEditScreen';
 import { GymSelectScreen } from './src/screens/GymSelectScreen';
+import { KilterConnectScreen } from './src/screens/KilterConnectScreen';
 import { LogScreen } from './src/screens/LogScreen';
 import { ProgressScreen } from './src/screens/ProgressScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
@@ -123,6 +124,11 @@ function AppContent() {
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
           <Stack.Screen name="ExerciseProgress" component={ExerciseProgressScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen
+            name="KilterConnect"
+            component={KilterConnectScreen}
+            options={{ presentation: 'modal' }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
