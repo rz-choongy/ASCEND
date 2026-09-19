@@ -30,6 +30,7 @@ import {
   Chip,
   IconButton,
   SegmentedControl,
+  getContrastText,
   radius,
   useTheme,
 } from '../ui';
@@ -581,8 +582,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   screenTitle: {
     ...typography.title,
-    fontSize: 19,
-    color: colors.textSecondary,
+    fontSize: 22,
   },
   discardedBanner: {
     ...typography.bodyMuted,
@@ -608,6 +608,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   monthLabel: {
     ...typography.title,
     fontSize: 17,
+    fontWeight: '600',
   },
 
   // Weekday labels
@@ -623,7 +624,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   weekdayText: {
     ...typography.meta,
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
   },
 
   // Grid
@@ -638,12 +641,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingVertical: 2,
     paddingHorizontal: 2,
   },
-  // Square selection marker, not a circle: matches the grade tiles and the
-  // square-knob icon language rather than the default rounded-pill calendar look.
+  // Circular selection marker, the way the iOS calendar rings the chosen day.
   dayNumberWrapper: {
     width: DAY_CELL_SIZE,
     height: DAY_CELL_SIZE,
-    borderRadius: radius.sm,
+    borderRadius: DAY_CELL_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -651,30 +653,31 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backgroundColor: colors.accent,
   },
   dayNumber: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    fontSize: 17,
+    fontWeight: '400',
+    letterSpacing: -0.4,
+    color: colors.textPrimary,
   },
   dayNumberTodayText: {
     color: colors.accent,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   dayNumberSelectedText: {
-    color: colors.textInverse,
-    fontWeight: '700',
+    color: getContrastText(colors.accent),
+    fontWeight: '600',
   },
   dayDot: {
-    width: 4,
-    height: 4,
-    borderRadius: radius.sm,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     marginTop: 2,
     backgroundColor: 'transparent',
   },
 
   // Divider
   divider: {
-    height: 1,
-    backgroundColor: colors.border,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
     marginTop: 4,
     marginHorizontal: spacing.sm,
   },
@@ -701,6 +704,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   panelDateLabel: {
     ...typography.title,
     fontSize: 17,
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   filterChips: {
@@ -709,8 +713,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   noSessions: {
     ...typography.bodyMuted,
+    fontSize: 15,
     color: colors.textMuted,
     paddingVertical: spacing.sm,
+    textAlign: 'center',
   },
   monthCountFooter: {
     ...typography.bodyMuted,
@@ -725,30 +731,32 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.md,
   },
   groupDateLabel: {
-    ...typography.meta,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
+    ...typography.section,
+    color: colors.textSecondary,
+    marginBottom: 6,
+    marginLeft: 2,
   },
 
-  // Day card of bar-rows
+  // Day card of bar-rows -- one inset-grouped panel per day.
   dayCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
+    overflow: 'hidden',
   },
   sessRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   sessRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
   },
   sessBar: {
     width: 3,
+    borderRadius: 1.5,
     flexShrink: 0,
   },
   sessBody: {
@@ -756,23 +764,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   sessType: {
     ...typography.body,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
   },
   sessMeta: {
     ...typography.bodyMuted,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 3,
   },
   sessGradeChip: {
     ...typography.meta,
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     color: colors.textPrimary,
-    backgroundColor: colors.border,
+    backgroundColor: colors.fill,
   },
   sessDur: {
     ...typography.numeric,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: colors.textSecondary,
     marginLeft: 'auto',
     flexShrink: 0,

@@ -11,10 +11,17 @@ type ScreenHeaderProps = {
   eyebrow?: string;
   title: string;
   onClose?: () => void;
+  closeLabel?: string;
   left?: ReactNode;
 };
 
-export const ScreenHeader = ({ eyebrow, title, onClose, left }: ScreenHeaderProps) => {
+export const ScreenHeader = ({
+  eyebrow,
+  title,
+  onClose,
+  closeLabel = 'Done',
+  left,
+}: ScreenHeaderProps) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   return (
@@ -22,12 +29,15 @@ export const ScreenHeader = ({ eyebrow, title, onClose, left }: ScreenHeaderProp
       <View style={styles.textCol}>
         {left}
         {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
       {onClose ? (
+        // Nav-bar action: text only, in the accent -- the iOS toolbar button.
         <Button
-          label="Close"
-          variant="ghost"
+          label={closeLabel}
+          variant="plain"
           onPress={onClose}
           style={styles.closeButton}
           textStyle={styles.closeText}
@@ -41,9 +51,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     header: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'space-between',
-      gap: spacing.sm,
+      gap: spacing.s,
       marginBottom: spacing.sm,
     },
     textCol: {
@@ -51,17 +61,21 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     eyebrow: {
       ...typography.meta,
-      color: colors.accent,
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.textSecondary,
     },
     title: {
       ...typography.title,
-      marginTop: 2,
+      marginTop: 1,
     },
     closeButton: {
-      minHeight: 38,
-      paddingHorizontal: 12,
+      minHeight: 34,
+      paddingHorizontal: 4,
+      marginRight: -4,
     },
     closeText: {
-      fontSize: 10,
+      fontSize: 17,
+      fontWeight: '400',
     },
   });

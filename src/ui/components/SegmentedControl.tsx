@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
-import { radius } from '../tokens/radius';
 import { spacing } from '../tokens/spacing';
 import { PressableScale } from './PressableScale';
 
@@ -22,8 +21,8 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
 }: SegmentedControlProps<T>) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, mode } = useTheme();
+  const styles = useMemo(() => createStyles(colors, mode === 'dark'), [colors, mode]);
   return (
     <View style={styles.segmented}>
       {options.map((option) => {
@@ -32,6 +31,7 @@ export function SegmentedControl<T extends string>({
           <PressableScale
             key={option.value}
             onPress={() => onChange(option.value)}
+            scaleTo={0.97}
             style={[styles.segment, active ? styles.segmentActive : null]}
           >
             <Text style={active ? styles.segmentTextActive : styles.segmentText}>
@@ -44,35 +44,44 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-const createStyles = (colors: ThemeColors) =>
+// UISegmentedControl proper: a translucent track with a lifted neutral thumb.
+// The thumb is a surface, not the accent -- selection reads from elevation, so
+// the accent stays reserved for actions.
+const createStyles = (colors: ThemeColors, isDark: boolean) =>
   StyleSheet.create({
-    // Pill, not sharp: the system reserves radius.pill for switchable selectors
-    // (Chip, Settings' theme toggle, this) so shape alone signals "pick one of these".
     segmented: {
       flexDirection: 'row',
-      backgroundColor: colors.surfaceAlt,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.pill,
-      padding: 3,
+      backgroundColor: colors.fill,
+      borderRadius: 9,
+      padding: 2,
       gap: 2,
     },
     segment: {
+      flex: 1,
       paddingHorizontal: spacing.s,
-      paddingVertical: 6,
-      borderRadius: radius.pill,
+      paddingVertical: 7,
+      borderRadius: 7,
     },
     segmentActive: {
-      backgroundColor: colors.accent,
+      backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
+      shadowColor: '#000',
+      shadowOpacity: isDark ? 0 : 0.12,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
+      elevation: isDark ? 0 : 2,
     },
     segmentText: {
-      fontSize: 12,
-      fontWeight: '700',
+      fontSize: 13,
+      fontWeight: '500',
+      letterSpacing: -0.08,
       color: colors.textSecondary,
+      textAlign: 'center',
     },
     segmentTextActive: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: colors.textInverse,
+      fontSize: 13,
+      fontWeight: '600',
+      letterSpacing: -0.08,
+      color: colors.textPrimary,
+      textAlign: 'center',
     },
   });

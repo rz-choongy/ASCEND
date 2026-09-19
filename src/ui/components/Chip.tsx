@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import type { ThemeColors } from '../tokens/colors';
+import { getContrastText, type ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { PressableScale } from './PressableScale';
 
@@ -18,38 +18,37 @@ export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => 
   return (
     <PressableScale
       onPress={onPress}
-      scaleTo={0.94}
+      scaleTo={0.95}
       style={[styles.base, selected ? styles.selected : null, style]}
     >
-      <Text style={[styles.text, selected ? styles.textSelected : null]}>{label}</Text>
+      <Text style={[styles.text, selected ? styles.textSelected : null]} numberOfLines={1}>
+        {label}
+      </Text>
     </PressableScale>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
+    // Capsule filter, the shape iOS reserves for "pick one of these".
     base: {
       minHeight: 34,
-      paddingHorizontal: 12,
+      paddingHorizontal: 14,
       borderRadius: radius.pill,
-      borderWidth: 1,
-      borderColor: colors.borderSoft,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.fill,
       alignItems: 'center',
       justifyContent: 'center',
     },
     selected: {
-      borderColor: colors.accent,
-      backgroundColor: colors.accentSoft,
+      backgroundColor: colors.accent,
     },
     text: {
       color: colors.textSecondary,
-      fontSize: 12,
-      fontWeight: '800',
-      textTransform: 'uppercase',
-      letterSpacing: 1,
+      fontSize: 14,
+      fontWeight: '600',
+      letterSpacing: -0.2,
     },
     textSelected: {
-      color: colors.textPrimary,
+      color: getContrastText(colors.accent),
     },
   });

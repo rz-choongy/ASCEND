@@ -28,7 +28,9 @@ export const StatRow = ({ items, style }: StatRowProps) => {
             <Text style={styles.value} numberOfLines={1}>
               {item.value}
             </Text>
-            <Text style={styles.label}>{item.label}</Text>
+            <Text style={styles.label} numberOfLines={1}>
+              {item.label}
+            </Text>
           </View>
         </Fragment>
       ))}
@@ -41,29 +43,28 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     strip: {
       flexDirection: 'row',
       backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
+      borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       paddingVertical: spacing.sm,
     },
     cell: {
       flex: 1,
       alignItems: 'center',
-      gap: 2,
+      gap: 3,
     },
-    // Space Grotesk numeric: these are the headline figures of the session detail
-    // screen, so they get the same face as the streak/PR/session-stat hero numbers.
     value: {
       ...typography.numeric,
       fontSize: 22,
     },
     label: {
       ...typography.meta,
-      color: colors.textMuted,
+      fontSize: 12,
+      color: colors.textSecondary,
     },
     divider: {
-      width: 1,
-      backgroundColor: colors.border,
-      marginVertical: spacing.xxs,
+      width: StyleSheet.hairlineWidth,
+      backgroundColor: colors.separator,
+      marginVertical: spacing.xs,
     },
   });

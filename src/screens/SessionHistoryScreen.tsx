@@ -29,7 +29,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
   ChevronLeftIcon,
-  Divider,
+  ListGroup,
   ListRow,
   StatRow,
   radius,
@@ -390,44 +390,46 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
         {/* Log list */}
         <Text style={styles.sectionLabel}>{isClimb ? 'Sends' : 'Sets'}</Text>
-        <Divider style={styles.divider} />
 
         {isClimb ? (
           climbs.length === 0 ? (
             <Text style={styles.emptyText}>Nothing logged</Text>
           ) : (
-            climbs.map((climb) => (
-              <ListRow
-                key={climb.eventId}
-                title={climb.gradeLabel}
-                subtitle={climb.result === 'FLASH' ? 'Flash' : 'Send'}
-                meta={formatLogTime(climb.createdAt)}
-                left={
-                  climb.gradeColor ? (
-                    <View style={[styles.gradeSwatch, { backgroundColor: climb.gradeColor }]} />
-                  ) : undefined
-                }
-                onPress={() => openClimbEdit(climb)}
-              />
-            ))
+            <ListGroup>
+              {climbs.map((climb) => (
+                <ListRow
+                  key={climb.eventId}
+                  title={climb.gradeLabel}
+                  subtitle={climb.result === 'FLASH' ? 'Flash' : 'Send'}
+                  meta={formatLogTime(climb.createdAt)}
+                  left={
+                    climb.gradeColor ? (
+                      <View style={[styles.gradeSwatch, { backgroundColor: climb.gradeColor }]} />
+                    ) : undefined
+                  }
+                  onPress={() => openClimbEdit(climb)}
+                />
+              ))}
+            </ListGroup>
           )
         ) : sets.length === 0 ? (
           <Text style={styles.emptyText}>Nothing logged</Text>
         ) : (
-          sets.map((set) => (
-            <ListRow
-              key={set.eventId}
-              title={set.exerciseName}
-              subtitle={formatSetLabel(set)}
-              meta={formatLogTime(set.createdAt)}
-              onPress={() => openSetEdit(set)}
-            />
-          ))
+          <ListGroup>
+            {sets.map((set) => (
+              <ListRow
+                key={set.eventId}
+                title={set.exerciseName}
+                subtitle={formatSetLabel(set)}
+                meta={formatLogTime(set.createdAt)}
+                onPress={() => openSetEdit(set)}
+              />
+            ))}
+          </ListGroup>
         )}
 
         {/* Notes */}
         <Text style={[styles.sectionLabel, styles.notesSectionLabel]}>Notes</Text>
-        <Divider style={styles.divider} />
         <TextInput
           style={styles.notesInput}
           multiline
@@ -637,9 +639,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.xs,
   },
   backLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.accent,
+    fontSize: 17,
+    fontWeight: '400',
+    letterSpacing: -0.3,
   },
   metaBlock: {
     marginBottom: spacing.md,
@@ -647,34 +650,32 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   titleLabel: {
     ...typography.meta,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   titleInput: {
     ...typography.title,
+    fontSize: 20,
     minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    backgroundColor: colors.fill,
     color: colors.textPrimary,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.s,
     paddingVertical: 6,
     marginTop: 4,
     marginBottom: 2,
   },
   metaLine: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
   },
   sectionLabel: {
     ...typography.section,
-    marginBottom: spacing.xs,
+    marginBottom: 6,
+    marginLeft: 2,
   },
   notesSectionLabel: {
     marginTop: spacing.md,
-  },
-  divider: {
-    marginBottom: spacing.xs,
   },
   emptyText: {
     color: colors.textMuted,
@@ -684,41 +685,38 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeSwatch: {
     width: 10,
     height: 36,
-    borderRadius: radius.sm,
+    borderRadius: 5,
   },
   notesInput: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
+    borderRadius: radius.lg,
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 16,
     padding: spacing.sm,
     minHeight: 100,
   },
   dangerBlock: {
     marginTop: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     padding: spacing.sm,
     gap: spacing.xs,
   },
   dangerLabel: {
     ...typography.meta,
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.danger,
   },
   dangerCopy: {
     color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 19,
   },
   restoreButton: {
     marginTop: 4,
   },
   removeButton: {
-    borderColor: colors.danger,
     marginTop: 8,
   },
   removeButtonText: {
@@ -733,10 +731,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   modalCard: {
     width: '100%',
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceAlt,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -750,13 +746,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   modalInput: {
     minHeight: 48,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.fill,
     color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-    paddingHorizontal: spacing.sm,
+    fontSize: 17,
+    fontWeight: '400',
+    paddingHorizontal: spacing.s,
   },
   modalRow: {
     flexDirection: 'row',
@@ -774,7 +768,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     minHeight: 42,
     minWidth: 64,
     borderRadius: radius.md,
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
@@ -786,8 +780,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   gradeChipText: {
     color: colors.textInverse,
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '600',
   },
   resultRow: {
     flexDirection: 'row',
@@ -797,24 +791,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flex: 1,
     minHeight: 44,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resultChipSelected: {
-    borderColor: colors.accent,
     backgroundColor: colors.accentMuted,
   },
   resultText: {
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: -0.2,
   },
   resultTextSelected: {
-    color: colors.textPrimary,
+    color: colors.accent,
+    fontWeight: '600',
   },
   modalActions: {
     flexDirection: 'row',
@@ -825,7 +817,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   deleteEntryButton: {
     flex: 1,
-    borderColor: colors.danger,
   },
 
   statsRow: {

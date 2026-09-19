@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
@@ -15,10 +15,11 @@ import {
   ACCENT_PALETTE,
   ChevronLeftIcon,
   IconButton,
+  ListGroup,
   ListRow,
   MountainMarkIcon,
   PressableScale,
-  radius,
+  SegmentedControl,
   spacing,
   useTheme,
 } from '../ui';
@@ -168,34 +169,21 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <Text style={styles.title}>Settings</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionLabel}>Appearance</Text>
-        <View style={styles.group}>
+        <ListGroup>
           <ListRow
             title="Theme"
             right={
-              // Deliberately pill-shaped -- Direction A's wireframe carves this
-              // control out as the one intentional exception to its otherwise
-              // fully-sharp corner language.
-              <View style={styles.pillSegmented}>
-                <TouchableOpacity
-                  style={[styles.pillSeg, mode === 'light' && styles.pillSegActive]}
-                  onPress={() => setThemeMode('light')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.pillSegText, mode === 'light' && styles.pillSegTextActive]}>
-                    Light
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.pillSeg, mode === 'dark' && styles.pillSegActive]}
-                  onPress={() => setThemeMode('dark')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.pillSegText, mode === 'dark' && styles.pillSegTextActive]}>
-                    Dark
-                  </Text>
-                </TouchableOpacity>
+              <View style={styles.themePicker}>
+                <SegmentedControl
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                  ]}
+                  value={mode}
+                  onChange={setThemeMode}
+                />
               </View>
             }
           />
@@ -225,10 +213,10 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               </View>
             }
           />
-        </View>
+        </ListGroup>
 
         <Text style={styles.sectionLabel}>Session</Text>
-        <View style={styles.group}>
+        <ListGroup>
           <ListRow
             title="Default gym"
             subtitle="Used to prefill new climbing sessions"
@@ -242,15 +230,15 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               <Switch
                 value={timerEnabled}
                 onValueChange={handleToggleTimer}
-                trackColor={{ false: colors.borderSoft, true: colors.accent }}
+                trackColor={{ false: colors.fill, true: colors.accent }}
                 thumbColor="#ffffff"
               />
             }
           />
-        </View>
+        </ListGroup>
 
         <Text style={styles.sectionLabel}>Data</Text>
-        <View style={styles.group}>
+        <ListGroup>
           <ListRow
             title="Refine old grade ranges"
             subtitle={
@@ -261,10 +249,10 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             meta={wideBands.climbs > 0 ? `${wideBands.climbs}` : undefined}
             onPress={handleRefineGrades}
           />
-        </View>
+        </ListGroup>
 
         <Text style={styles.sectionLabel}>About</Text>
-        <View style={styles.group}>
+        <ListGroup>
           <ListRow title="Version" meta={APP_VERSION} />
           <ListRow
             title="Build"
@@ -276,13 +264,13 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             subtitle={isCheckingUpdate ? 'Checking…' : 'Fetch and apply the latest update now'}
             onPress={handleCheckForUpdates}
           />
-        </View>
+        </ListGroup>
 
         <View style={styles.footer}>
           <MountainMarkIcon size={18} color={colors.accent} strokeWidth={2} />
           <Text style={styles.footerWord}>ASCEND</Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -304,58 +292,36 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     title: {
       ...typography.title,
       fontSize: 20,
-      letterSpacing: 0.4,
-      textTransform: 'uppercase',
     },
     content: {
-      paddingHorizontal: spacing.md,
-      paddingTop: spacing.sm,
-      gap: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      paddingTop: spacing.xs,
+      paddingBottom: spacing.xl,
+      gap: spacing.xs,
     },
+    // Grouped-list header: sits above its card, indented to the card's text column.
     sectionLabel: {
       ...typography.section,
-      marginBottom: spacing.xs,
+      marginTop: spacing.s,
+      marginBottom: 6,
+      marginLeft: spacing.sm,
     },
-    group: {},
-
-    pillSegmented: {
-      flexDirection: 'row',
-      gap: 2,
-      borderWidth: 1,
-      borderColor: colors.textMuted,
-      padding: 2,
-      borderRadius: radius.pill,
+    themePicker: {
+      width: 144,
       marginTop: spacing.xxs,
-    },
-    pillSeg: {
-      paddingHorizontal: spacing.s,
-      height: 22,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.pill,
-    },
-    pillSegActive: {
-      backgroundColor: colors.accent,
-    },
-    pillSegText: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: colors.textSecondary,
-    },
-    pillSegTextActive: {
-      color: colors.textInverse,
     },
 
     accentSwatchRow: {
       flexDirection: 'row',
-      gap: spacing.xxs,
+      gap: 7,
       marginTop: 4,
     },
+    // Round swatches, the way iOS presents a colour choice.
     accentSwatch: {
       width: 24,
       height: 24,
-      borderRadius: radius.sm,
-      borderWidth: 2,
+      borderRadius: 12,
+      borderWidth: 2.5,
       borderColor: 'transparent',
     },
     accentSwatchSelected: {
@@ -369,9 +335,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       paddingBottom: spacing.sm,
     },
     footerWord: {
-      ...typography.title,
+      ...typography.meta,
       fontSize: 13,
-      letterSpacing: 0.2,
+      fontWeight: '600',
+      letterSpacing: 0.6,
       color: colors.textSecondary,
     },
   });

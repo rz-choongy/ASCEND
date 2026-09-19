@@ -30,11 +30,13 @@ import {
 import type { SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import {
-  ArrowRightIcon,
   Button,
   Card,
+  ChevronRightIcon,
   IconButton,
+  MoonIcon,
   SettingsGearIcon,
+  SunIcon,
   getContrastText,
   radius,
   spacing,
@@ -79,7 +81,7 @@ const SettingsButton = ({ colors, onPress }: { colors: ThemeColors; onPress: () 
   </IconButton>
 );
 
-const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnType<typeof createStyles> }) => {
+const ThemeToggle = ({ colors }: { colors: ThemeColors }) => {
   const { mode, setMode } = useTheme();
   const isDark = mode === 'dark';
   return (
@@ -88,12 +90,9 @@ const ThemeToggle = ({ colors, styles }: { colors: ThemeColors; styles: ReturnTy
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {isDark ? (
-        <View style={styles.moonWrap}>
-          <View style={[styles.moonBase, { backgroundColor: colors.textPrimary }]} />
-          <View style={[styles.moonCutout, { backgroundColor: colors.surfaceRaised }]} />
-        </View>
+        <MoonIcon color={colors.textSecondary} />
       ) : (
-        <View style={[styles.sunDot, { backgroundColor: colors.warning }]} />
+        <SunIcon color={colors.textSecondary} />
       )}
     </IconButton>
   );
@@ -173,7 +172,7 @@ export function LogScreen() {
         <View style={styles.headerRow}>
           <Text style={styles.screenTitle}>Today</Text>
           <View style={styles.headerRight}>
-            <ThemeToggle colors={colors} styles={styles} />
+            <ThemeToggle colors={colors} />
             <SettingsButton colors={colors} onPress={() => navigation.navigate('Settings')} />
           </View>
         </View>
@@ -237,7 +236,7 @@ export function LogScreen() {
                 <Text style={styles.gymLabel}>Climb grades</Text>
                 <Text style={styles.gymName}>{selectedGym?.name ?? 'Default V-Scale'}</Text>
               </View>
-              <Text style={styles.chevron}>{'>'}</Text>
+              <ChevronRightIcon size={16} color={colors.textMuted} />
             </TouchableOpacity>
             <View style={styles.ctaRow}>
               <Button
@@ -286,36 +285,37 @@ export function LogScreen() {
       {recentSends.length > 0 ? (
         <View style={styles.sessionSection}>
           <Text style={styles.sectionLabel}>Recent sends</Text>
-          <View>
-            {recentSends.map((send) => {
+          <View style={styles.sendList}>
+            {recentSends.map((send, index) => {
               const chipColor = send.gradeColor ?? colors.surfaceRaised;
               return (
-                <View key={send.eventId} style={styles.sendRow}>
-                  <View
-                    style={[styles.gradeChip, { backgroundColor: chipColor, borderColor: chipColor }]}
-                  >
-                    <Text
-                      style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                    >
-                      {send.gradeLabel}
-                    </Text>
-                  </View>
-                  <View style={styles.sendInfo}>
-                    <View style={styles.sendGymRow}>
-                      <Text style={styles.sendGym}>{send.gymName}</Text>
-                      {send.isToday ? (
-                        <View style={styles.todayChip}>
-                          <Text style={styles.todayChipText}>Today</Text>
-                        </View>
-                      ) : null}
+                <View key={send.eventId}>
+                  {index > 0 ? <View style={styles.sendSeparator} /> : null}
+                  <View style={styles.sendRow}>
+                    <View style={[styles.gradeChip, { backgroundColor: chipColor }]}>
+                      <Text
+                        style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
+                        {send.gradeLabel}
+                      </Text>
                     </View>
-                    <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
+                    <View style={styles.sendInfo}>
+                      <View style={styles.sendGymRow}>
+                        <Text style={styles.sendGym}>{send.gymName}</Text>
+                        {send.isToday ? (
+                          <View style={styles.todayChip}>
+                            <Text style={styles.todayChipText}>Today</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
+                    </View>
+                    {send.result === 'FLASH' ? (
+                      <Text style={styles.sendResult}>Flash</Text>
+                    ) : null}
                   </View>
-                  {send.result === 'FLASH' ? (
-                    <Text style={styles.sendResult}>Flash</Text>
-                  ) : null}
                 </View>
               );
             })}
@@ -326,7 +326,7 @@ export function LogScreen() {
             activeOpacity={0.75}
           >
             <Text style={styles.viewAllText}>View all sessions</Text>
-            <ArrowRightIcon color={colors.textSecondary} />
+            <ChevronRightIcon size={15} color={colors.accent} />
           </TouchableOpacity>
         </View>
       ) : null}
@@ -372,31 +372,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   dateHeader: {
     ...typography.bodyMuted,
   },
-  // Sun/moon stay circular: they're celestial pictographs, where the round form
-  // carries the meaning -- unlike UI surfaces, which are uniformly sharp.
-  moonWrap: {
-    width: 14,
-    height: 14,
-  },
-  moonBase: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  moonCutout: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    top: -3,
-    left: 5,
-  },
-  sunDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
 
   // Streak module
   streakRow: {
@@ -414,16 +389,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   streakNum: {
     ...typography.display,
-    fontSize: 30,
-    lineHeight: 32,
+    fontSize: 32,
+    lineHeight: 34,
+    letterSpacing: -0.6,
   },
   streakLabel: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: colors.textMuted,
-    lineHeight: 13,
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: -0.05,
+    color: colors.textSecondary,
+    lineHeight: 14,
   },
   weekStrip: {
     flex: 1,
@@ -435,27 +410,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     alignItems: 'center',
     gap: 4,
   },
+  // Round: an activity dot, the same read as the rings iOS Fitness uses.
   weekDot: {
-    width: 10,
-    height: 10,
-    borderWidth: 1,
-    borderColor: colors.textMuted,
-    backgroundColor: colors.background,
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    backgroundColor: colors.fill,
   },
   weekDotDone: {
     backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   weekDayLabel: {
-    fontSize: 8.5,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: -0.05,
     color: colors.textMuted,
   },
 
   // Active session banner
   banner: {
-    borderColor: colors.accent,
-    borderWidth: 1,
+    borderColor: colors.accentSoft,
     backgroundColor: colors.accentMuted,
     padding: spacing.sm,
   },
@@ -467,7 +441,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   bannerDot: {
     width: 8,
     height: 8,
-    borderRadius: radius.sm,
+    borderRadius: 4,
     backgroundColor: colors.accent,
   },
   bannerTextCol: {
@@ -475,12 +449,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   bannerLabel: {
     ...typography.meta,
+    fontSize: 13,
     color: colors.accent,
   },
   bannerType: {
     ...typography.body,
-    fontWeight: '700',
-    marginTop: 2,
+    fontWeight: '600',
+    marginTop: 1,
   },
   resumeButton: {
     minWidth: 126,
@@ -492,16 +467,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginTop: spacing.xs,
   },
   activeLockBox: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.s,
   },
   activeLockTitle: {
     ...typography.body,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   activeLockCopy: {
     ...typography.bodyMuted,
@@ -511,25 +484,20 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.s,
   },
   gymLabel: {
     ...typography.meta,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   gymName: {
     ...typography.body,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  chevron: {
-    color: colors.textMuted,
-    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 1,
   },
   ctaRow: {
     flexDirection: 'row',
@@ -543,17 +511,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   emptyState: {
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
   },
   emptyStateTitle: {
     ...typography.body,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   },
   emptyStateCopy: {
@@ -567,15 +533,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: spacing.s,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
+    padding: spacing.sm,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
   },
   prGrade: {
     ...typography.display,
-    fontSize: 26,
-    lineHeight: 27,
+    fontSize: 28,
+    lineHeight: 30,
+    letterSpacing: -0.6,
     color: colors.accent,
     flexShrink: 0,
   },
@@ -584,49 +550,61 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   prLabel: {
     ...typography.meta,
-    fontSize: 9.5,
+    fontSize: 12,
   },
   prGym: {
     ...typography.body,
-    fontSize: 13.5,
-    marginTop: 3,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 2,
   },
   prMeta: {
     ...typography.bodyMuted,
-    fontSize: 11.5,
+    fontSize: 13,
     marginTop: 1,
   },
 
   // Recent sends section
+  // A grouped-list section: header outside, rows inside one rounded card.
   sessionSection: {
     gap: 0,
   },
   sectionLabel: {
     ...typography.section,
     marginBottom: spacing.xs,
+    marginLeft: 2,
+  },
+  sendList: {
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
   },
   sendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.s,
-    paddingVertical: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.sm,
+  },
+  sendSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
+    marginLeft: 56,
   },
   gradeChip: {
-    ...typography.numeric,
-    minWidth: 32,
-    height: 32,
-    maxWidth: 64,
+    minWidth: 34,
+    height: 34,
+    maxWidth: 66,
+    borderRadius: radius.sm,
     paddingHorizontal: 6,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
   gradeChipText: {
     ...typography.numeric,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
   sendInfo: {
@@ -639,29 +617,29 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   sendGym: {
     ...typography.body,
-    fontSize: 13.5,
+    fontSize: 16,
   },
   todayChip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
+    backgroundColor: colors.fill,
+    borderRadius: radius.pill,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
   todayChipText: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.05,
     color: colors.textSecondary,
   },
   sendMeta: {
     ...typography.bodyMuted,
-    fontSize: 11.5,
-    marginTop: 2,
+    fontSize: 13,
+    marginTop: 1,
   },
   sendResult: {
     ...typography.meta,
-    fontSize: 11.5,
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.accent,
     flexShrink: 0,
   },
@@ -669,15 +647,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 2,
     paddingVertical: spacing.s,
     marginTop: spacing.xxs,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   viewAllText: {
-    ...typography.bodyMuted,
-    fontSize: 11.5,
-    fontWeight: '600',
+    ...typography.body,
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.accent,
   },
   });
