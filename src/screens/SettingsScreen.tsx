@@ -35,7 +35,7 @@ type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 // drives EAS's runtimeVersion (policy: "appVersion") -- bumping that would
 // break OTA updates for already-installed builds, since it changes what
 // runtime an `eas update` targets.
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.7';
 
 /**
  * What's actually running, not what was published — the two can disagree if the
