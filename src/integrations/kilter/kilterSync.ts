@@ -2,7 +2,8 @@ import { ensureNamedVScaleGym, getGradeOptionsForGym } from '../../domain/gymSto
 import { importExternalClimbSession } from '../../domain/sessionStore';
 import { setKilterLastSyncedAt } from '../../domain/settingsStore';
 import { fetchKilterLogs } from './kilterApi';
-import { KilterAuthError, kilterAuth } from './kilterAuth';
+import { KilterAuthError } from './kilterAuth';
+import { kilterAuth } from './kilterClient';
 import { KILTER_GYM_NAME, KILTER_SOURCE, MIN_SYNC_INTERVAL_MS } from './kilterConfig';
 import { extractLogList, mapKilterLogs, parseKilterLogs } from './kilterMapping';
 

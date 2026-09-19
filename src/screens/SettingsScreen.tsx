@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
-import { KilterAuthError, kilterAuth } from '../integrations/kilter/kilterAuth';
+import { KilterAuthError } from '../integrations/kilter/kilterAuth';
+import { kilterAuth } from '../integrations/kilter/kilterClient';
 import { syncKilter } from '../integrations/kilter/kilterSync';
 import {
   countWideGradeBandClimbs,

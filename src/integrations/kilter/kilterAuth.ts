@@ -15,9 +15,7 @@ export type KilterAuthErrorKind =
   /** No usable session -- never connected, or Kilter revoked the refresh token. */
   | 'signed_out'
   | 'network'
-  | 'server'
-  /** This build has no secure storage (installed before the native module shipped). */
-  | 'storage_unavailable';
+  | 'server';
 
 export class KilterAuthError extends Error {
   constructor(
@@ -154,47 +152,3 @@ export const createKilterAuth = ({ store, fetchImpl = fetch, now = Date.now }: D
 
   return { login, getAccessToken, disconnect, getConnectedUsername };
 };
-
-const STORE_KEY = 'kilter_session';
-
-/** The slice of expo-secure-store used here, typed locally so the project builds without the package installed. */
-type SecureStoreModule = {
-  getItemAsync: (key: string) => Promise<string | null>;
-  setItemAsync: (key: string, value: string) => Promise<void>;
-  deleteItemAsync: (key: string) => Promise<void>;
-};
-
-/**
- * Keychain / Keystore. `expo-secure-store` is a native module, so it's required lazily: a build
- * installed before it shipped would otherwise crash at app launch on a top-level import.
- */
-export const secureSessionStore: SessionStore = (() => {
-  const load = (): SecureStoreModule => {
-    try {
-      return require('expo-secure-store') as SecureStoreModule;
-    } catch {
-      throw new KilterAuthError(
-        'storage_unavailable',
-        'Kilter sync needs the latest ASCEND build. Install the newest version and try again.'
-      );
-    }
-  };
-  return {
-    get: async () => {
-      const raw = await load().getItemAsync(STORE_KEY);
-      if (!raw) return null;
-      try {
-        const parsed = JSON.parse(raw) as Partial<StoredSession>;
-        return typeof parsed.refreshToken === 'string' && typeof parsed.username === 'string'
-          ? { refreshToken: parsed.refreshToken, username: parsed.username }
-          : null;
-      } catch {
-        return null;
-      }
-    },
-    set: (session) => load().setItemAsync(STORE_KEY, JSON.stringify(session)),
-    clear: () => load().deleteItemAsync(STORE_KEY),
-  };
-})();
-
-export const kilterAuth = createKilterAuth({ store: secureSessionStore });

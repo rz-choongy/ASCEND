@@ -6,17 +6,14 @@ jest.mock('../../domain/gymStore', () => ({
 }));
 jest.mock('../../domain/sessionStore', () => ({ importExternalClimbSession: jest.fn(() => 1) }));
 jest.mock('../../domain/settingsStore', () => ({ setKilterLastSyncedAt: jest.fn() }));
-// Keep the real KilterAuthError; only the network-touching client is replaced.
-jest.mock('./kilterAuth', () => ({
-  ...jest.requireActual('./kilterAuth'),
-  kilterAuth: { getAccessToken: jest.fn() },
-}));
+jest.mock('./kilterClient', () => ({ kilterAuth: { getAccessToken: jest.fn() } }));
 jest.mock('./kilterApi', () => ({ fetchKilterLogs: jest.fn() }));
 
 import { importExternalClimbSession } from '../../domain/sessionStore';
 import { setKilterLastSyncedAt } from '../../domain/settingsStore';
 import { fetchKilterLogs } from './kilterApi';
-import { KilterAuthError, kilterAuth } from './kilterAuth';
+import { KilterAuthError } from './kilterAuth';
+import { kilterAuth } from './kilterClient';
 import { syncKilter } from './kilterSync';
 
 const mockFetch = fetchKilterLogs as jest.Mock;

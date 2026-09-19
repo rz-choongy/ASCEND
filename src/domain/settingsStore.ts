@@ -7,6 +7,7 @@ const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 const ACCENT_COLOR_KEY = 'accent_color';
 const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 const KILTER_USERNAME_KEY = 'kilter_username';
+const KILTER_SESSION_KEY = 'kilter_session';
 
 const VALID_ACCENT_IDS: AccentColorId[] = ['blue', 'teal', 'purple', 'orange', 'rose'];
 
@@ -96,4 +97,24 @@ export const getKilterUsername = (): string | null => {
 export const setKilterUsername = (username: string | null): void => {
   if (username) setSetting(KILTER_USERNAME_KEY, username);
   else run('DELETE FROM app_settings WHERE key = ?;', [KILTER_USERNAME_KEY]);
+};
+
+/**
+ * The Kilter sign-in (refresh token + username) as one JSON string. Lives in the local database
+ * because expo-secure-store closed the app on Android release builds (Expo SDK 54). The
+ * password is never stored -- only the refresh token Kilter issues in exchange for it.
+ */
+export const getKilterSession = (): string | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    KILTER_SESSION_KEY,
+  ]);
+  return setting?.value ?? null;
+};
+
+export const setKilterSession = (json: string): void => {
+  setSetting(KILTER_SESSION_KEY, json);
+};
+
+export const clearKilterSession = (): void => {
+  run('DELETE FROM app_settings WHERE key = ?;', [KILTER_SESSION_KEY]);
 };

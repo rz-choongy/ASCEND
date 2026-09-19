@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KilterAuthError, kilterAuth } from '../integrations/kilter/kilterAuth';
+import { KilterAuthError } from '../integrations/kilter/kilterAuth';
+import { kilterAuth } from '../integrations/kilter/kilterClient';
 import { syncKilter } from '../integrations/kilter/kilterSync';
 import { setKilterUsername } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -61,7 +62,7 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
       >
         <Text style={styles.copy}>
           ASCEND signs in to your Kilter account and imports your sends. Your password goes only to
-          Kilter and is never saved; ASCEND keeps a sign-in token in your device's secure storage.
+          Kilter and is never saved; ASCEND keeps only the sign-in token Kilter gives back, in its private app storage on this device.
         </Text>
 
         <View style={styles.notice}>
