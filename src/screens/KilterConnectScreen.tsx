@@ -3,6 +3,7 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KilterAuthError, kilterAuth } from '../integrations/kilter/kilterAuth';
 import { syncKilter } from '../integrations/kilter/kilterSync';
+import { setKilterUsername } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import { Button, ScreenHeader, radius, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
@@ -26,6 +27,7 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
     setError(null);
     try {
       await kilterAuth.login(username.trim(), password);
+      setKilterUsername(username.trim());
       // The password has done its job; don't keep it in component state a moment longer.
       setPassword('');
       const result = await syncKilter();

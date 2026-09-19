@@ -11,7 +11,13 @@ import {
   narrowWideGradeBands,
   type WideBandSummary,
 } from '../domain/sessionStore';
-import { getKilterLastSyncedAt, getShowSessionTimer, setShowSessionTimer } from '../domain/settingsStore';
+import {
+  getKilterLastSyncedAt,
+  getKilterUsername,
+  getShowSessionTimer,
+  setKilterUsername,
+  setShowSessionTimer,
+} from '../domain/settingsStore';
 import { formatDaysAgo } from '../domain/strengthProgress';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -70,11 +76,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
       setKilterSyncedAt(getKilterLastSyncedAt());
-      // Storage can be unavailable on a build that predates it -- that just reads as "not connected".
-      kilterAuth
-        .getConnectedUsername()
-        .then(setKilterUser)
-        .catch(() => setKilterUser(null));
+      setKilterUser(getKilterUsername());
       // Surfaced rather than left to crash silently -- an uncaught throw here would
       // leave wideBands stuck at its zero default with no visible sign anything failed.
       try {
@@ -138,7 +140,10 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           : `Imported ${result.added} send${result.added === 1 ? '' : 's'}.`
       );
     } catch (e) {
-      if (e instanceof KilterAuthError && e.kind === 'signed_out') setKilterUser(null);
+      if (e instanceof KilterAuthError && e.kind === 'signed_out') {
+        setKilterUsername(null);
+        setKilterUser(null);
+      }
       Alert.alert(
         "Couldn't sync Kilter",
         e instanceof KilterAuthError ? e.message : 'Something went wrong. Try again.'
@@ -160,7 +165,10 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           onPress: () => {
             kilterAuth
               .disconnect()
-              .then(() => setKilterUser(null))
+              .then(() => {
+                setKilterUsername(null);
+                setKilterUser(null);
+              })
               .catch((e: unknown) =>
                 Alert.alert("Couldn't disconnect", e instanceof Error ? e.message : 'Something went wrong.')
               );

@@ -6,6 +6,7 @@ const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 const ACCENT_COLOR_KEY = 'accent_color';
 const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
+const KILTER_USERNAME_KEY = 'kilter_username';
 
 const VALID_ACCENT_IDS: AccentColorId[] = ['blue', 'teal', 'purple', 'orange', 'rose'];
 
@@ -79,4 +80,20 @@ export const getKilterLastSyncedAt = (): number | null => {
 
 export const setKilterLastSyncedAt = (ms: number): void => {
   setSetting(KILTER_LAST_SYNCED_KEY, String(ms));
+};
+
+/**
+ * Who is connected to Kilter, for display only. Kept here rather than read back out of secure
+ * storage so opening Settings never has to touch the native keychain module.
+ */
+export const getKilterUsername = (): string | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    KILTER_USERNAME_KEY,
+  ]);
+  return setting?.value ? setting.value : null;
+};
+
+export const setKilterUsername = (username: string | null): void => {
+  if (username) setSetting(KILTER_USERNAME_KEY, username);
+  else run('DELETE FROM app_settings WHERE key = ?;', [KILTER_USERNAME_KEY]);
 };
