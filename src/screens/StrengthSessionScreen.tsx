@@ -15,12 +15,26 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getExercises, createExercise } from '../domain/exerciseStore';
 import {
   appendEvent,
+  getCompletedSessions,
   getSessionById,
   getSessionEvents,
   setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
+import {
+  buildExerciseDetail,
+  buildLoggerReference,
+  estimateOneRepMax,
+  exerciseKeyFor,
+  formatMonthDay,
+  formatWeight,
+  initialInputFor,
+  isNewRecord,
+  type LoggerReference,
+  type SetInput,
+} from '../domain/strengthProgress';
+import type { SessionRow } from '../domain/types';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -57,7 +71,29 @@ type ExerciseState = {
   selectedExerciseId: string | null;
 };
 
-type ExerciseInputMemory = Record<string, { reps: number; weight: number }>;
+type ExerciseInputMemory = Record<string, SetInput>;
+
+const DEFAULT_INPUT: SetInput = { reps: 8, weight: 20 };
+/** Small step, in kg: a standard 2.5 kg plate jump. */
+const WEIGHT_STEP = 2.5;
+const BIG_WEIGHT_STEP = 5;
+const RECORD_CHIP_MS = 3000;
+const LAST_TIME_SETS_SHOWN = 4;
+
+/** Older sets were logged without an exercise id, so fall back to matching on the name. */
+const buildReferenceFor = (
+  sessions: SessionRow[],
+  exercise: ExerciseOption
+): LoggerReference | null =>
+  buildLoggerReference(
+    buildExerciseDetail(sessions, exercise.id) ??
+      buildExerciseDetail(sessions, exerciseKeyFor({ exerciseName: exercise.name }))
+  );
+
+/** Nearest quarter kilo, so a typed 27.49 doesn't leave a stray decimal on every later set. */
+const roundWeight = (kg: number): number => Math.round(kg * 4) / 4;
+
+const parseNumber = (text: string): number => Number(text.trim().replace(',', '.'));
 
 const loadExerciseState = (selectedExerciseId?: string | null): ExerciseState => {
   const exercises = getExercises();
@@ -78,7 +114,7 @@ const formatLogTime = (ms: number): string => {
 };
 
 const formatSetLabel = (set: LoggedSet): string => {
-  const weightLabel = set.weight === 0 ? 'bw' : `${set.weight}kg`;
+  const weightLabel = set.weight === 0 ? 'bw' : `${formatWeight(set.weight)}kg`;
   return `${set.reps}x${weightLabel}`;
 };
 
@@ -89,12 +125,34 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const [session, setSession] = useState(() => getSessionById(sessionId));
   const [refreshKey, setRefreshKey] = useState(0);
+  // Completed sessions can't change while one is being logged, so read them once and cache
+  // each exercise's reference (last time out, best to beat) the first time it's needed.
+  const [historySessions] = useState(() => getCompletedSessions('strength'));
+  const references = useRef(new Map<string, LoggerReference | null>()).current;
+  const getReference = (exercise: ExerciseOption): LoggerReference | null => {
+    if (!references.has(exercise.id)) references.set(exercise.id, buildReferenceFor(historySessions, exercise));
+    return references.get(exercise.id) ?? null;
+  };
+
   const [exerciseState, setExerciseState] = useState<ExerciseState>(() => loadExerciseState());
   const [title, setTitle] = useState(session?.title ?? '');
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
-  const [reps, setReps] = useState(8);
-  const [weight, setWeight] = useState(20);
+  // Start each exercise where you left off last time, not at a fixed 8 x 20.
+  const startInput = (): SetInput => {
+    const first = exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId);
+    return initialInputFor(first ? getReference(first) : null, DEFAULT_INPUT);
+  };
+  const [reps, setReps] = useState(() => startInput().reps);
+  const [weight, setWeight] = useState(() => startInput().weight);
+  const [recordChip, setRecordChip] = useState<number | null>(null);
+  const recordChipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (recordChipTimer.current) clearTimeout(recordChipTimer.current);
+    },
+    []
+  );
   const [exerciseInputMemory, setExerciseInputMemory] = useState<ExerciseInputMemory>({});
 
   useFocusEffect(
@@ -159,6 +217,22 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     exerciseState.exercises[0] ??
     null;
   const hasLogs = loggedSets.length > 0;
+  const reference = selectedExercise ? getReference(selectedExercise) : null;
+
+  // Which logged sets were records, replayed in order so it stays right after an undo.
+  const recordEventIds = useMemo(() => {
+    const ids = new Set<string>();
+    const sessionBest = new Map<string, number>();
+    loggedSets.forEach((set) => {
+      const key = set.exerciseId ?? exerciseKeyFor(set);
+      const exercise = exerciseState.exercises.find((e) => e.id === set.exerciseId);
+      const historyBest = exercise ? (getReference(exercise)?.bestE1rm ?? null) : null;
+      if (isNewRecord(historyBest, sessionBest.get(key) ?? null, set.weight, set.reps)) ids.add(set.eventId);
+      sessionBest.set(key, Math.max(sessionBest.get(key) ?? 0, estimateOneRepMax(set.weight, set.reps)));
+    });
+    return ids;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedSets, exerciseState.exercises]);
 
   const handleSaveTitle = () => {
     if (!session) return;
@@ -175,11 +249,13 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const handleSelectExercise = (exerciseId: string) => {
     rememberCurrentInput();
-    const savedInput = exerciseInputMemory[exerciseId];
-    if (savedInput) {
-      setReps(savedInput.reps);
-      setWeight(savedInput.weight);
-    }
+    const exercise = exerciseState.exercises.find((e) => e.id === exerciseId);
+    const next =
+      exerciseInputMemory[exerciseId] ??
+      initialInputFor(exercise ? getReference(exercise) : null, DEFAULT_INPUT);
+    setReps(next.reps);
+    setWeight(next.weight);
+    setRecordChip(null);
     setExerciseState((state) => ({ ...state, selectedExerciseId: exerciseId }));
   };
 
@@ -192,8 +268,10 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     const selectedExerciseId = created.id;
 
     setExerciseState({ exercises, selectedExerciseId });
+    setExerciseInputMemory((current) => ({ ...current, [created.id]: { reps: 8, weight: 0 } }));
     setReps(8);
     setWeight(0);
+    setRecordChip(null);
     setNewExerciseName('');
     setIsAddExerciseOpen(false);
   };
@@ -207,7 +285,21 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     setTimeout(() => {
       isLoggingRef.current = false;
     }, 400);
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const sessionBest = loggedSets
+      .filter((set) => set.exerciseId === selectedExercise.id)
+      .reduce<number | null>(
+        (best, set) => Math.max(best ?? 0, estimateOneRepMax(set.weight, set.reps)),
+        null
+      );
+    const isRecord = isNewRecord(reference?.bestE1rm ?? null, sessionBest, weight, reps);
+    if (isRecord) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setRecordChip(estimateOneRepMax(weight, reps));
+      if (recordChipTimer.current) clearTimeout(recordChipTimer.current);
+      recordChipTimer.current = setTimeout(() => setRecordChip(null), RECORD_CHIP_MS);
+    } else {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     appendEvent(sessionId, 'SET_LOGGED', {
       exerciseId: selectedExercise.id,
       exerciseName: selectedExercise.name,
@@ -324,11 +416,31 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           <Text style={styles.loggingExercise}>
             {selectedExercise?.name ?? 'Select an exercise'}
           </Text>
+          {reference ? (
+            <Text style={styles.lastTime} numberOfLines={2}>
+              {`Last time · ${formatMonthDay(reference.lastAt)} · `}
+              {reference.lastSets
+                .slice(0, LAST_TIME_SETS_SHOWN)
+                .map((set) => `${set.weight === 0 ? 'bw' : `${formatWeight(set.weight)} kg`} × ${set.reps}`)
+                .join(', ')}
+              {reference.lastSets.length > LAST_TIME_SETS_SHOWN
+                ? ` +${reference.lastSets.length - LAST_TIME_SETS_SHOWN} more`
+                : ''}
+            </Text>
+          ) : null}
         </View>
         <View style={styles.inputRow}>
           <Text style={styles.inputLabel}>Reps</Text>
           <Stepper
             value={`${reps}`}
+            editable={{
+              text: `${reps}`,
+              keyboardType: 'numeric',
+              onCommit: (text) => {
+                const n = Math.round(parseNumber(text));
+                if (Number.isFinite(n) && n >= 1) setReps(n);
+              },
+            }}
             onDecrement={() => setReps((v) => Math.max(1, v - 1))}
             onIncrement={() => setReps((v) => v + 1)}
           />
@@ -338,14 +450,28 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           <Text style={styles.inputLabel}>Weight (kg)</Text>
           <Stepper
             compact
-            value={weight === 0 ? 'Bodyweight' : `${weight} kg`}
-            onDecrement={() => setWeight((v) => Math.max(0, v - 1))}
-            onIncrement={() => setWeight((v) => v + 1)}
-            onBigDecrement={() => setWeight((v) => Math.max(0, v - 5))}
-            onBigIncrement={() => setWeight((v) => v + 5)}
+            value={weight === 0 ? 'Bodyweight' : `${formatWeight(weight)} kg`}
+            editable={{
+              text: formatWeight(weight),
+              keyboardType: 'decimal-pad',
+              onCommit: (text) => {
+                const n = parseNumber(text);
+                if (Number.isFinite(n) && n >= 0) setWeight(roundWeight(n));
+              },
+            }}
+            onDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - WEIGHT_STEP)))}
+            onIncrement={() => setWeight((v) => roundWeight(v + WEIGHT_STEP))}
+            onBigDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - BIG_WEIGHT_STEP)))}
+            onBigIncrement={() => setWeight((v) => roundWeight(v + BIG_WEIGHT_STEP))}
             bigStepLabel="5"
           />
         </View>
+
+        {recordChip !== null ? (
+          <View style={styles.recordChip}>
+            <Text style={styles.recordChipText}>New est. 1RM · {formatWeight(recordChip)} kg</Text>
+          </View>
+        ) : null}
 
         <Button
           label="Log Set"
@@ -395,7 +521,14 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             <View style={styles.logAccent} />
             <View style={styles.logBody}>
               <Text style={styles.logExercise}>{set.exerciseName}</Text>
-              <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
+              <View style={styles.logDetailRow}>
+                <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
+                {recordEventIds.has(set.eventId) ? (
+                  <View style={styles.recordBadge}>
+                    <Text style={styles.recordBadgeText}>PR</Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
             <Text style={styles.logTime}>{formatLogTime(set.createdAt)}</Text>
           </View>
@@ -591,6 +724,41 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   logTime: {
     color: colors.textMuted,
     fontSize: 13,
+  },
+  lastTime: {
+    ...typography.meta,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  recordChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentMuted,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.s,
+    paddingVertical: 5,
+  },
+  recordChipText: {
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  logDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recordBadge: {
+    backgroundColor: colors.accentMuted,
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    marginTop: 1,
+  },
+  recordBadgeText: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: '700',
   },
   emptyText: {
     color: colors.textMuted,

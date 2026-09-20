@@ -217,3 +217,45 @@ export const formatDaysAgo = (ms: number, now: Date = new Date()): string => {
   if (days === 1) return 'Yesterday';
   return days <= 14 ? `${days}d ago` : formatMonthDay(ms);
 };
+
+export type LoggerReference = {
+  /** The exercise's most recent completed session, in the order the sets were logged. */
+  lastSets: LoggedSet[];
+  lastAt: number;
+  /** Best est. 1RM across every completed session. */
+  bestE1rm: number;
+};
+
+/** What the strength logger needs to know about an exercise's past: last time out, and the bar to beat. */
+export const buildLoggerReference = (detail: ExerciseDetail | null): LoggerReference | null => {
+  const last = detail?.sessions[0];
+  if (!detail || !last) return null;
+  return {
+    lastSets: last.sets,
+    lastAt: last.startedAt,
+    bestE1rm: Math.max(...detail.series.e1rm.map((point) => point.value)),
+  };
+};
+
+export type SetInput = { reps: number; weight: number };
+
+/** Start where you left off: the last set of the last session, else the given defaults. */
+export const initialInputFor = (reference: LoggerReference | null, fallback: SetInput): SetInput => {
+  const lastSet = reference?.lastSets[reference.lastSets.length - 1];
+  return lastSet ? { reps: lastSet.reps, weight: lastSet.weight } : fallback;
+};
+
+/**
+ * A record beats every earlier session's est. 1RM and anything already logged today. An exercise
+ * with no history has nothing to beat, so its first sets aren't flagged -- otherwise every warm-up
+ * ramp on a new lift would read as a PR.
+ */
+export const isNewRecord = (
+  historyBest: number | null,
+  sessionBest: number | null,
+  weight: number,
+  reps: number
+): boolean => {
+  if (historyBest === null) return false;
+  return estimateOneRepMax(weight, reps) > Math.max(historyBest, sessionBest ?? 0) + 1e-9;
+};

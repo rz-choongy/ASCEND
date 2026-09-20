@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, type ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
@@ -12,8 +12,17 @@ const withHaptic = (fn: () => void) => () => {
   fn();
 };
 
+type EditableValue = {
+  /** The bare number to edit, e.g. "27.5" -- not the formatted label shown on the stepper. */
+  text: string;
+  onCommit: (text: string) => void;
+  keyboardType?: 'numeric' | 'decimal-pad';
+};
+
 type StepperProps = {
   value: string;
+  /** Makes the centre value tappable so an exact number can be typed instead of stepped to. */
+  editable?: EditableValue;
   onIncrement: () => void;
   onDecrement: () => void;
   onBigIncrement?: () => void;
@@ -25,6 +34,7 @@ type StepperProps = {
 
 export const Stepper = ({
   value,
+  editable,
   onIncrement,
   onDecrement,
   onBigIncrement,
@@ -36,6 +46,16 @@ export const Stepper = ({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const buttonStyle = compact ? styles.buttonCompact : styles.button;
+  const [draft, setDraft] = useState<string | null>(null);
+  // Blur and submit both end an edit; only the first should commit.
+  const committedRef = useRef(false);
+
+  const commit = () => {
+    if (draft === null || committedRef.current || !editable) return;
+    committedRef.current = true;
+    editable.onCommit(draft);
+    setDraft(null);
+  };
 
   return (
     <View style={[styles.row, style]}>
@@ -52,7 +72,33 @@ export const Stepper = ({
       <PressableScale onPress={withHaptic(onDecrement)} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>-</Text>
       </PressableScale>
-      <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
+      {draft !== null ? (
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          onBlur={commit}
+          onSubmitEditing={commit}
+          keyboardType={editable?.keyboardType ?? 'numeric'}
+          returnKeyType="done"
+          autoFocus
+          selectTextOnFocus
+          style={[styles.value, compact ? styles.valueCompact : null, styles.valueInput]}
+        />
+      ) : editable ? (
+        <Pressable
+          onPress={() => {
+            committedRef.current = false;
+            setDraft(editable.text);
+          }}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit value, currently ${value}`}
+        >
+          <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
+        </Pressable>
+      ) : (
+        <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
+      )}
       <PressableScale onPress={withHaptic(onIncrement)} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>+</Text>
       </PressableScale>
@@ -120,5 +166,12 @@ const createStyles = (colors: ThemeColors) =>
     },
     valueCompact: {
       minWidth: 32,
+    },
+    // Same footprint as the label it replaces, with an underline so it reads as editing.
+    valueInput: {
+      minWidth: 64,
+      padding: 0,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.accent,
     },
   });

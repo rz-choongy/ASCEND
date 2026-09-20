@@ -7,12 +7,15 @@ import { getSessionEvents } from './sessionStore';
 import {
   buildExerciseDetail,
   buildExerciseList,
+  buildLoggerReference,
   estimateOneRepMax,
   exerciseKeyFor,
   formatDaysAgo,
   formatMonthDay,
   formatVolume,
   formatWeight,
+  initialInputFor,
+  isNewRecord,
   sliceSeriesToRange,
 } from './strengthProgress';
 import type { SessionRow } from './types';
@@ -158,5 +161,49 @@ describe('date formatters', () => {
     expect(formatDaysAgo(new Date(2026, 8, 18, 23, 0).getTime(), now)).toBe('Yesterday');
     expect(formatDaysAgo(new Date(2026, 8, 14).getTime(), now)).toBe('5d ago');
     expect(formatDaysAgo(new Date(2026, 7, 1).getTime(), now)).toBe('Aug 1');
+  });
+});
+
+describe('logger helpers', () => {
+  const sessions = [makeSession('a', DAY), makeSession('b', 2 * DAY)];
+  const detail = () => {
+    stubSessions({
+      a: [setEvent('1', 'Press', 40, 5, 'sp')],
+      b: [setEvent('2', 'Press', 30, 8, 'sp'), setEvent('3', 'Press', 27.5, 6, 'sp')],
+    });
+    return buildExerciseDetail(sessions, 'sp', new Date(3 * DAY));
+  };
+
+  it('has no reference for an exercise with no history', () => {
+    expect(buildLoggerReference(null)).toBeNull();
+  });
+
+  it('reports the last session\'s sets and the all-time best est. 1RM', () => {
+    const reference = buildLoggerReference(detail())!;
+    expect(reference.lastAt).toBe(2 * DAY);
+    expect(reference.lastSets.map((s) => [s.weight, s.reps])).toEqual([[30, 8], [27.5, 6]]);
+    // The heavier earlier session (40 x 5) still holds the record over the lighter last one.
+    expect(reference.bestE1rm).toBeCloseTo(estimateOneRepMax(40, 5), 5);
+  });
+
+  it('starts from the last set of the last session, else the fallback', () => {
+    expect(initialInputFor(buildLoggerReference(detail()), { reps: 8, weight: 20 })).toEqual({ reps: 6, weight: 27.5 });
+    expect(initialInputFor(null, { reps: 8, weight: 20 })).toEqual({ reps: 8, weight: 20 });
+  });
+
+  describe('isNewRecord', () => {
+    it('never flags an exercise with no history', () => {
+      expect(isNewRecord(null, null, 100, 5)).toBe(false);
+      expect(isNewRecord(null, 50, 100, 5)).toBe(false);
+    });
+
+    it('flags a set that beats history and anything already logged this session', () => {
+      const best = estimateOneRepMax(40, 5);
+      expect(isNewRecord(best, null, 45, 5)).toBe(true);
+      expect(isNewRecord(best, null, 40, 5)).toBe(false); // a tie is not a record
+      expect(isNewRecord(best, null, 30, 5)).toBe(false);
+      expect(isNewRecord(best, estimateOneRepMax(50, 5), 45, 5)).toBe(false);
+      expect(isNewRecord(best, estimateOneRepMax(50, 5), 55, 5)).toBe(true);
+    });
   });
 });
