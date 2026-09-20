@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { CalendarScreen } from './src/screens/CalendarScreen';
+import { ChangelogScreen } from './src/screens/ChangelogScreen';
 import { ClimbSessionScreen } from './src/screens/ClimbSessionScreen';
 import { ExerciseProgressScreen } from './src/screens/ExerciseProgressScreen';
 import { GymEditScreen } from './src/screens/GymEditScreen';
@@ -124,6 +125,7 @@ function AppContent() {
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />
           <Stack.Screen name="ExerciseProgress" component={ExerciseProgressScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="Changelog" component={ChangelogScreen} />
           <Stack.Screen
             name="KilterConnect"
             component={KilterConnectScreen}

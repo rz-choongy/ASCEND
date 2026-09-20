@@ -20,6 +20,7 @@ import {
   setShowSessionTimer,
 } from '../domain/settingsStore';
 import { formatDaysAgo } from '../domain/strengthProgress';
+import { APP_VERSION } from '../changelog';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
@@ -40,12 +41,6 @@ const ACCENT_OPTIONS = Object.entries(ACCENT_PALETTE) as [AccentColorId, (typeof
 
 type SettingsScreenProps = RootStackScreenProps<'Settings'>;
 
-// Bumped by hand with each shipped round of changes (major.minor only, no
-// patch digit). Deliberately separate from app.json's "version" field, which
-// drives EAS's runtimeVersion (policy: "appVersion") -- bumping that would
-// break OTA updates for already-installed builds, since it changes what
-// runtime an `eas update` targets.
-const APP_VERSION = '1.8';
 
 /**
  * What's actually running, not what was published — the two can disagree if the
@@ -352,6 +347,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <Text style={styles.sectionLabel}>About</Text>
         <ListGroup>
           <ListRow title="Version" meta={APP_VERSION} />
+          <ListRow
+            title="What's new"
+            subtitle="Changes in each version"
+            onPress={() => navigation.navigate('Changelog')}
+          />
           <ListRow
             title="Build"
             subtitle="Which OTA update is actually running right now"

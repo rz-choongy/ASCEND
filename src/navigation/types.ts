@@ -11,6 +11,7 @@ export type RootStackParamList = {
   GymEdit: { returnToSessionId?: string; gymId?: string; parentId?: string } | undefined;
   Settings: undefined;
   KilterConnect: undefined;
+  Changelog: undefined;
 };
 
 export type TabParamList = {
