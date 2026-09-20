@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
@@ -15,7 +15,8 @@ const withHaptic = (fn: () => void) => () => {
 type EditableValue = {
   /** The bare number to edit, e.g. "27.5" -- not the formatted label shown on the stepper. */
   text: string;
-  onCommit: (text: string) => void;
+  /** Called on every keystroke, so the parent's value always matches what's on screen. */
+  onChangeText: (text: string) => void;
   keyboardType?: 'numeric' | 'decimal-pad';
 };
 
@@ -47,15 +48,10 @@ export const Stepper = ({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const buttonStyle = compact ? styles.buttonCompact : styles.button;
   const [draft, setDraft] = useState<string | null>(null);
-  // Blur and submit both end an edit; only the first should commit.
-  const committedRef = useRef(false);
-
-  const commit = () => {
-    if (draft === null || committedRef.current || !editable) return;
-    committedRef.current = true;
-    editable.onCommit(draft);
-    setDraft(null);
-  };
+  // Ends the edit, going back to the formatted label. The value itself was already updated as the
+  // user typed -- waiting for blur to commit meant tapping Log Set with the keyboard open logged
+  // the old number.
+  const endEditing = () => setDraft(null);
 
   return (
     <View style={[styles.row, style]}>
@@ -75,9 +71,12 @@ export const Stepper = ({
       {draft !== null ? (
         <TextInput
           value={draft}
-          onChangeText={setDraft}
-          onBlur={commit}
-          onSubmitEditing={commit}
+          onChangeText={(text) => {
+            setDraft(text);
+            editable?.onChangeText(text);
+          }}
+          onBlur={endEditing}
+          onSubmitEditing={endEditing}
           keyboardType={editable?.keyboardType ?? 'numeric'}
           returnKeyType="done"
           autoFocus
@@ -86,10 +85,7 @@ export const Stepper = ({
         />
       ) : editable ? (
         <Pressable
-          onPress={() => {
-            committedRef.current = false;
-            setDraft(editable.text);
-          }}
+          onPress={() => setDraft(editable.text)}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel={`Edit value, currently ${value}`}

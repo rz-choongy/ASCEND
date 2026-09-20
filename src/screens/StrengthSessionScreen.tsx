@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   Alert,
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -31,6 +32,9 @@ import {
   formatWeight,
   initialInputFor,
   isNewRecord,
+  parseRepsInput,
+  parseWeightInput,
+  roundWeight,
   type LoggerReference,
   type SetInput,
 } from '../domain/strengthProgress';
@@ -74,8 +78,7 @@ type ExerciseState = {
 type ExerciseInputMemory = Record<string, SetInput>;
 
 const DEFAULT_INPUT: SetInput = { reps: 8, weight: 20 };
-/** Small step, in kg: a standard 2.5 kg plate jump. */
-const WEIGHT_STEP = 2.5;
+const WEIGHT_STEP = 1;
 const BIG_WEIGHT_STEP = 5;
 const RECORD_CHIP_MS = 3000;
 const LAST_TIME_SETS_SHOWN = 4;
@@ -90,10 +93,6 @@ const buildReferenceFor = (
       buildExerciseDetail(sessions, exerciseKeyFor({ exerciseName: exercise.name }))
   );
 
-/** Nearest quarter kilo, so a typed 27.49 doesn't leave a stray decimal on every later set. */
-const roundWeight = (kg: number): number => Math.round(kg * 4) / 4;
-
-const parseNumber = (text: string): number => Number(text.trim().replace(',', '.'));
 
 const loadExerciseState = (selectedExerciseId?: string | null): ExerciseState => {
   const exercises = getExercises();
@@ -282,6 +281,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const handleLogSet = () => {
     if (session?.status !== 'active' || !selectedExercise || isLoggingRef.current) return;
     isLoggingRef.current = true;
+    // Close any open number field so the steppers go back to their labels.
+    Keyboard.dismiss();
     setTimeout(() => {
       isLoggingRef.current = false;
     }, 400);
@@ -436,9 +437,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             editable={{
               text: `${reps}`,
               keyboardType: 'numeric',
-              onCommit: (text) => {
-                const n = Math.round(parseNumber(text));
-                if (Number.isFinite(n) && n >= 1) setReps(n);
+              onChangeText: (text) => {
+                const n = parseRepsInput(text);
+                if (n !== null) setReps(n);
               },
             }}
             onDecrement={() => setReps((v) => Math.max(1, v - 1))}
@@ -454,9 +455,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             editable={{
               text: formatWeight(weight),
               keyboardType: 'decimal-pad',
-              onCommit: (text) => {
-                const n = parseNumber(text);
-                if (Number.isFinite(n) && n >= 0) setWeight(roundWeight(n));
+              onChangeText: (text) => {
+                const n = parseWeightInput(text);
+                if (n !== null) setWeight(n);
               },
             }}
             onDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - WEIGHT_STEP)))}

@@ -259,3 +259,22 @@ export const isNewRecord = (
   if (historyBest === null) return false;
   return estimateOneRepMax(weight, reps) > Math.max(historyBest, sessionBest ?? 0) + 1e-9;
 };
+
+/** Weights are kept to one decimal, matching how `formatWeight` shows them. */
+export const roundWeight = (kg: number): number => Math.round(kg * 10) / 10;
+
+/** What the weight field means by its text so far: null while it isn't a usable weight yet (empty, "-", "abc"). */
+export const parseWeightInput = (text: string): number | null => {
+  const trimmed = text.trim().replace(',', '.');
+  if (trimmed === '') return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) && n >= 0 ? roundWeight(n) : null;
+};
+
+/** Whole reps, at least 1; null while the text isn't usable. */
+export const parseRepsInput = (text: string): number | null => {
+  const trimmed = text.trim().replace(',', '.');
+  if (trimmed === '') return null;
+  const n = Math.round(Number(trimmed));
+  return Number.isFinite(n) && n >= 1 ? n : null;
+};

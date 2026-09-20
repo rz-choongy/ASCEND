@@ -16,6 +16,8 @@ import {
   formatWeight,
   initialInputFor,
   isNewRecord,
+  parseRepsInput,
+  parseWeightInput,
   sliceSeriesToRange,
 } from './strengthProgress';
 import type { SessionRow } from './types';
@@ -205,5 +207,29 @@ describe('logger helpers', () => {
       expect(isNewRecord(best, estimateOneRepMax(50, 5), 45, 5)).toBe(false);
       expect(isNewRecord(best, estimateOneRepMax(50, 5), 55, 5)).toBe(true);
     });
+  });
+});
+
+describe('typed input parsing', () => {
+  it('reads weights, accepting comma decimals and keeping one decimal', () => {
+    expect(parseWeightInput('60')).toBe(60);
+    expect(parseWeightInput('27.5')).toBe(27.5);
+    expect(parseWeightInput('27,5')).toBe(27.5);
+    expect(parseWeightInput(' 27.54 ')).toBe(27.5);
+    expect(parseWeightInput('0')).toBe(0);
+    // Mid-typing states still count, so the value is right the moment the user taps Log Set.
+    expect(parseWeightInput('27.')).toBe(27);
+  });
+
+  it('gives null while a weight is not usable yet, so the last good value is kept', () => {
+    ['', ' ', '-', 'abc', '-5', '1e999'].forEach((text) => expect(parseWeightInput(text)).toBeNull());
+  });
+
+  it('reads reps as whole numbers of at least 1', () => {
+    expect(parseRepsInput('8')).toBe(8);
+    expect(parseRepsInput('7.6')).toBe(8);
+    expect(parseRepsInput('0')).toBeNull();
+    expect(parseRepsInput('')).toBeNull();
+    expect(parseRepsInput('x')).toBeNull();
   });
 });
