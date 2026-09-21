@@ -92,7 +92,6 @@ export type ImportedClimb = {
   externalId: string;
   createdAt: number;
   payload: ClimbLogPayload;
-  climbName: string | null;
 };
 
 /** One local calendar day of Kilter sends, imported as a single completed climb session. */
@@ -133,7 +132,6 @@ export const mapKilterLogs = (
       const climb: ImportedClimb = {
         externalId: log.logUuid,
         createdAt: log.createdAt,
-        climbName: log.climbName,
         payload: {
           gradeLabel: option.label,
           gradeMin: option.gradeMin,
@@ -142,6 +140,7 @@ export const mapKilterLogs = (
           gradeColor: option.colorHex,
           gradeId: option.id,
           gymId,
+          climbName: log.climbName,
         },
       };
       const key = dayKeyOf(log.createdAt);

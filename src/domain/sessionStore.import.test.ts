@@ -13,27 +13,17 @@ import type { ClimbLogPayload } from './types';
 const mockGetFirst = getFirst as jest.Mock;
 const mockRun = run as jest.Mock;
 
-type Sess = {
-  id: string;
-  started_at: number;
-  completed_at: number;
-  title: string;
-  gym_id: string;
-  status: string;
-  type: string;
-  notes: string | null;
-};
+type Sess = { id: string; started_at: number; completed_at: number; title: string; gym_id: string; status: string; type: string };
 let sessions: Sess[];
 let externals: { source: string; external_id: string; session_id: string }[];
-let events: { session_id: string; created_at: number }[];
+let events: { session_id: string; created_at: number; payload: ClimbLogPayload }[];
 
-const payload: ClimbLogPayload = { gradeLabel: 'V4', gradeMin: 4, gradeMax: 4, result: 'SEND', gymId: 'kilter' };
+const basePayload: ClimbLogPayload = { gradeLabel: 'V4', gradeMin: 4, gradeMax: 4, result: 'SEND', gymId: 'kilter' };
 const at = (day: number, hour: number) => new Date(2026, 8, day, hour).getTime();
 const climb = (id: string, createdAt: number, climbName: string | null = null) => ({
   externalId: id,
   createdAt,
-  payload,
-  climbName,
+  payload: climbName ? { ...basePayload, climbName } : basePayload,
 });
 const input = (climbs: ReturnType<typeof climb>[]) => ({ source: 'kilter', gymId: 'kilter', title: 'Kilter Board', climbs });
 
@@ -65,26 +55,16 @@ beforeEach(() => {
 
   mockRun.mockImplementation((sql: string, params: unknown[] = []) => {
     if (sql.startsWith('INSERT INTO sessions')) {
-      const [id, started_at, completed_at, title, gym_id, notes] = params as [
-        string,
-        number,
-        number,
-        string,
-        string,
-        string | null,
-      ];
-      sessions.push({ id, started_at, completed_at, title, gym_id, notes, status: 'completed', type: 'climb' });
-    } else if (sql.includes('SET started_at')) {
+      const [id, started_at, completed_at, title, gym_id] = params as [string, number, number, string, string];
+      sessions.push({ id, started_at, completed_at, title, gym_id, status: 'completed', type: 'climb' });
+    } else if (sql.startsWith('UPDATE sessions')) {
       const [first, last, id] = params as [number, number, string];
       const s = sessions.find((x) => x.id === id)!;
       s.started_at = Math.min(s.started_at, first);
       s.completed_at = Math.max(s.completed_at, last);
-    } else if (sql.includes('SET notes')) {
-      const [notes, id] = params as [string | null, string];
-      sessions.find((x) => x.id === id)!.notes = notes;
     } else if (sql.includes('INTO events')) {
-      const [, session_id, , , created_at] = params as [string, string, string, number, number];
-      events.push({ session_id, created_at });
+      const [, session_id, payload_json, , created_at] = params as [string, string, string, number, number];
+      events.push({ session_id, created_at, payload: JSON.parse(payload_json) });
     } else if (sql.includes('INTO external_logs')) {
       const [source, external_id, session_id] = params as string[];
       externals.push({ source, external_id, session_id });
@@ -128,18 +108,9 @@ describe('importExternalClimbSession', () => {
     expect(sessions).toHaveLength(2);
   });
 
-  it('adds a note line per named climb, leaving unnamed ones out', () => {
+  it('carries a named climb\'s name into its event payload, leaving unnamed ones without one', () => {
     importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop'), climb('b', at(1, 19))]));
-    expect(sessions[0].notes).toBe('Bomb Pop (V4)');
-  });
-
-  it('appends new note lines to an existing session without duplicating or losing the user\'s own notes', () => {
-    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop')]));
-    sessions[0].notes = `${sessions[0].notes}\nGreat session today`;
-
-    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop'), climb('late', at(1, 21), 'Tomahawk')]));
-
-    expect(sessions[0].notes).toBe('Bomb Pop (V4)\nGreat session today\nTomahawk (V4)');
+    expect(events.map((e) => e.payload.climbName)).toEqual(['Bomb Pop', undefined]);
   });
 
   it('rolls back if a write fails part way', () => {

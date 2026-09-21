@@ -390,8 +390,6 @@ export type ExternalClimbInput = {
   externalId: string;
   createdAt: number;
   payload: ClimbLogPayload;
-  /** The climb's name at the source, when it has one -- recorded as a note line. */
-  climbName?: string | null;
 };
 
 export type ExternalClimbSessionInput = {
@@ -399,25 +397,6 @@ export type ExternalClimbSessionInput = {
   gymId: string;
   title: string;
   climbs: ExternalClimbInput[];
-};
-
-/** One line per named climb, e.g. "Bomb Pop (V4)"; unnamed climbs are left out rather than noised up with a placeholder. */
-const climbNoteLine = (climb: ExternalClimbInput): string | null =>
-  climb.climbName ? `${climb.climbName} (${climb.payload.gradeLabel})` : null;
-
-/** Appends lines not already present, so a re-sync or a same-day repeat of a climb never duplicates a note, and never touches what the user already wrote. */
-const mergeNoteLines = (existing: string | null, newLines: string[]): string | null => {
-  const existingLines = existing ? existing.split('\n') : [];
-  const seen = new Set(existingLines);
-  const toAdd: string[] = [];
-  newLines.forEach((line) => {
-    if (!seen.has(line)) {
-      seen.add(line);
-      toAdd.push(line);
-    }
-  });
-  if (toAdd.length === 0) return existing;
-  return [...existingLines, ...toAdd].join('\n');
 };
 
 const inTransaction = (work: () => void): void => {
@@ -436,9 +415,7 @@ const inTransaction = (work: () => void): void => {
  * timestamps -- the live-logging path (`createSession`/`appendEvent`) stamps "now" and refuses
  * to run beside an active session, so it can't do this. Sends already imported (same
  * `source` + `externalId`) are skipped, and a day that was imported before gets the new sends
- * appended to its session instead of a second one. Named climbs get a note line appended to the
- * session's notes (deduped against what's there, existing notes never overwritten). Returns how
- * many sends were new.
+ * appended to its session instead of a second one. Returns how many sends were new.
  */
 export const importExternalClimbSession = (input: ExternalClimbSessionInput): number => {
   const fresh = input.climbs
@@ -468,8 +445,6 @@ export const importExternalClimbSession = (input: ExternalClimbSessionInput): nu
       [dayStart, dayEnd, input.source]
     );
 
-    const newLines = fresh.map(climbNoteLine).filter((line): line is string => line !== null);
-
     let sessionId: string;
     if (existing) {
       sessionId = existing.id;
@@ -478,16 +453,12 @@ export const importExternalClimbSession = (input: ExternalClimbSessionInput): nu
         last,
         sessionId,
       ]);
-      const mergedNotes = mergeNoteLines(existing.notes, newLines);
-      if (mergedNotes !== existing.notes) {
-        run('UPDATE sessions SET notes = ? WHERE id = ?;', [mergedNotes, sessionId]);
-      }
     } else {
       sessionId = uuid();
       run(
         `INSERT INTO sessions (id, type, status, started_at, completed_at, title, gym_id, notes)
-         VALUES (?, 'climb', 'completed', ?, ?, ?, ?, ?);`,
-        [sessionId, first, last, input.title, input.gymId, mergeNoteLines(null, newLines)]
+         VALUES (?, 'climb', 'completed', ?, ?, ?, ?, NULL);`,
+        [sessionId, first, last, input.title, input.gymId]
       );
     }
 

@@ -86,6 +86,47 @@ describe('applyClimbEvents', () => {
 
     expect(logs).toEqual([]);
   });
+
+  it('carries a climb name through, defaulting to null when absent', () => {
+    const logs = applyClimbEvents([
+      event('a', 'CLIMB_LOGGED', {
+        gradeLabel: 'V2',
+        gradeMin: 2,
+        gradeMax: 2,
+        result: 'SEND',
+        climbName: 'Bomb Pop',
+      }),
+      event('b', 'CLIMB_LOGGED', {
+        gradeLabel: 'V3',
+        gradeMin: 3,
+        gradeMax: 3,
+        result: 'SEND',
+      }),
+    ]);
+
+    expect(logs.map((log) => log.climbName)).toEqual(['Bomb Pop', null]);
+  });
+
+  it('replaces the climb name on edit, clearing it when the edit omits one', () => {
+    const logs = applyClimbEvents([
+      event('a', 'CLIMB_LOGGED', {
+        gradeLabel: 'V2',
+        gradeMin: 2,
+        gradeMax: 2,
+        result: 'SEND',
+        climbName: 'Bomb Pop',
+      }),
+      event('b', 'CLIMB_EDITED', {
+        eventId: 'a',
+        gradeLabel: 'V2',
+        gradeMin: 2,
+        gradeMax: 2,
+        result: 'SEND',
+      }),
+    ]);
+
+    expect(logs[0].climbName).toBeNull();
+  });
 });
 
 describe('spansMultipleGrades', () => {

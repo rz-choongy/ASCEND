@@ -38,6 +38,7 @@ export type ClimbLog = {
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
+  climbName?: string | null;
   createdAt: number;
 };
 
@@ -59,6 +60,7 @@ type ClimbEditPayload = {
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
+  climbName?: string | null;
 };
 
 type ClimbDeletePayload = {
@@ -161,6 +163,7 @@ export const applyClimbEvents = (events: EventLike[]): ClimbLog[] => {
           typeof event.payload.gradeColor === 'string' ? event.payload.gradeColor : null,
         gradeId: typeof event.payload.gradeId === 'string' ? event.payload.gradeId : undefined,
         gymId: typeof event.payload.gymId === 'string' ? event.payload.gymId : undefined,
+        climbName: typeof event.payload.climbName === 'string' ? event.payload.climbName : null,
         createdAt: event.createdAt,
       });
       return;
@@ -200,6 +203,7 @@ export const applyClimbEvents = (events: EventLike[]): ClimbLog[] => {
           typeof payload.gradeColor === 'string' ? payload.gradeColor : null,
         gradeId: typeof payload.gradeId === 'string' ? payload.gradeId : undefined,
         gymId: typeof payload.gymId === 'string' ? payload.gymId : undefined,
+        climbName: typeof payload.climbName === 'string' ? payload.climbName : null,
         result: payload.result,
       };
       return;

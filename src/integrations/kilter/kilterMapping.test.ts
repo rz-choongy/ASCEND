@@ -123,8 +123,8 @@ describe('mapKilterLogs', () => {
     expect(session.climbs[0].payload.gradeLabel).toBe('V11+');
   });
 
-  it('carries the climb name through onto the imported climb', () => {
+  it('carries the climb name through onto the imported climb payload', () => {
     const [session] = mapKilterLogs([log('named', { climbName: 'Bomb Pop' })], OPTIONS, 'gym');
-    expect(session.climbs[0].climbName).toBe('Bomb Pop');
+    expect(session.climbs[0].payload.climbName).toBe('Bomb Pop');
   });
 });
