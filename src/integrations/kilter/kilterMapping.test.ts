@@ -22,6 +22,7 @@ const log = (id: string, overrides: Partial<KilterLog> = {}): KilterLog => ({
   flashed: false,
   createdAt: at(1, 18),
   difficultyId: 18, // V4
+  climbName: null,
   ...overrides,
 });
 
@@ -56,6 +57,12 @@ describe('parseKilterLogs', () => {
     const parsed = parseKilterLogs([raw, { ...raw, logUuid: undefined }, { ...raw, createdAt: 'garbage' }, 5]);
     expect(parsed).toHaveLength(1);
     expect(parsed[0]).toMatchObject({ logUuid: 'a', attempts: 1, topped: true, flashed: true, difficultyId: 18 });
+  });
+
+  it('reads a climb name from whichever plausible key is present, and null when none is', () => {
+    expect(parseKilterLogs([{ ...raw, name: 'Bomb Pop' }])[0].climbName).toBe('Bomb Pop');
+    expect(parseKilterLogs([{ ...raw, climb_name: 'Tomahawk' }])[0].climbName).toBe('Tomahawk');
+    expect(parseKilterLogs([raw])[0].climbName).toBeNull();
   });
 });
 
@@ -114,5 +121,10 @@ describe('mapKilterLogs', () => {
   it('clamps grades harder than any bucket onto the hardest one', () => {
     const [session] = mapKilterLogs([log('hard', { difficultyId: 36 })], OPTIONS, 'gym'); // V19
     expect(session.climbs[0].payload.gradeLabel).toBe('V11+');
+  });
+
+  it('carries the climb name through onto the imported climb payload', () => {
+    const [session] = mapKilterLogs([log('named', { climbName: 'Bomb Pop' })], OPTIONS, 'gym');
+    expect(session.climbs[0].payload.climbName).toBe('Bomb Pop');
   });
 });

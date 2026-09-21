@@ -65,6 +65,7 @@ export type ClimbLogPayload = {
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
+  climbName?: string | null;
 };
 
 export type StrengthSetPayload = {

@@ -16,11 +16,15 @@ const mockRun = run as jest.Mock;
 type Sess = { id: string; started_at: number; completed_at: number; title: string; gym_id: string; status: string; type: string };
 let sessions: Sess[];
 let externals: { source: string; external_id: string; session_id: string }[];
-let events: { session_id: string; created_at: number }[];
+let events: { session_id: string; created_at: number; payload: ClimbLogPayload }[];
 
-const payload: ClimbLogPayload = { gradeLabel: 'V4', gradeMin: 4, gradeMax: 4, result: 'SEND', gymId: 'kilter' };
+const basePayload: ClimbLogPayload = { gradeLabel: 'V4', gradeMin: 4, gradeMax: 4, result: 'SEND', gymId: 'kilter' };
 const at = (day: number, hour: number) => new Date(2026, 8, day, hour).getTime();
-const climb = (id: string, createdAt: number) => ({ externalId: id, createdAt, payload });
+const climb = (id: string, createdAt: number, climbName: string | null = null) => ({
+  externalId: id,
+  createdAt,
+  payload: climbName ? { ...basePayload, climbName } : basePayload,
+});
 const input = (climbs: ReturnType<typeof climb>[]) => ({ source: 'kilter', gymId: 'kilter', title: 'Kilter Board', climbs });
 
 beforeEach(() => {
@@ -59,8 +63,8 @@ beforeEach(() => {
       s.started_at = Math.min(s.started_at, first);
       s.completed_at = Math.max(s.completed_at, last);
     } else if (sql.includes('INTO events')) {
-      const [, session_id, , , created_at] = params as [string, string, string, number, number];
-      events.push({ session_id, created_at });
+      const [, session_id, payload_json, , created_at] = params as [string, string, string, number, number];
+      events.push({ session_id, created_at, payload: JSON.parse(payload_json) });
     } else if (sql.includes('INTO external_logs')) {
       const [source, external_id, session_id] = params as string[];
       externals.push({ source, external_id, session_id });
@@ -102,6 +106,11 @@ describe('importExternalClimbSession', () => {
     importExternalClimbSession(input([climb('a', at(1, 18))]));
     importExternalClimbSession(input([climb('b', at(3, 18))]));
     expect(sessions).toHaveLength(2);
+  });
+
+  it('carries a named climb\'s name into its event payload, leaving unnamed ones without one', () => {
+    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop'), climb('b', at(1, 19))]));
+    expect(events.map((e) => e.payload.climbName)).toEqual(['Bomb Pop', undefined]);
   });
 
   it('rolls back if a write fails part way', () => {
