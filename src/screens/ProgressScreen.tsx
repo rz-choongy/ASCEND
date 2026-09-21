@@ -16,6 +16,7 @@ import {
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
+import { BodyweightCard } from './progress/BodyweightCard';
 import { ClimbProgressView } from './progress/ClimbProgressView';
 import { StrengthProgressView } from './progress/StrengthProgressView';
 
@@ -91,6 +92,8 @@ export function ProgressScreen() {
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.screenTitle}>Progress</Text>
+
+        <BodyweightCard />
 
         <View style={styles.segmented}>
           <SegmentedControl
