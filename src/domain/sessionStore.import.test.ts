@@ -13,14 +13,28 @@ import type { ClimbLogPayload } from './types';
 const mockGetFirst = getFirst as jest.Mock;
 const mockRun = run as jest.Mock;
 
-type Sess = { id: string; started_at: number; completed_at: number; title: string; gym_id: string; status: string; type: string };
+type Sess = {
+  id: string;
+  started_at: number;
+  completed_at: number;
+  title: string;
+  gym_id: string;
+  status: string;
+  type: string;
+  notes: string | null;
+};
 let sessions: Sess[];
 let externals: { source: string; external_id: string; session_id: string }[];
 let events: { session_id: string; created_at: number }[];
 
 const payload: ClimbLogPayload = { gradeLabel: 'V4', gradeMin: 4, gradeMax: 4, result: 'SEND', gymId: 'kilter' };
 const at = (day: number, hour: number) => new Date(2026, 8, day, hour).getTime();
-const climb = (id: string, createdAt: number) => ({ externalId: id, createdAt, payload });
+const climb = (id: string, createdAt: number, climbName: string | null = null) => ({
+  externalId: id,
+  createdAt,
+  payload,
+  climbName,
+});
 const input = (climbs: ReturnType<typeof climb>[]) => ({ source: 'kilter', gymId: 'kilter', title: 'Kilter Board', climbs });
 
 beforeEach(() => {
@@ -51,13 +65,23 @@ beforeEach(() => {
 
   mockRun.mockImplementation((sql: string, params: unknown[] = []) => {
     if (sql.startsWith('INSERT INTO sessions')) {
-      const [id, started_at, completed_at, title, gym_id] = params as [string, number, number, string, string];
-      sessions.push({ id, started_at, completed_at, title, gym_id, status: 'completed', type: 'climb' });
-    } else if (sql.startsWith('UPDATE sessions')) {
+      const [id, started_at, completed_at, title, gym_id, notes] = params as [
+        string,
+        number,
+        number,
+        string,
+        string,
+        string | null,
+      ];
+      sessions.push({ id, started_at, completed_at, title, gym_id, notes, status: 'completed', type: 'climb' });
+    } else if (sql.includes('SET started_at')) {
       const [first, last, id] = params as [number, number, string];
       const s = sessions.find((x) => x.id === id)!;
       s.started_at = Math.min(s.started_at, first);
       s.completed_at = Math.max(s.completed_at, last);
+    } else if (sql.includes('SET notes')) {
+      const [notes, id] = params as [string | null, string];
+      sessions.find((x) => x.id === id)!.notes = notes;
     } else if (sql.includes('INTO events')) {
       const [, session_id, , , created_at] = params as [string, string, string, number, number];
       events.push({ session_id, created_at });
@@ -102,6 +126,20 @@ describe('importExternalClimbSession', () => {
     importExternalClimbSession(input([climb('a', at(1, 18))]));
     importExternalClimbSession(input([climb('b', at(3, 18))]));
     expect(sessions).toHaveLength(2);
+  });
+
+  it('adds a note line per named climb, leaving unnamed ones out', () => {
+    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop'), climb('b', at(1, 19))]));
+    expect(sessions[0].notes).toBe('Bomb Pop (V4)');
+  });
+
+  it('appends new note lines to an existing session without duplicating or losing the user\'s own notes', () => {
+    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop')]));
+    sessions[0].notes = `${sessions[0].notes}\nGreat session today`;
+
+    importExternalClimbSession(input([climb('a', at(1, 18), 'Bomb Pop'), climb('late', at(1, 21), 'Tomahawk')]));
+
+    expect(sessions[0].notes).toBe('Bomb Pop (V4)\nGreat session today\nTomahawk (V4)');
   });
 
   it('rolls back if a write fails part way', () => {
