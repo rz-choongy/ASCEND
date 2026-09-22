@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { formatElapsed } from '../domain/dateUtils';
 import { getExercises, createExercise } from '../domain/exerciseStore';
 import {
   appendEvent,
@@ -22,6 +23,7 @@ import {
   setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
+import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import {
   buildExerciseDetail,
@@ -44,8 +46,9 @@ import {
   Button,
   Card,
   Chip,
+  CloseIcon,
   Divider,
-  ScreenHeader,
+  IconButton,
   Stepper,
   radius,
   spacing,
@@ -153,10 +156,14 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     []
   );
   const [exerciseInputMemory, setExerciseInputMemory] = useState<ExerciseInputMemory>({});
+  const [showTimer, setShowTimer] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
   useFocusEffect(
     useCallback(() => {
       setSession(getSessionById(sessionId));
+      setShowTimer(getShowSessionTimer());
+      setNow(Date.now());
     }, [sessionId])
   );
 
@@ -199,6 +206,13 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     });
     return unsubscribe;
   }, [navigation, sessionId, title]);
+
+  // Ticks the live session-length display; only runs while there's something to show.
+  useEffect(() => {
+    if (!showTimer || session?.status !== 'active') return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [showTimer, session?.status]);
 
   const bump = () => setRefreshKey((k) => k + 1);
   const displayTitle = title.trim() || 'Gym Session';
@@ -341,9 +355,35 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     );
   }
 
+  const elapsedMs = Math.max(0, now - session.started_at);
+
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <ScreenHeader title="Log strength" onClose={() => navigation.navigate('Tabs')} />
+      {/* Header — close, screen title, and elapsed timer bound into one row (mirrors ClimbSessionScreen) */}
+      <View style={styles.headerRow}>
+        <IconButton
+          variant="bare"
+          onPress={() => navigation.navigate('Tabs')}
+          accessibilityLabel="Close"
+          hitSlop={8}
+        >
+          <CloseIcon color={colors.textSecondary} />
+        </IconButton>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          Log strength
+        </Text>
+        {showTimer && session.status === 'active' ? (
+          <View style={styles.timerCol}>
+            <View style={styles.timerLabelRow}>
+              <View style={styles.liveDot} />
+              <Text style={styles.timerLabel}>Elapsed</Text>
+            </View>
+            <Text style={styles.timerValue}>{formatElapsed(elapsedMs)}</Text>
+          </View>
+        ) : (
+          <View style={styles.closeBtn} />
+        )}
+      </View>
 
       {/* Exercise chips */}
       <Text style={styles.sectionLabel}>Exercise</Text>
@@ -451,7 +491,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           <Text style={styles.inputLabel}>Weight (kg)</Text>
           <Stepper
             compact
-            value={weight === 0 ? 'Bodyweight' : `${formatWeight(weight)} kg`}
+            value={weight === 0 ? 'BW' : `${formatWeight(weight)} kg`}
             editable={{
               text: formatWeight(weight),
               keyboardType: 'decimal-pad',
@@ -554,6 +594,53 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    ...typography.title,
+    fontSize: 17,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  timerCol: {
+    alignItems: 'flex-end',
+    gap: 1,
+    minWidth: 64,
+  },
+  timerLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  timerLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  timerValue: {
+    ...typography.title,
+    fontSize: 19,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   titleBlock: {
     backgroundColor: colors.surface,

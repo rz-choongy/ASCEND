@@ -89,11 +89,16 @@ export const Stepper = ({
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel={`Edit value, currently ${value}`}
+          style={styles.valuePressable}
         >
-          <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
+          <Text style={[styles.value, compact ? styles.valueCompact : null]} numberOfLines={1}>
+            {value}
+          </Text>
         </Pressable>
       ) : (
-        <Text style={[styles.value, compact ? styles.valueCompact : null]}>{value}</Text>
+        <Text style={[styles.value, compact ? styles.valueCompact : null]} numberOfLines={1}>
+          {value}
+        </Text>
       )}
       <PressableScale onPress={withHaptic(onIncrement)} scaleTo={0.88} style={buttonStyle} hitSlop={6}>
         <Text style={styles.symbolText}>+</Text>
@@ -118,6 +123,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
+      flexShrink: 1,
     },
     // UIStepper's two halves: filled, borderless, softly rounded.
     button: {
@@ -151,6 +157,9 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: '600',
       letterSpacing: -0.1,
     },
+    valuePressable: {
+      flexShrink: 1,
+    },
     value: {
       color: colors.textPrimary,
       fontSize: 20,
@@ -159,9 +168,11 @@ const createStyles = (colors: ThemeColors) =>
       fontVariant: ['tabular-nums'],
       minWidth: 76,
       textAlign: 'center',
+      flexShrink: 1,
     },
     valueCompact: {
       minWidth: 32,
+      fontSize: 17,
     },
     // Same footprint as the label it replaces, with an underline so it reads as editing.
     valueInput: {

@@ -1,8 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -11,6 +15,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getLatestBodyweight, logBodyweight } from '../domain/bodyweightStore';
 import { addDays, formatLocalDate } from '../domain/dateUtils';
 import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
 import {
@@ -27,7 +32,8 @@ import {
   getSessionsForDate,
   getSessionsForDateRange,
 } from '../domain/sessionStore';
-import type { SessionRow, SessionType } from '../domain/types';
+import { formatDaysAgo, formatWeight, parseWeightInput } from '../domain/strengthProgress';
+import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import {
   Button,
@@ -112,6 +118,9 @@ export function LogScreen() {
   const [hardestThisWeek, setHardestThisWeek] = useState<ReturnType<typeof findHardestSendThisWeek>>(null);
   const [recentSends, setRecentSends] = useState<RecentSend[]>([]);
   const [hasEverLogged, setHasEverLogged] = useState(true);
+  const [latestBodyweight, setLatestBodyweight] = useState<BodyweightLogRow | null>(null);
+  const [isLogWeightOpen, setIsLogWeightOpen] = useState(false);
+  const [weightInput, setWeightInput] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -120,6 +129,7 @@ export function LogScreen() {
       setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
       setStreak(getSessionStreak());
       setHasEverLogged(getAllCompletedSessionCount() > 0 || active !== null);
+      setLatestBodyweight(getLatestBodyweight());
 
       const now = new Date();
       const last7Start = addDays(now, -6);
@@ -160,6 +170,28 @@ export function LogScreen() {
     navigateToSession(type, sessionId);
   }
 
+  const parsedWeight = parseWeightInput(weightInput);
+  const canLogWeight = parsedWeight !== null && parsedWeight > 0;
+
+  // Prefill with the last logged weight, not a blank field -- most people's weight barely
+  // moves day to day, so this is usually a confirm-and-tap rather than a retype.
+  function handleOpenWeightModal() {
+    setWeightInput(latestBodyweight ? formatWeight(latestBodyweight.weight_kg) : '');
+    setIsLogWeightOpen(true);
+  }
+
+  function handleCloseWeightModal() {
+    setWeightInput('');
+    setIsLogWeightOpen(false);
+  }
+
+  function handleLogWeight() {
+    if (!canLogWeight) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setLatestBodyweight(logBodyweight(parsedWeight as number));
+    handleCloseWeightModal();
+  }
+
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
@@ -194,6 +226,67 @@ export function LogScreen() {
           </View>
         </View>
       </View>
+
+      {/* Bodyweight quick-log */}
+      <TouchableOpacity
+        style={styles.weightRow}
+        onPress={handleOpenWeightModal}
+        activeOpacity={0.75}
+      >
+        <View>
+          <Text style={styles.weightLabel}>Bodyweight</Text>
+          <Text style={styles.weightValue}>
+            {latestBodyweight
+              ? `${formatWeight(latestBodyweight.weight_kg)} kg · ${formatDaysAgo(latestBodyweight.logged_at)}`
+              : 'Not logged yet'}
+          </Text>
+        </View>
+        <Button
+          label="Log"
+          variant="secondary"
+          onPress={handleOpenWeightModal}
+          style={styles.weightLogButton}
+        />
+      </TouchableOpacity>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={isLogWeightOpen}
+        onRequestClose={handleCloseWeightModal}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={handleCloseWeightModal}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Log bodyweight</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={weightInput}
+              onChangeText={setWeightInput}
+              placeholder="Weight (kg)"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="decimal-pad"
+              autoFocus
+              selectTextOnFocus
+              returnKeyType="done"
+              onSubmitEditing={handleLogWeight}
+            />
+            <View style={styles.modalActions}>
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={handleCloseWeightModal}
+                style={styles.modalButton}
+              />
+              <Button
+                label="Log"
+                onPress={handleLogWeight}
+                disabled={!canLogWeight}
+                style={styles.modalButton}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Active session banner */}
       {activeSession ? (
@@ -425,6 +518,63 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontWeight: '500',
     letterSpacing: -0.05,
     color: colors.textMuted,
+  },
+
+  // Bodyweight quick-log
+  weightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.s,
+  },
+  weightLabel: {
+    ...typography.meta,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  weightValue: {
+    ...typography.body,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  weightLogButton: {
+    minWidth: 64,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.overlay,
+    padding: spacing.md,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: radius.xl,
+    backgroundColor: colors.surfaceAlt,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  modalTitle: {
+    ...typography.title,
+    fontSize: 20,
+  },
+  modalInput: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.fill,
+    color: colors.textPrimary,
+    fontSize: 17,
+    paddingHorizontal: spacing.s,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  modalButton: {
+    flex: 1,
   },
 
   // Active session banner
