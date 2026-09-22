@@ -28,9 +28,20 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
     setError(null);
     try {
       await kilterAuth.login(username.trim(), password);
-      setKilterUsername(username.trim());
-      // The password has done its job; don't keep it in component state a moment longer.
-      setPassword('');
+    } catch (e) {
+      setError(e instanceof KilterAuthError ? e.message : 'Something went wrong. Try again.');
+      setBusy(false);
+      return;
+    }
+
+    // The account is connected from here on, regardless of how the import
+    // below goes -- so every path past this point leaves the screen, and a
+    // sync failure is reported as its own (retryable) problem rather than
+    // implying the connection itself failed.
+    setKilterUsername(username.trim());
+    // The password has done its job; don't keep it in component state a moment longer.
+    setPassword('');
+    try {
       const result = await syncKilter();
       Alert.alert(
         'Kilter connected',
@@ -38,12 +49,17 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
           ? 'No new sends to import.'
           : `Imported ${result.added} send${result.added === 1 ? '' : 's'}.`
       );
-      navigation.goBack();
     } catch (e) {
-      setError(e instanceof KilterAuthError ? e.message : 'Something went wrong. Try again.');
+      Alert.alert(
+        'Kilter connected',
+        `Signed in, but the first import didn't go through (${
+          e instanceof KilterAuthError ? e.message : 'something went wrong'
+        }). Try "Sync now" from Settings.`
+      );
     } finally {
       setBusy(false);
     }
+    navigation.goBack();
   };
 
   return (

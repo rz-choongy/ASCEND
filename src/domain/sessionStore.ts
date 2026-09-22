@@ -177,8 +177,11 @@ export const setSessionStatus = (
   sessionId: string,
   status: SessionStatus
 ): void => {
-  if (status === 'completed') {
-    run('UPDATE sessions SET status = ?, completed_at = ? WHERE id = ?;', [
+  if (status === 'completed' || status === 'abandoned') {
+    // COALESCE keeps the original end time across a discard-then-restore round trip:
+    // abandoning stamps it once, and restoring to 'completed' must not overwrite it
+    // with the restore button's press time.
+    run('UPDATE sessions SET status = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?;', [
       status,
       Date.now(),
       sessionId,

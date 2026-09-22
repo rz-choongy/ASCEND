@@ -9,7 +9,7 @@ jest.mock('../db/db', () => ({
 }));
 
 import { getAll, getFirst, run } from '../db/db';
-import { countWideGradeBandClimbs, narrowWideGradeBands } from './sessionStore';
+import { countWideGradeBandClimbs, narrowWideGradeBands, setSessionStatus } from './sessionStore';
 import type { SessionRow } from './types';
 
 const mockGetAll = getAll as jest.Mock;
@@ -64,6 +64,35 @@ beforeEach(() => {
   mockGetAll.mockReset();
   mockGetFirst.mockReset();
   mockRun.mockReset();
+});
+
+describe('setSessionStatus', () => {
+  it('preserves the original completed_at when restoring an abandoned session', () => {
+    // Restoring must COALESCE onto the existing completed_at rather than
+    // overwriting it -- a session abandoned hours ago and restored later
+    // should keep its real (short) duration instead of being stretched to
+    // the restore button's press time.
+    setSessionStatus('s1', 'completed');
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.stringContaining('COALESCE(completed_at'),
+      ['completed', expect.any(Number), 's1']
+    );
+  });
+
+  it('stamps completed_at once when a session is first abandoned, and clears it for non-terminal statuses', () => {
+    setSessionStatus('s1', 'abandoned');
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.stringContaining('COALESCE(completed_at'),
+      ['abandoned', expect.any(Number), 's1']
+    );
+
+    mockRun.mockClear();
+    setSessionStatus('s1', 'active');
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.stringContaining('completed_at = NULL'),
+      ['active', 's1']
+    );
+  });
 });
 
 describe('countWideGradeBandClimbs / narrowWideGradeBands', () => {

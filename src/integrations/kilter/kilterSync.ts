@@ -28,7 +28,6 @@ export const syncKilter = async (now: () => number = Date.now): Promise<KilterSy
   }
 
   const token = await kilterAuth.getAccessToken();
-  lastFetchAt = now();
   const raw = await fetchKilterLogs(token);
 
   // An unrecognised envelope would otherwise read as "nothing new" and hide a broken sync.
@@ -59,6 +58,10 @@ export const syncKilter = async (now: () => number = Date.now): Promise<KilterSy
     0
   );
 
+  // Only stamped once the whole sync succeeds, so a failure partway through
+  // (network drop, server error, unrecognised shape, a bad import) doesn't lock
+  // out an immediate retry with a misleading "synced moments ago" message.
+  lastFetchAt = now();
   setKilterLastSyncedAt(now());
   return { added, fetched: logs.length };
 };
