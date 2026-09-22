@@ -73,4 +73,15 @@ describe('syncKilter', () => {
     await expect(syncKilter(clock)).rejects.toMatchObject({ kind: 'signed_out' });
     expect(mockImport).not.toHaveBeenCalled();
   });
+
+  it('does not lock out an immediate retry after a failed fetch', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('network drop'));
+    await expect(syncKilter(clock)).rejects.toThrow('network drop');
+
+    // A retry right after the failure must reach fetchKilterLogs again, not
+    // be told "Kilter was synced moments ago" for a sync that never happened.
+    mockFetch.mockResolvedValueOnce([]);
+    await expect(syncKilter(clock)).resolves.toEqual({ added: 0, fetched: 0 });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
 });

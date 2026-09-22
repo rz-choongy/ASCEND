@@ -289,6 +289,13 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     setIsAddExerciseOpen(false);
   };
 
+  // Shared by the backdrop tap, Android back, and the Cancel button so every
+  // dismiss path clears the draft name the same way (no stale text on reopen).
+  const handleCloseAddExercise = () => {
+    setNewExerciseName('');
+    setIsAddExerciseOpen(false);
+  };
+
   // See ClimbSessionScreen.handleLog for why this guard exists.
   const isLoggingRef = useRef(false);
 
@@ -408,9 +415,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         transparent
         animationType="fade"
         visible={isAddExerciseOpen}
-        onRequestClose={() => setIsAddExerciseOpen(false)}
+        onRequestClose={handleCloseAddExercise}
       >
-        <Pressable style={styles.modalBackdrop} onPress={() => setIsAddExerciseOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={handleCloseAddExercise}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Add exercise</Text>
             <TextInput
@@ -427,10 +434,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
               <Button
                 label="Cancel"
                 variant="ghost"
-                onPress={() => {
-                  setNewExerciseName('');
-                  setIsAddExerciseOpen(false);
-                }}
+                onPress={handleCloseAddExercise}
                 style={styles.modalButton}
               />
               <Button
