@@ -173,12 +173,23 @@ export function LogScreen() {
   const parsedWeight = parseWeightInput(weightInput);
   const canLogWeight = parsedWeight !== null && parsedWeight > 0;
 
+  // Prefill with the last logged weight, not a blank field -- most people's weight barely
+  // moves day to day, so this is usually a confirm-and-tap rather than a retype.
+  function handleOpenWeightModal() {
+    setWeightInput(latestBodyweight ? formatWeight(latestBodyweight.weight_kg) : '');
+    setIsLogWeightOpen(true);
+  }
+
+  function handleCloseWeightModal() {
+    setWeightInput('');
+    setIsLogWeightOpen(false);
+  }
+
   function handleLogWeight() {
     if (!canLogWeight) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setLatestBodyweight(logBodyweight(parsedWeight as number));
-    setWeightInput('');
-    setIsLogWeightOpen(false);
+    handleCloseWeightModal();
   }
 
   return (
@@ -219,7 +230,7 @@ export function LogScreen() {
       {/* Bodyweight quick-log */}
       <TouchableOpacity
         style={styles.weightRow}
-        onPress={() => setIsLogWeightOpen(true)}
+        onPress={handleOpenWeightModal}
         activeOpacity={0.75}
       >
         <View>
@@ -233,7 +244,7 @@ export function LogScreen() {
         <Button
           label="Log"
           variant="secondary"
-          onPress={() => setIsLogWeightOpen(true)}
+          onPress={handleOpenWeightModal}
           style={styles.weightLogButton}
         />
       </TouchableOpacity>
@@ -242,9 +253,9 @@ export function LogScreen() {
         transparent
         animationType="fade"
         visible={isLogWeightOpen}
-        onRequestClose={() => setIsLogWeightOpen(false)}
+        onRequestClose={handleCloseWeightModal}
       >
-        <Pressable style={styles.modalBackdrop} onPress={() => setIsLogWeightOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={handleCloseWeightModal}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Log bodyweight</Text>
             <TextInput
@@ -255,6 +266,7 @@ export function LogScreen() {
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               autoFocus
+              selectTextOnFocus
               returnKeyType="done"
               onSubmitEditing={handleLogWeight}
             />
@@ -262,10 +274,7 @@ export function LogScreen() {
               <Button
                 label="Cancel"
                 variant="ghost"
-                onPress={() => {
-                  setWeightInput('');
-                  setIsLogWeightOpen(false);
-                }}
+                onPress={handleCloseWeightModal}
                 style={styles.modalButton}
               />
               <Button
