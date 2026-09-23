@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -40,6 +39,7 @@ import {
   font,
   getContrastText,
   radius,
+  showDialog,
   spacing,
   useTheme,
   type Shadows,
@@ -210,7 +210,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       }
 
       e.preventDefault();
-      Alert.alert('Leave this session?', 'You have logged climbs in this session.', [
+      showDialog('Leave this session?', 'You have logged climbs in this session.', [
         { text: 'Keep logging', style: 'cancel' },
         {
           text: 'Finish session',
@@ -335,7 +335,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const elapsedMs = Math.max(0, now - session.started_at);
 
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    // Bottom edge too: Done sits at the very bottom and must clear the home indicator.
+    <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       {/* Header — close, gym name, and elapsed timer bound into one row */}
       <View style={styles.headerRow}>
         <IconButton
@@ -379,7 +380,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         style={styles.gymSelector}
         onPress={() => {
           if (!canChangeSessionGym(sessionId)) {
-            Alert.alert(
+            showDialog(
               'Gym locked for this session',
               'Finish this climbing session before switching gyms. Logged climbs keep their original gym and grade colors.'
             );

@@ -90,3 +90,32 @@ describe('applySetEvents', () => {
     expect(sets).toEqual([]);
   });
 });
+
+describe('SET_EDITED exercise reassignment', () => {
+  const logged = event('a', 'SET_LOGGED', { exerciseId: 'ex-1', exerciseName: 'Pull-ups', reps: 5, weight: 10, unit: 'kg' });
+
+  it('keeps the exercise when the edit leaves exerciseId out', () => {
+    const [set] = applySetEvents([
+      logged,
+      event('b', 'SET_EDITED', { eventId: 'a', exerciseName: 'Pull-ups', reps: 6, weight: 10, unit: 'kg' }),
+    ]);
+    expect(set).toMatchObject({ exerciseId: 'ex-1', reps: 6 });
+  });
+
+  it('moves the set to another exercise', () => {
+    const [set] = applySetEvents([
+      logged,
+      event('b', 'SET_EDITED', { eventId: 'a', exerciseId: 'ex-2', exerciseName: 'Chin-ups', reps: 5, weight: 10, unit: 'kg' }),
+    ]);
+    expect(set).toMatchObject({ exerciseId: 'ex-2', exerciseName: 'Chin-ups' });
+  });
+
+  it('detaches it from any exercise when exerciseId is null', () => {
+    const [set] = applySetEvents([
+      logged,
+      event('b', 'SET_EDITED', { eventId: 'a', exerciseId: null, exerciseName: 'Ring rows', reps: 5, weight: 10, unit: 'kg' }),
+    ]);
+    expect(set.exerciseId).toBeUndefined();
+    expect(set.exerciseName).toBe('Ring rows');
+  });
+});

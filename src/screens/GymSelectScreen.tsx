@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -16,14 +16,15 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   IconButton,
+  PencilIcon,
   PressableScale,
   ScreenHeader,
   font,
   radius,
+  showDialog,
   spacing,
   useTheme,
   type Shadows,
-  PencilIcon,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 
@@ -76,7 +77,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
     if (returnToSessionId) {
       const changed = setSessionGymId(returnToSessionId, gymId);
       if (!changed) {
-        Alert.alert(
+        showDialog(
           'Gym locked for this session',
           'Finish this climbing session before switching gyms. Logged climbs keep their original gym and grade colors.'
         );
@@ -207,6 +208,15 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   <Text style={styles.gymName}>{gym.name}</Text>
                   <Text style={styles.gymMeta}>{`${count} branch${count === 1 ? '' : 'es'}`}</Text>
                 </View>
+                {/* Branches inherit the parent's grades and say "edit the parent gym",
+                    so the parent needs its own way into the editor. */}
+                <IconButton
+                  size={36}
+                  onPress={() => navigation.navigate('GymEdit', { returnToSessionId, gymId: gym.id })}
+                  accessibilityLabel={`Edit ${gym.name}`}
+                >
+                  <PencilIcon size={16} color={colors.textSecondary} />
+                </IconButton>
                 <ChevronRightIcon size={16} color={colors.textMuted} />
               </PressableScale>
             );

@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -12,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getExerciseNames } from '../domain/exerciseStore';
+import { getExerciseNames, getExercises } from '../domain/exerciseStore';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
 import { formatDuration } from '../domain/dateUtils';
 import { getGradeOptionsForGym } from '../domain/gymStore';
@@ -30,15 +29,17 @@ import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
   ChevronLeftIcon,
-  font,
-  getContrastText,
+  DialogHost,
   ListGroup,
   ListRow,
-  radius,
-  type Shadows,
-  spacing,
   StatRow,
+  font,
+  getContrastText,
+  radius,
+  showDialog,
+  spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -204,6 +205,19 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [title, setTitle] = useState(session?.title ?? '');
 
+  // Save title and notes however the screen is left -- the Back button, a swipe, or
+  // Android's back -- not only when a field happens to blur first.
+  const latestText = useRef({ title, notes });
+  latestText.current = { title, notes };
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', () => {
+        setSessionTitle(sessionId, latestText.current.title);
+        setSessionNotes(sessionId, latestText.current.notes);
+      }),
+    [navigation, sessionId]
+  );
+
   if (!session) {
     return (
       <SafeAreaView edges={['top']} style={styles.container}>
@@ -250,7 +264,8 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   const openSetEdit = (entry: LoggedSet) => {
     setEditingEntry({ kind: 'set', entry });
     setSetDraft({
-      exerciseName: entry.exerciseName,
+      // What the list shows (the exercise's current name), not the name it was logged under.
+      exerciseName: displayName(entry),
       reps: `${entry.reps}`,
       weight: `${entry.weight}`,
     });
@@ -291,9 +306,17 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
       return;
     }
 
+    // Changing the name moves the set to the exercise with that name; the set's old
+    // exercise id would otherwise keep winning and the edit would look ignored.
+    const typedName = setDraft.exerciseName.trim();
+    const renamed = typedName !== '' && typedName.toLowerCase() !== displayName(editingEntry.entry).toLowerCase();
+    const target = renamed
+      ? getExercises().find((e) => e.name.toLowerCase() === typedName.toLowerCase()) ?? null
+      : null;
     appendSessionCorrectionEvent(sessionId, 'SET_EDITED', {
       eventId: editingEntry.entry.eventId,
-      exerciseName: setDraft.exerciseName.trim() || editingEntry.entry.exerciseName,
+      ...(renamed ? { exerciseId: target?.id ?? null } : {}),
+      exerciseName: renamed ? (target?.name ?? typedName) : editingEntry.entry.exerciseName,
       reps: Math.max(1, Math.round(toNumber(setDraft.reps, editingEntry.entry.reps))),
       weight: Math.max(0, toNumber(setDraft.weight, editingEntry.entry.weight)),
       unit: 'kg',
@@ -305,7 +328,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   const deleteEntry = () => {
     if (!editingEntry) return;
     const type = editingEntry.kind === 'climb' ? 'climb' : 'set';
-    Alert.alert(`Delete ${type}?`, "This removes it from this session's history.", [
+    showDialog(`Delete ${type}?`, "This removes it from this session's history.", [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -324,7 +347,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   };
 
   const handleRemoveSession = () => {
-    Alert.alert(
+    showDialog(
       'Delete session?',
       "This removes it from Log and Calendar. You can't undo this in the app yet.",
       [
@@ -509,7 +532,11 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
         visible={editingEntry !== null}
         onRequestClose={closeEdit}
       >
-        <View style={styles.modalBackdrop}>
+        {/* Lifts the card above the keyboard so Save/Delete stay reachable while typing. */}
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
               {editingEntry?.kind === 'climb' ? 'Edit climb' : 'Edit set'}
@@ -629,7 +656,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                     style={[styles.modalInput, styles.smallInput]}
                     value={setDraft.weight}
                     onChangeText={(value) => setSetDraft((draft) => ({ ...draft, weight: value }))}
-                    keyboardType="number-pad"
+                    keyboardType="decimal-pad"
                     placeholder="Weight"
                     placeholderTextColor={colors.textMuted}
                   />
@@ -649,7 +676,9 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               <Button label="Save" onPress={saveEntryEdit} style={styles.modalButton} />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
+        {/* The delete confirmation opens from inside this sheet, so it draws in here. */}
+        {editingEntry !== null ? <DialogHost inline /> : null}
       </Modal>
     </SafeAreaView>
   );

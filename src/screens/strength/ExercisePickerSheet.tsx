@@ -15,6 +15,7 @@ import type { ExerciseCategoryRow, ExerciseRow } from '../../domain/types';
 import {
   ChevronLeftIcon,
   Chip,
+  DialogHost,
   MoreIcon,
   SearchIcon,
   StarIcon,
@@ -89,7 +90,13 @@ export const ExercisePickerSheet = ({
     if (visible) {
       setQuery('');
       setEditingId(null);
+      // The category behind the filter may have been deleted while the sheet was closed.
+      setFilter((current) =>
+        current === 'all' || current === 'favorites' || categories.some((c) => c.id === current) ? current : 'all'
+      );
     }
+    // Only on open: re-running on every category change would reset the view mid-use.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const categoryName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
@@ -120,6 +127,21 @@ export const ExercisePickerSheet = ({
     setRenameError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId]);
+
+  // Leaving the edit view unmounts the name field before it can blur, so every
+  // exit path saves a pending rename first.
+  const leaveEditing = () => {
+    saveName();
+    setEditingId(null);
+  };
+  const closeSheet = () => {
+    if (editing) saveName();
+    onClose();
+  };
+  const manageCategories = () => {
+    if (editing) saveName();
+    onManageCategories();
+  };
 
   const saveName = () => {
     if (!editing) return;
@@ -207,16 +229,16 @@ export const ExercisePickerSheet = ({
   );
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={editing ? () => setEditingId(null) : onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={editing ? leaveEditing : onClose}>
       <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close exercise list" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} accessibilityLabel="Close exercise list" />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.sm }]}>
           <View style={styles.grabber} />
 
           {editing ? (
             <>
               <View style={styles.headerRow}>
-                <Pressable onPress={() => setEditingId(null)} hitSlop={10} style={styles.back} accessibilityRole="button">
+                <Pressable onPress={leaveEditing} hitSlop={10} style={styles.back} accessibilityRole="button">
                   <ChevronLeftIcon size={18} color={colors.textPrimary} />
                   <Text style={styles.backText}>Exercises</Text>
                 </Pressable>
@@ -253,7 +275,7 @@ export const ExercisePickerSheet = ({
                     onPress={() => onSetCategory(editing.id, c.id)}
                   />
                 ))}
-                <Chip label="Manage…" onPress={onManageCategories} style={styles.manageChip} />
+                <Chip label="Manage…" onPress={manageCategories} style={styles.manageChip} />
               </View>
 
               <View style={styles.favoriteRow}>
@@ -309,7 +331,7 @@ export const ExercisePickerSheet = ({
                 {filterChip('all', 'All')}
                 {filterChip('favorites', '★ Favourites')}
                 {categories.map((c) => filterChip(c.id, c.name))}
-                <Chip label="Manage…" onPress={onManageCategories} style={styles.manageChip} />
+                <Chip label="Manage…" onPress={manageCategories} style={styles.manageChip} />
               </ScrollView>
 
               <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.listContent}>
@@ -343,6 +365,8 @@ export const ExercisePickerSheet = ({
             </>
           )}
         </View>
+        {/* Delete confirmations open from inside this sheet, so they draw in here. */}
+        {visible ? <DialogHost inline /> : null}
       </View>
     </Modal>
   );

@@ -36,7 +36,7 @@ import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { IconButton, SettingsGearIcon, spacing, useTheme } from '../ui';
+import { IconButton, SettingsGearIcon, showDialog, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { ActiveSessionCard } from './today/ActiveSessionCard';
@@ -158,11 +158,25 @@ export function LogScreen() {
   // abandoned rather than saved, so it never shows up as an empty workout.
   function handleFinish() {
     if (!activeSession) return;
-    const events = getSessionEvents(activeSession.id);
-    const logged =
-      activeSession.type === 'climb' ? applyClimbEvents(events).length : applySetEvents(events).length;
-    setSessionStatus(activeSession.id, logged > 0 ? 'completed' : 'abandoned');
-    setData(loadDashboard());
+    const session = activeSession;
+    const events = getSessionEvents(session.id);
+    const logged = session.type === 'climb' ? applyClimbEvents(events).length : applySetEvents(events).length;
+    const finish = () => {
+      setSessionStatus(session.id, logged > 0 ? 'completed' : 'abandoned');
+      setData(loadDashboard());
+    };
+    // Finish sits right beside Resume, so a slip shouldn't end a workout.
+    const what = session.type === 'climb' ? (logged === 1 ? 'climb' : 'climbs') : logged === 1 ? 'set' : 'sets';
+    showDialog(
+      logged > 0 ? 'Finish this session?' : 'Discard this session?',
+      logged > 0
+        ? `It'll be saved with ${logged} ${what}. You can't add to it afterwards.`
+        : "Nothing's been logged in it yet, so it won't be saved.",
+      [
+        { text: 'Keep going', style: 'cancel' },
+        { text: logged > 0 ? 'Finish' : 'Discard', style: logged > 0 ? 'default' : 'destructive', onPress: finish },
+      ]
+    );
   }
 
   const activeWhere = activeSession

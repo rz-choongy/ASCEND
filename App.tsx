@@ -25,6 +25,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
 import {
   CalendarTabIcon,
+  DialogHost,
   fontAssets,
   LogTabIcon,
   ProgressTabIcon,
@@ -124,6 +125,8 @@ function AppContent() {
           />
         </Stack.Navigator>
       </NavigationContainer>
+      {/* The app's own alert/confirm dialog -- see showDialog. */}
+      <DialogHost />
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
     </SafeAreaProvider>
   );

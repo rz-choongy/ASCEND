@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -19,6 +19,7 @@ import {
   ScreenHeader,
   font,
   radius,
+  showDialog,
   spacing,
   useTheme,
   type Shadows,
@@ -58,7 +59,7 @@ export const CategoriesScreen = ({ navigation }: Props) => {
     if (!newName.trim()) return;
     const existing = categories.find((c) => c.name.toLowerCase() === newName.trim().toLowerCase());
     if (existing) {
-      Alert.alert('Already there', `You already have a category called ${existing.name}.`);
+      showDialog('Already there', `You already have a category called ${existing.name}.`);
       return;
     }
     createCategory(newName);
@@ -78,13 +79,13 @@ export const CategoriesScreen = ({ navigation }: Props) => {
       setEditingId(null);
       reload();
     } catch (error) {
-      Alert.alert("Couldn't rename", error instanceof Error ? error.message : 'Try a different name.');
+      showDialog("Couldn't rename", error instanceof Error ? error.message : 'Try a different name.');
     }
   };
 
   const confirmDelete = (category: ExerciseCategoryRow) => {
     const n = counts.get(category.id) ?? 0;
-    Alert.alert(
+    showDialog(
       `Remove ${category.name}?`,
       n > 0 ? `Its ${countLabel(n)} will become uncategorised.` : 'No exercises are in it.',
       [

@@ -17,6 +17,19 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.1',
+    date: '2026-09-24',
+    changes: [
+      { kind: 'improved', text: 'Confirmations and messages now use the app\'s own dialog instead of the plain system pop-up, with a red button for anything that deletes.' },
+      { kind: 'fixed', text: 'Buttons that sometimes ignored taps, like cards, chips and the accent colours in Settings, now respond everywhere you touch them.' },
+      { kind: 'fixed', text: 'Finish on Today now asks first, so a slip beside Resume can\'t end a workout.' },
+      { kind: 'fixed', text: 'A typed weight or reps can no longer be left out of step with the − / + buttons, and Log set waits while a typed field is empty.' },
+      { kind: 'fixed', text: 'Renaming an exercise is saved even if you leave without pressing Done, and a set can be moved to another exercise from its session.' },
+      { kind: 'fixed', text: 'Session titles and notes save when you swipe back; edited weights accept decimals; the edit sheet moves above the keyboard.' },
+      { kind: 'fixed', text: 'A parent gym\'s grades can be edited again, a gym can\'t be saved without a name, and the Calendar\'s month view keeps up with Week view.' },
+    ],
+  },
+  {
     version: '2.2',
     date: '2026-09-24',
     changes: [

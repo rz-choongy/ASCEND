@@ -17,6 +17,7 @@ export { Button } from './components/Button';
 export { Card } from './components/Card';
 export { Chip } from './components/Chip';
 export { Divider } from './components/Divider';
+export { DialogHost, showDialog, type DialogButton } from './components/Dialog';
 export {
   ArrowRightIcon,
   CalendarTabIcon,

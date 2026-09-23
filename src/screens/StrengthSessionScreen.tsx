@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
-  Alert,
   Keyboard,
   Pressable,
   ScrollView,
@@ -62,6 +61,7 @@ import {
   StarIcon,
   font,
   radius,
+  showDialog,
   spacing,
   useTheme,
   type Shadows,
@@ -134,7 +134,10 @@ const formatSetLabel = (set: LoggedSet): string => {
   return `${weightLabel} × ${set.reps}`;
 };
 
+// Stepping closes any open number field first: the field shows its own draft, so
+// leaving it open would show a stale number next to the stepped value.
 const stepHaptic = (fn: () => void) => () => {
+  Keyboard.dismiss();
   void Haptics.selectionAsync();
   fn();
 };
@@ -148,6 +151,9 @@ type ValuePanelProps = {
   keyboardType: 'numeric' | 'decimal-pad';
   /** Called on every keystroke -- see Stepper for why this doesn't wait for blur. */
   onChangeText: (text: string) => void;
+  /** Whether typed text is a usable value; while it isn't, the parent blocks logging. */
+  isValid: (text: string) => boolean;
+  onValidityChange: (valid: boolean) => void;
   onDecrement: () => void;
   onIncrement: () => void;
   /** Extra controls on the label row (the weight panel's -5 / +5). */
@@ -161,6 +167,8 @@ const ValuePanel = ({
   editText,
   keyboardType,
   onChangeText,
+  isValid,
+  onValidityChange,
   onDecrement,
   onIncrement,
   accessory,
@@ -168,7 +176,11 @@ const ValuePanel = ({
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createPanelStyles(colors, typography), [colors, typography]);
   const [draft, setDraft] = useState<string | null>(null);
-  const endEditing = () => setDraft(null);
+  // Closing the field shows the real value again, so it's valid by definition.
+  const endEditing = () => {
+    setDraft(null);
+    onValidityChange(true);
+  };
 
   return (
     <View style={styles.panel}>
@@ -182,6 +194,7 @@ const ValuePanel = ({
           onChangeText={(text) => {
             setDraft(text);
             onChangeText(text);
+            onValidityChange(isValid(text));
           }}
           onBlur={endEditing}
           onSubmitEditing={endEditing}
@@ -238,6 +251,10 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   );
   const [categories, setCategories] = useState<ExerciseCategoryRow[]>(() => getCategories());
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  // A typed field that's empty or not a number: Log waits rather than logging the old value.
+  const [invalidFields, setInvalidFields] = useState({ reps: false, weight: false });
+  const setFieldValid = (field: 'reps' | 'weight') => (valid: boolean) =>
+    setInvalidFields((current) => (current[field] === !valid ? current : { ...current, [field]: !valid }));
   // Picked this session but not logged yet, so they still show in the session row.
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [title, setTitle] = useState(session?.title ?? '');
@@ -295,7 +312,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       }
 
       e.preventDefault();
-      Alert.alert('Leave this session?', 'You have logged sets in this session.', [
+      showDialog('Leave this session?', 'You have logged sets in this session.', [
         { text: 'Keep logging', style: 'cancel' },
         {
           text: 'Finish session',
@@ -407,6 +424,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   };
 
   const handleSelectExercise = (exerciseId: string) => {
+    Keyboard.dismiss();
     rememberCurrentInput();
     const exercise = exerciseState.exercises.find((e) => e.id === exerciseId);
     const next =
@@ -474,7 +492,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     ];
     const count = countExerciseData(strengthSessions, exercise);
     if (count.activeSets > 0) {
-      Alert.alert(
+      showDialog(
         `${exercise.name} is in this session`,
         `Undo its ${count.activeSets} ${count.activeSets === 1 ? 'set' : 'sets'} here first, then delete it.`
       );
@@ -486,7 +504,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             count.sessions === 1 ? 'session' : 'sessions'
           }, and its progress history. Sessions with nothing else in them are removed too. This can't be undone.`
         : "It hasn't been logged yet, so no history is lost.";
-    Alert.alert(`Delete ${exercise.name}?`, message, [
+    showDialog(`Delete ${exercise.name}?`, message, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: count.sets > 0 ? 'Delete exercise and data' : 'Delete exercise',
@@ -495,7 +513,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           try {
             deleteExerciseWithData(strengthSessions, exercise);
           } catch (error) {
-            Alert.alert("Couldn't delete it", error instanceof Error ? error.message : 'Try again.');
+            showDialog("Couldn't delete it", error instanceof Error ? error.message : 'Try again.');
             return;
           }
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -508,9 +526,11 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     ]);
   };
 
+  // Let the sheet finish closing first: iOS won't present a new screen while a
+  // native modal is still animating away.
   const handleManageCategories = () => {
     setIsPickerOpen(false);
-    navigation.navigate('Categories');
+    setTimeout(() => navigation.navigate('Categories'), 350);
   };
 
   // See ClimbSessionScreen.handleLog for why this guard exists.
@@ -518,6 +538,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const handleLogSet = () => {
     if (session?.status !== 'active' || !selectedExercise || isLoggingRef.current) return;
+    if (invalidFields.reps || invalidFields.weight) return;
     isLoggingRef.current = true;
     // Close any open number field so the steppers go back to their labels.
     Keyboard.dismiss();
@@ -580,7 +601,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    // Bottom edge too: Done sits at the very bottom and must clear the home indicator.
+    <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       {/* Header: close, the session's name (tap to rename), elapsed time */}
       <View style={styles.headerRow}>
         <IconButton onPress={() => navigation.navigate('Tabs')} accessibilityLabel="Close">
@@ -725,6 +747,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
               const n = parseRepsInput(text);
               if (n !== null) setReps(n);
             }}
+            isValid={(text) => parseRepsInput(text) !== null}
+            onValidityChange={setFieldValid('reps')}
             onDecrement={() => setReps((v) => Math.max(1, v - 1))}
             onIncrement={() => setReps((v) => v + 1)}
           />
@@ -737,6 +761,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
               const n = parseWeightInput(text);
               if (n !== null) setWeight(n);
             }}
+            isValid={(text) => parseWeightInput(text) !== null}
+            onValidityChange={setFieldValid('weight')}
             onDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - WEIGHT_STEP)))}
             onIncrement={() => setWeight((v) => roundWeight(v + WEIGHT_STEP))}
             accessory={
@@ -766,7 +792,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         <Button
           label={`Log set · ${weight === 0 ? 'BW' : `${formatWeight(weight)} kg`} × ${reps}`}
           onPress={handleLogSet}
-          disabled={!selectedExercise}
+          disabled={!selectedExercise || invalidFields.reps || invalidFields.weight}
         />
       </Card>
       ) : null}

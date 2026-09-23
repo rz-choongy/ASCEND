@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -32,6 +31,7 @@ import {
   Stepper,
   font,
   radius,
+  showDialog,
   spacing,
   useTheme,
   type Shadows,
@@ -200,7 +200,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const updateType = (nextType: GradingType) => {
     if (nextType === gradingType) return;
     if (!rowsMatchSeed(rows, gradingType)) {
-      Alert.alert(
+      showDialog(
         'Replace grade rows?',
         'Changing grading type will reset the current grade list.',
         [
@@ -238,11 +238,11 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
 
   const removeRow = (index: number) => {
     if (rows.length <= 1) {
-      Alert.alert('At least one grade required', 'A gym needs at least one grade — add another before removing this one.');
+      showDialog('At least one grade required', 'A gym needs at least one grade — add another before removing this one.');
       return;
     }
     const row = rows[index];
-    Alert.alert(`Delete ${row.label || 'this grade'}?`, 'This removes it from the gym’s grade list.', [
+    showDialog(`Delete ${row.label || 'this grade'}?`, 'This removes it from the gym’s grade list.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -272,7 +272,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     if (returnToSessionId) {
       const changed = setSessionGymId(returnToSessionId, gymId);
       if (!changed) {
-        Alert.alert(
+        showDialog(
           'Gym locked for this session',
           'Finish this climbing session before switching gyms. Your changes were saved.'
         );
@@ -297,7 +297,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     const branchWarning =
       count > 0 ? ` This also removes its ${count} branch${count === 1 ? '' : 'es'}.` : '';
     const noun = isBranchMode ? 'branch' : 'gym';
-    Alert.alert(
+    showDialog(
       `Delete ${editingGym.name}?`,
       `This removes the ${noun} and its grade list.${branchWarning} Logged sessions keep their history.`,
       [
@@ -310,7 +310,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
               deleteGym(editingGym.id);
               navigation.goBack();
             } catch (e) {
-              Alert.alert('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
+              showDialog('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
             }
           },
         },
@@ -356,7 +356,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         .filter((row) => row.label.length > 0);
 
       if (gradeOptions.length === 0) {
-        Alert.alert('Add at least one grade', 'Each gym needs at least one grade before saving.');
+        showDialog('Add at least one grade', 'Each gym needs at least one grade before saving.');
         return;
       }
 
@@ -531,7 +531,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         <Button
           label="Save gym"
           onPress={handleSave}
-          disabled={(!editingGym && !name.trim()) || isSaving}
+          disabled={!name.trim() || isSaving}
         />
         {editingGym && !editingGym.is_default ? (
           <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>

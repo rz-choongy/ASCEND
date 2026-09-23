@@ -245,14 +245,22 @@ export function CalendarScreen() {
     [filteredWeekSessions]
   );
 
+  // Month view reads the selected day's sessions from `currentMonth`, so stepping
+  // weeks has to carry the month along or switching back shows the wrong month.
+  function stepWeek(days: number) {
+    const next = addDays(selectedDate, days);
+    setSelectedDate(next);
+    setCurrentMonth(firstOfMonth(next));
+  }
+
   function prevWeek() {
     if (!canGoPrevWeek) return;
-    setSelectedDate((d) => addDays(d, -7));
+    stepWeek(-7);
   }
 
   function nextWeek() {
     if (!canGoNextWeek) return;
-    setSelectedDate((d) => addDays(d, 7));
+    stepWeek(7);
   }
 
   // List view (all-time)

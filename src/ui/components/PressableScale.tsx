@@ -6,11 +6,13 @@ type HitSlop = number | { top?: number; bottom?: number; left?: number; right?: 
 
 type PressableScaleProps = {
   onPress?: () => void;
+  onLongPress?: () => void;
   disabled?: boolean;
   scaleTo?: number;
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
+  accessibilityState?: { selected?: boolean; checked?: boolean };
   hitSlop?: HitSlop;
 };
 
@@ -20,13 +22,21 @@ const SPRING_CONFIG = { damping: 26, stiffness: 520, mass: 0.6 };
 const PRESSED_OPACITY = 0.85;
 const DISABLED_OPACITY = 0.4;
 
+// The Pressable *is* the animated element and wraps its content. It used to be an
+// invisible overlay drawn after the content -- but on Android any child with a
+// shadow (elevation) is drawn above that overlay and swallowed the tap, so some
+// buttons (cards, raised chips) only worked when you hit a bare edge.
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export const PressableScale = ({
   onPress,
+  onLongPress,
   disabled,
   scaleTo = 0.97,
   children,
   style,
   accessibilityLabel,
+  accessibilityState,
   hitSlop,
 }: PressableScaleProps) => {
   const scale = useSharedValue(1);
@@ -43,25 +53,26 @@ export const PressableScale = ({
   );
 
   return (
-    <Animated.View style={[styles.base, style, animatedStyle]}>
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      disabled={disabled}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled, ...accessibilityState }}
+      hitSlop={hitSlop}
+      onPressIn={() => {
+        scale.value = withSpring(scaleTo, SPRING_CONFIG);
+        opacity.value = withTiming(PRESSED_OPACITY, { duration: 80 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, SPRING_CONFIG);
+        opacity.value = withTiming(1, { duration: 140 });
+      }}
+      style={[styles.base, style, animatedStyle]}
+    >
       {children}
-      <Pressable
-        onPress={onPress}
-        disabled={disabled}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        hitSlop={hitSlop}
-        onPressIn={() => {
-          scale.value = withSpring(scaleTo, SPRING_CONFIG);
-          opacity.value = withTiming(PRESSED_OPACITY, { duration: 80 });
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1, SPRING_CONFIG);
-          opacity.value = withTiming(1, { duration: 140 });
-        }}
-        style={StyleSheet.absoluteFillObject}
-      />
-    </Animated.View>
+    </AnimatedPressable>
   );
 };
 

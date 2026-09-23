@@ -141,8 +141,9 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
         </View>
         {latest.exercises.length > 0 ? (
           <View>
-            {latest.exercises.slice(0, 4).map((ex) => (
-              <View key={ex.name} style={styles.exerciseRow}>
+            {latest.exercises.slice(0, 4).map((ex, index) => (
+              // Names can repeat (a renamed exercise next to an older name-only entry).
+              <View key={`${ex.name}-${index}`} style={styles.exerciseRow}>
                 <Text style={styles.exerciseName} numberOfLines={1}>
                   {ex.name}
                 </Text>

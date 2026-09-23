@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KilterAuthError } from '../integrations/kilter/kilterAuth';
 import { kilterAuth } from '../integrations/kilter/kilterClient';
 import { syncKilter } from '../integrations/kilter/kilterSync';
 import { setKilterUsername } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, ScreenHeader, font, radius, spacing, useTheme, type Shadows } from '../ui';
+import {
+  Button,
+  ScreenHeader,
+  font,
+  radius,
+  showDialog,
+  spacing,
+  useTheme,
+  type Shadows,
+} from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -43,14 +52,14 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
     setPassword('');
     try {
       const result = await syncKilter();
-      Alert.alert(
+      showDialog(
         'Kilter connected',
         result.added === 0
           ? 'No new sends to import.'
           : `Imported ${result.added} send${result.added === 1 ? '' : 's'}.`
       );
     } catch (e) {
-      Alert.alert(
+      showDialog(
         'Kilter connected',
         `Signed in, but the first import didn't go through (${
           e instanceof KilterAuthError ? e.message : 'something went wrong'

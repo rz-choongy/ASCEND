@@ -20,6 +20,8 @@ export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => 
     <PressableScale
       onPress={onPress}
       scaleTo={0.95}
+      // 36pt tall; the slop takes the tap area to 44 without making the pill bigger.
+      hitSlop={4}
       style={[styles.base, selected ? styles.selected : null, style]}
     >
       <Text style={[styles.text, selected ? styles.textSelected : null]} numberOfLines={1}>

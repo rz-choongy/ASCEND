@@ -1,5 +1,5 @@
 import { getFirst, run } from '../db/db';
-import { DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
+import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
@@ -10,7 +10,8 @@ const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 const KILTER_USERNAME_KEY = 'kilter_username';
 const KILTER_SESSION_KEY = 'kilter_session';
 
-const VALID_ACCENT_IDS: AccentColorId[] = ['blue', 'teal', 'purple', 'orange', 'rose'];
+// Derived from the palette so a new accent can't be silently rejected on the next launch.
+const VALID_ACCENT_IDS = Object.keys(ACCENT_PALETTE) as AccentColorId[];
 
 type AppSettingRow = {
   value: string;

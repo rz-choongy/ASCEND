@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
@@ -32,6 +32,7 @@ import {
   PressableScale,
   SegmentedControl,
   font,
+  showDialog,
   spacing,
   useTheme,
 } from '../ui';
@@ -79,7 +80,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       try {
         setWideBands(countWideGradeBandClimbs());
       } catch (e) {
-        Alert.alert(
+        showDialog(
           'Grade-range check failed',
           e instanceof Error ? `${e.name}: ${e.message}` : String(e)
         );
@@ -99,7 +100,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const handleCheckForUpdates = async () => {
     if (isCheckingUpdate) return;
     if (!Updates.isEnabled) {
-      Alert.alert(
+      showDialog(
         'Updates unavailable',
         "This build doesn't support over-the-air updates (e.g. Expo Go or a local dev build)."
       );
@@ -109,16 +110,16 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     try {
       const result = await Updates.checkForUpdateAsync();
       if (!result.isAvailable) {
-        Alert.alert('Up to date', "You're already on the latest version.");
+        showDialog('Up to date', "You're already on the latest version.");
         return;
       }
       await Updates.fetchUpdateAsync();
-      Alert.alert('Update ready', 'Restart now to apply it?', [
+      showDialog('Update ready', 'Restart now to apply it?', [
         { text: 'Later', style: 'cancel' },
         { text: 'Restart', onPress: () => void Updates.reloadAsync() },
       ]);
     } catch (e) {
-      Alert.alert("Couldn't check for updates", e instanceof Error ? e.message : 'Something went wrong.');
+      showDialog("Couldn't check for updates", e instanceof Error ? e.message : 'Something went wrong.');
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -130,7 +131,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     try {
       const result = await syncKilter();
       setKilterSyncedAt(getKilterLastSyncedAt());
-      Alert.alert(
+      showDialog(
         'Kilter synced',
         result.added === 0
           ? 'No new sends to import.'
@@ -141,7 +142,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         setKilterUsername(null);
         setKilterUser(null);
       }
-      Alert.alert(
+      showDialog(
         "Couldn't sync Kilter",
         e instanceof KilterAuthError ? e.message : 'Something went wrong. Try again.'
       );
@@ -151,7 +152,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   };
 
   const handleDisconnectKilter = () => {
-    Alert.alert(
+    showDialog(
       'Disconnect Kilter?',
       'ASCEND will forget your Kilter sign-in. Sends you already imported stay in your history.',
       [
@@ -167,7 +168,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
                 setKilterUser(null);
               })
               .catch((e: unknown) =>
-                Alert.alert("Couldn't disconnect", e instanceof Error ? e.message : 'Something went wrong.')
+                showDialog("Couldn't disconnect", e instanceof Error ? e.message : 'Something went wrong.')
               );
           },
         },
@@ -185,10 +186,10 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     // Always give the tap some feedback -- a silent no-op here is indistinguishable
     // from the button being broken, which is exactly what it looked like before this.
     if (wideBands.climbs === 0) {
-      Alert.alert('Nothing to refine', 'Every logged climb already has an exact grade.');
+      showDialog('Nothing to refine', 'Every logged climb already has an exact grade.');
       return;
     }
-    Alert.alert(
+    showDialog(
       'Refine old grade ranges?',
       `${plural(wideBands.climbs, 'climb')} across ${plural(wideBands.sessions, 'session')} ` +
         'were logged as a range, like V3–V4. This sets each one to the middle grade so they ' +
@@ -203,9 +204,9 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             try {
               const done = narrowWideGradeBands();
               setWideBands(countWideGradeBandClimbs());
-              Alert.alert('Grades refined', `Updated ${plural(done.climbs, 'climb')}.`);
+              showDialog('Grades refined', `Updated ${plural(done.climbs, 'climb')}.`);
             } catch (e) {
-              Alert.alert(
+              showDialog(
                 'Refine failed',
                 e instanceof Error ? `${e.name}: ${e.message}` : String(e)
               );
@@ -258,18 +259,20 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
                   const selected = id === accentId;
                   const swatchColor = option[mode].accent;
                   return (
+                    // The whole 36px cell is the tap target; the colour is drawn inside it.
+                    // A bare 24px swatch with hitSlop missed taps on Android.
                     <PressableScale
                       key={id}
                       onPress={() => setAccentId(id)}
                       scaleTo={0.9}
-                      hitSlop={6}
                       accessibilityLabel={option.label}
-                      style={[
-                        styles.accentSwatch,
-                        { backgroundColor: swatchColor },
-                        selected ? styles.accentSwatchSelected : null,
-                      ]}
-                    />
+                      accessibilityState={{ selected }}
+                      style={styles.accentTarget}
+                    >
+                      <View style={[styles.accentRing, selected ? styles.accentRingSelected : null]}>
+                        <View style={[styles.accentSwatch, { backgroundColor: swatchColor }]} />
+                      </View>
+                    </PressableScale>
                   );
                 })}
               </View>
@@ -417,19 +420,30 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
     accentSwatchRow: {
       flexDirection: 'row',
-      gap: 7,
       marginTop: 4,
+      marginRight: -6,
     },
-    // Round swatches, the way iOS presents a colour choice.
-    accentSwatch: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 2.5,
+    accentTarget: {
+      width: 36,
+      height: 36,
+    },
+    // Round swatches, the way iOS presents a colour choice; the selected one gets a ring.
+    accentRing: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      borderWidth: 2,
       borderColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    accentSwatchSelected: {
+    accentRingSelected: {
       borderColor: colors.textPrimary,
+    },
+    accentSwatch: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
     },
 
     footer: {

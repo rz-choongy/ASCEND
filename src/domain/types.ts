@@ -111,8 +111,13 @@ export type ClimbEditPayload = ClimbLogPayload & {
   eventId: string;
 };
 
-export type SetEditPayload = StrengthSetPayload & {
+export type SetEditPayload = Omit<StrengthSetPayload, 'exerciseId'> & {
   eventId: string;
+  /**
+   * Absent: keep the set's exercise. A string: move it to that exercise. null: it now
+   * belongs to no saved exercise (a typed name that matches none), so its name shows.
+   */
+  exerciseId?: string | null;
 };
 
 export type DeleteLoggedEntryPayload = {

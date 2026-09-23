@@ -95,7 +95,11 @@ export const applySetEvents = (events: EventLike[]): LoggedSet[] => {
       sets[targetIndex] = {
         ...sets[targetIndex],
         exerciseId:
-          typeof payload.exerciseId === 'string' ? payload.exerciseId : sets[targetIndex].exerciseId,
+          typeof payload.exerciseId === 'string'
+            ? payload.exerciseId
+            : payload.exerciseId === null
+              ? undefined
+              : sets[targetIndex].exerciseId,
         exerciseName: payload.exerciseName,
         reps: payload.reps,
         weight: payload.weight,
