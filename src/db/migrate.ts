@@ -33,7 +33,26 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 7;
+// Fixed ids so the defaults above can be tagged and the picker can tell built-ins from
+// the user's own. Built-ins can't be renamed or deleted, so seeding them is safe to repeat.
+const builtinExerciseCategories = [
+  { id: 'cat-pull', name: 'Pull', sort_order: 0 },
+  { id: 'cat-push', name: 'Push', sort_order: 1 },
+  { id: 'cat-legs', name: 'Legs', sort_order: 2 },
+  { id: 'cat-core', name: 'Core', sort_order: 3 },
+  { id: 'cat-fingers', name: 'Fingers', sort_order: 4 },
+  { id: 'cat-mobility', name: 'Mobility', sort_order: 5 },
+];
+
+const defaultExerciseCategories: Record<string, string> = {
+  'exercise-pullups': 'cat-pull',
+  'exercise-barbell-row': 'cat-pull',
+  'exercise-pushups': 'cat-push',
+  'exercise-dips': 'cat-push',
+  'exercise-hangboard': 'cat-fingers',
+};
+
+const APP_SCHEMA_VERSION = 8;
 
 type Migration = {
   version: number;
@@ -166,6 +185,8 @@ const ensureSchema = (): void => {
       updated_at INTEGER NOT NULL
     );
   `);
+
+  createExerciseCategoriesSchema();
 };
 
 /**
@@ -323,6 +344,39 @@ const createBodyweightLogsTable = (): void => {
   run('CREATE INDEX IF NOT EXISTS idx_bodyweight_logs_logged_at ON bodyweight_logs(logged_at);');
 };
 
+const createExerciseCategoriesSchema = (): void => {
+  run(`
+    CREATE TABLE IF NOT EXISTS exercise_categories (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      builtin INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+  ensureColumns('exercises', [
+    { name: 'category_id', ddl: 'category_id TEXT' },
+    { name: 'favorite', ddl: 'favorite INTEGER NOT NULL DEFAULT 0' },
+  ]);
+};
+
+const addExerciseCategories = (): void => {
+  createExerciseCategoriesSchema();
+  const seededAt = now();
+  builtinExerciseCategories.forEach((category) => {
+    run(
+      `INSERT OR IGNORE INTO exercise_categories (id, name, sort_order, builtin, created_at, updated_at)
+       VALUES (?, ?, ?, 1, ?, ?);`,
+      [category.id, category.name, category.sort_order, seededAt, seededAt]
+    );
+  });
+  // Only fills a blank: never overrides a category the user already chose.
+  Object.entries(defaultExerciseCategories).forEach(([exerciseId, categoryId]) => {
+    run('UPDATE exercises SET category_id = ? WHERE id = ? AND category_id IS NULL;', [categoryId, exerciseId]);
+  });
+};
+
 const migrations: Migration[] = [
   { version: 1, up: ensureBaseSchema },
   { version: 2, up: ensureBetaHardening },
@@ -331,6 +385,7 @@ const migrations: Migration[] = [
   { version: 5, up: backfillNumericGradeColors },
   { version: 6, up: createExternalLogsTable },
   { version: 7, up: createBodyweightLogsTable },
+  { version: 8, up: addExerciseCategories },
 ];
 
 export const migrate = (): void => {

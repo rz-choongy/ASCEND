@@ -17,6 +17,22 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.0',
+    date: '2026-09-23',
+    changes: [
+      { kind: 'new', text: 'A new look across the whole app: cleaner cards, a new typeface, and buttons and highlights in your accent colour.' },
+      { kind: 'new', text: 'Today is now a dashboard. Pick Climb or Strength and start in one tap, see how your last session compared with the one before, track the week, and jump back into recent sessions.' },
+      { kind: 'new', text: 'Choosing an exercise: search, favourites and recent at the top, then everything A to Z. Type a new name to add it on the spot.' },
+      { kind: 'new', text: 'Exercise categories: Pull, Push, Legs, Core, Fingers and Mobility built in, plus your own. Manage them from Settings or the exercise picker.' },
+      { kind: 'new', text: 'Star exercises as favourites so they are always first in the picker.' },
+      { kind: 'new', text: 'Log your bodyweight from Today and see the trend on Progress.' },
+      { kind: 'new', text: 'Name individual climbs as you log them.' },
+      { kind: 'improved', text: 'The strength logger is more compact: reps and weight side by side, the session timer and name in the header, and only this session\'s exercises in the top row.' },
+      { kind: 'improved', text: 'The tab bar is now a floating dock, and light/dark mode lives in Settings.' },
+      { kind: 'fixed', text: 'A batch of fixes to sessions and Kilter syncing.' },
+    ],
+  },
+  {
     version: '1.10',
     date: '2026-09-21',
     changes: [

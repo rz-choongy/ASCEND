@@ -31,7 +31,7 @@ import {
 } from '../domain/sessionStore';
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
-import { formatWeight } from '../domain/strengthProgress';
+import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
@@ -56,7 +56,6 @@ const MONTH_NAMES = [
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const RECENT_SHOWN = 4;
 
 function formatHeaderDate(d: Date): string {
@@ -125,7 +124,7 @@ export function LogScreen() {
   const { activeSession, strength } = data;
   const firstExercise = strength?.latest.exercises[0];
   const strengthHint = strength
-    ? `Last: ${strength.latest.title ?? DAY_SHORT[new Date(strength.latest.startedAt).getDay()]}`
+    ? `Last: ${strength.latest.title ?? formatDaysAgo(strength.latest.startedAt)}`
     : 'Sets, reps and PRs';
   const strengthStartsFrom = firstExercise
     ? `${firstExercise.name} · ${firstExercise.weight === 0 ? 'BW' : `${formatWeight(firstExercise.weight)} kg`} × ${firstExercise.reps}`

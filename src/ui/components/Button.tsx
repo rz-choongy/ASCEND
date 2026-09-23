@@ -89,7 +89,7 @@ export const Button = ({
     <PressableScale
       onPress={onPress}
       disabled={disabled}
-      style={[styles.base, variantStyles.button, disabled ? styles.disabled : null, style]}
+      style={[styles.base, variantStyles.button, style]}
     >
       <View style={styles.inner}>
         {icon ? icon(variantStyles.text.color) : null}
@@ -120,8 +120,5 @@ const createStyles = () =>
       ...font('medium'),
       fontSize: 16,
       letterSpacing: -0.16,
-    },
-    disabled: {
-      opacity: 0.4,
     },
   });

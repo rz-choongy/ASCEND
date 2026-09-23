@@ -51,6 +51,20 @@ export type ExerciseRow = {
   name: string;
   sort_order: number;
   active: number;
+  /** null = uncategorised. */
+  category_id: string | null;
+  /** 0 / 1 */
+  favorite: number;
+  created_at: number;
+  updated_at: number;
+};
+
+export type ExerciseCategoryRow = {
+  id: string;
+  name: string;
+  sort_order: number;
+  /** 1 for the fixed set (Pull, Push, ...), which can't be renamed or deleted. */
+  builtin: number;
   created_at: number;
   updated_at: number;
 };

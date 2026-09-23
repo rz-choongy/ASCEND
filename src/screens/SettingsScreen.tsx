@@ -286,8 +286,13 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             onPress={() => navigation.navigate('GymSelect')}
           />
           <ListRow
+            title="Exercise categories"
+            subtitle="Group strength exercises for the picker"
+            onPress={() => navigation.navigate('Categories')}
+          />
+          <ListRow
             title="Session timer"
-            subtitle="Show elapsed time in climbing sessions"
+            subtitle="Show elapsed time while you log a session"
             right={
               <Switch
                 value={timerEnabled}

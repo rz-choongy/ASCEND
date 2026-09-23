@@ -1,8 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import { getAll, getFirst, run } from '../db/db';
-import type { ExerciseRow } from './types';
+import type { ExerciseCategoryRow, ExerciseRow } from './types';
 
-export type { ExerciseRow } from './types';
+export type { ExerciseCategoryRow, ExerciseRow } from './types';
 
 type SortOrderRow = {
   max_sort_order: number | null;
@@ -50,7 +50,7 @@ export const getExercises = (): ExerciseRow[] => {
   );
 };
 
-export const createExercise = (name: string): ExerciseRow => {
+export const createExercise = (name: string, categoryId: string | null = null): ExerciseRow => {
   ensureDefaultExercisesSeeded();
   const normalizedName = normalizeExerciseName(name);
   const existing = getFirst<ExerciseRow>(
@@ -59,6 +59,11 @@ export const createExercise = (name: string): ExerciseRow => {
   );
 
   if (existing) {
+    // Re-adding an exercise under a category fills in a missing one, never overrides a choice.
+    if (categoryId && !existing.category_id) {
+      run('UPDATE exercises SET category_id = ? WHERE id = ?;', [categoryId, existing.id]);
+      existing.category_id = categoryId;
+    }
     if (existing.active === 0) {
       const timestamp = Date.now();
       run('UPDATE exercises SET active = 1, updated_at = ? WHERE id = ?;', [timestamp, existing.id]);
@@ -82,10 +87,11 @@ export const createExercise = (name: string): ExerciseRow => {
       name,
       sort_order,
       active,
+      category_id,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?);`,
-    [exerciseId, normalizedName, sortOrder, 1, timestamp, timestamp]
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    [exerciseId, normalizedName, sortOrder, 1, categoryId, timestamp, timestamp]
   );
 
   const created = getFirst<ExerciseRow>('SELECT * FROM exercises WHERE id = ? LIMIT 1;', [
@@ -95,4 +101,80 @@ export const createExercise = (name: string): ExerciseRow => {
     throw new Error('Exercise could not be created.');
   }
   return created;
+};
+
+export const setExerciseFavorite = (exerciseId: string, favorite: boolean): void => {
+  run('UPDATE exercises SET favorite = ?, updated_at = ? WHERE id = ?;', [favorite ? 1 : 0, Date.now(), exerciseId]);
+};
+
+export const setExerciseCategory = (exerciseId: string, categoryId: string | null): void => {
+  run('UPDATE exercises SET category_id = ?, updated_at = ? WHERE id = ?;', [categoryId, Date.now(), exerciseId]);
+};
+
+// --- Categories -------------------------------------------------------------
+// Built-ins (seeded by migration 8) come first in their fixed order, then the
+// user's own in the order they were added.
+
+export const getCategories = (): ExerciseCategoryRow[] =>
+  getAll<ExerciseCategoryRow>(
+    'SELECT * FROM exercise_categories ORDER BY builtin DESC, sort_order ASC, name ASC;'
+  );
+
+const normalizeCategoryName = (name: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Category name is required.');
+  }
+  return trimmed;
+};
+
+const findCategoryByName = (name: string): ExerciseCategoryRow | null =>
+  getFirst<ExerciseCategoryRow>('SELECT * FROM exercise_categories WHERE lower(name) = lower(?) LIMIT 1;', [name]);
+
+/** Returns the existing category when the name is already taken (case-insensitive). */
+export const createCategory = (name: string): ExerciseCategoryRow => {
+  const normalizedName = normalizeCategoryName(name);
+  const existing = findCategoryByName(normalizedName);
+  if (existing) return existing;
+
+  const sortOrderRow = getFirst<SortOrderRow>('SELECT MAX(sort_order) AS max_sort_order FROM exercise_categories;');
+  const category: ExerciseCategoryRow = {
+    id: uuid(),
+    name: normalizedName,
+    sort_order: (sortOrderRow?.max_sort_order ?? -1) + 1,
+    builtin: 0,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+  };
+  run(
+    `INSERT INTO exercise_categories (id, name, sort_order, builtin, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?);`,
+    [category.id, category.name, category.sort_order, 0, category.created_at, category.updated_at]
+  );
+  return category;
+};
+
+/** Custom categories only. Throws if the new name belongs to a different category. */
+export const renameCategory = (categoryId: string, name: string): void => {
+  const normalizedName = normalizeCategoryName(name);
+  const clash = findCategoryByName(normalizedName);
+  if (clash && clash.id !== categoryId) {
+    throw new Error(`There's already a category called ${clash.name}.`);
+  }
+  run('UPDATE exercise_categories SET name = ?, updated_at = ? WHERE id = ? AND builtin = 0;', [
+    normalizedName,
+    Date.now(),
+    categoryId,
+  ]);
+};
+
+export const countExercisesInCategory = (categoryId: string): number =>
+  getFirst<{ n: number }>('SELECT COUNT(*) AS n FROM exercises WHERE category_id = ? AND active = 1;', [categoryId])?.n ?? 0;
+
+/** Custom categories only. Its exercises become uncategorised rather than disappearing. */
+export const deleteCategory = (categoryId: string): void => {
+  const category = getFirst<ExerciseCategoryRow>('SELECT * FROM exercise_categories WHERE id = ? LIMIT 1;', [categoryId]);
+  if (!category || category.builtin === 1) return;
+  run('UPDATE exercises SET category_id = NULL WHERE category_id = ?;', [categoryId]);
+  run('DELETE FROM exercise_categories WHERE id = ?;', [categoryId]);
 };

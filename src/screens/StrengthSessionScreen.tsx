@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import {
   Alert,
   Keyboard,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +13,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatElapsed } from '../domain/dateUtils';
-import { getExercises, createExercise } from '../domain/exerciseStore';
+import {
+  createExercise,
+  getCategories,
+  getExercises,
+  setExerciseCategory,
+  setExerciseFavorite,
+} from '../domain/exerciseStore';
 import {
   appendEvent,
   getCompletedSessions,
@@ -27,9 +32,11 @@ import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import {
   buildExerciseDetail,
+  buildExerciseList,
   buildLoggerReference,
   estimateOneRepMax,
   exerciseKeyFor,
+  formatDaysAgo,
   formatMonthDay,
   formatWeight,
   initialInputFor,
@@ -40,7 +47,7 @@ import {
   type LoggerReference,
   type SetInput,
 } from '../domain/strengthProgress';
-import type { SessionRow } from '../domain/types';
+import type { ExerciseCategoryRow, ExerciseRow, SessionRow } from '../domain/types';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -49,6 +56,7 @@ import {
   CloseIcon,
   IconButton,
   PressableScale,
+  StarIcon,
   font,
   radius,
   spacing,
@@ -57,6 +65,7 @@ import {
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
+import { ExercisePickerSheet, type ExerciseUsage } from './strength/ExercisePickerSheet';
 
 type StrengthSetPayload = {
   exerciseId?: string;
@@ -69,13 +78,11 @@ type StrengthSetPayload = {
 
 type StrengthSessionScreenProps = RootStackScreenProps<'StrengthLogger'>;
 
-type ExerciseOption = {
-  id: string;
-  name: string;
-};
+type ExerciseOption = Pick<ExerciseRow, 'id' | 'name'>;
 
 type ExerciseState = {
-  exercises: ExerciseOption[];
+  exercises: ExerciseRow[];
+  /** null until the first exercise is picked. */
   selectedExerciseId: string | null;
 };
 
@@ -101,13 +108,16 @@ const buildReferenceFor = (
 const loadExerciseState = (selectedExerciseId?: string | null): ExerciseState => {
   const exercises = getExercises();
   const selectedExists = exercises.some((exercise) => exercise.id === selectedExerciseId);
-  return {
-    exercises,
-    selectedExerciseId: selectedExists
-      ? selectedExerciseId ?? null
-      : exercises[0]?.id ?? null,
-  };
+  return { exercises, selectedExerciseId: selectedExists ? (selectedExerciseId ?? null) : null };
 };
+
+/** Reopening a session carries on with the exercise last logged in it. */
+const lastLoggedExerciseId = (sessionId: string): string | null => {
+  const sets = applySetEvents(getSessionEvents(sessionId));
+  return sets[sets.length - 1]?.exerciseId ?? null;
+};
+
+const QUICK_STARTS_SHOWN = 3;
 
 const formatLogTime = (ms: number): string => {
   const date = new Date(ms);
@@ -220,12 +230,16 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return references.get(exercise.id) ?? null;
   };
 
-  const [exerciseState, setExerciseState] = useState<ExerciseState>(() => loadExerciseState());
+  const [exerciseState, setExerciseState] = useState<ExerciseState>(() =>
+    loadExerciseState(lastLoggedExerciseId(sessionId))
+  );
+  const [categories, setCategories] = useState<ExerciseCategoryRow[]>(() => getCategories());
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  // Picked this session but not logged yet, so they still show in the session row.
+  const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [title, setTitle] = useState(session?.title ?? '');
   const [showTimer, setShowTimer] = useState(true);
   const [now, setNow] = useState(() => Date.now());
-  const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
-  const [newExerciseName, setNewExerciseName] = useState('');
   // Start each exercise where you left off last time, not at a fixed 8 x 20.
   const startInput = (): SetInput => {
     const first = exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId);
@@ -246,6 +260,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   useFocusEffect(
     useCallback(() => {
       setSession(getSessionById(sessionId));
+      // Categories may have been added, renamed or deleted on the Categories screen.
+      setCategories(getCategories());
+      setExerciseState((state) => loadExerciseState(state.selectedExerciseId));
       setShowTimer(getShowSessionTimer());
       setNow(Date.now());
     }, [sessionId])
@@ -310,9 +327,51 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const recentSets = useMemo(() => loggedSets.slice().reverse(), [loggedSets]);
 
   const selectedExercise =
-    exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId) ??
-    exerciseState.exercises[0] ??
-    null;
+    exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId) ?? null;
+
+  // Last top set and date per exercise, for the picker and the quick starts. Older sets
+  // were logged without an id, so fall back to matching on the name.
+  const usage = useMemo(() => {
+    const byKey = new Map(buildExerciseList(historySessions).map((e) => [e.key, e]));
+    const map = new Map<string, ExerciseUsage>();
+    exerciseState.exercises.forEach((exercise) => {
+      const found = byKey.get(exercise.id) ?? byKey.get(exerciseKeyFor({ exerciseName: exercise.name }));
+      if (found) map.set(exercise.id, { lastSet: found.lastSet, lastAt: found.lastAt });
+    });
+    return map;
+  }, [historySessions, exerciseState.exercises]);
+
+  const sessionSets = useMemo(() => {
+    const counts = new Map<string, number>();
+    loggedSets.forEach((set) => {
+      if (set.exerciseId) counts.set(set.exerciseId, (counts.get(set.exerciseId) ?? 0) + 1);
+    });
+    return counts;
+  }, [loggedSets]);
+
+  // This session's exercises in the order they were first used: logged ones, then any
+  // picked but not logged yet.
+  const sessionExercises = useMemo(() => {
+    const ids: string[] = [];
+    loggedSets.forEach((set) => {
+      if (set.exerciseId && !ids.includes(set.exerciseId)) ids.push(set.exerciseId);
+    });
+    [...pickedIds, exerciseState.selectedExerciseId].forEach((id) => {
+      if (id && !ids.includes(id)) ids.push(id);
+    });
+    return ids
+      .map((id) => exerciseState.exercises.find((e) => e.id === id))
+      .filter((e): e is ExerciseRow => e !== undefined);
+  }, [loggedSets, pickedIds, exerciseState]);
+
+  // First pick of a session: favourites first, then whatever was done most recently.
+  const quickStarts = useMemo(() => {
+    const byRecent = (a: ExerciseRow, b: ExerciseRow) =>
+      (usage.get(b.id)?.lastAt ?? 0) - (usage.get(a.id)?.lastAt ?? 0);
+    const favorites = exerciseState.exercises.filter((e) => e.favorite === 1).sort(byRecent);
+    const recent = exerciseState.exercises.filter((e) => e.favorite !== 1 && usage.has(e.id)).sort(byRecent);
+    return [...favorites, ...recent].slice(0, QUICK_STARTS_SHOWN);
+  }, [exerciseState.exercises, usage]);
   const hasLogs = loggedSets.length > 0;
   const reference = selectedExercise ? getReference(selectedExercise) : null;
 
@@ -356,21 +415,43 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     setExerciseState((state) => ({ ...state, selectedExerciseId: exerciseId }));
   };
 
-  const handleCreateExercise = () => {
-    const name = newExerciseName.trim();
-    if (name.length === 0) return;
+  const handlePickExercise = (exerciseId: string) => {
+    if (exerciseId !== exerciseState.selectedExerciseId) handleSelectExercise(exerciseId);
+    setPickedIds((ids) => (ids.includes(exerciseId) ? ids : [...ids, exerciseId]));
+    setIsPickerOpen(false);
+  };
 
-    const created = createExercise(name);
-    const exercises = getExercises();
-    const selectedExerciseId = created.id;
-
-    setExerciseState({ exercises, selectedExerciseId });
+  const handleCreateExercise = (name: string, categoryId: string | null) => {
+    rememberCurrentInput();
+    const created = createExercise(name, categoryId);
+    setExerciseState({ exercises: getExercises(), selectedExerciseId: created.id });
+    // A brand-new exercise has no history to start from, so begin at bodyweight.
     setExerciseInputMemory((current) => ({ ...current, [created.id]: { reps: 8, weight: 0 } }));
     setReps(8);
     setWeight(0);
     setRecordChip(null);
-    setNewExerciseName('');
-    setIsAddExerciseOpen(false);
+    setPickedIds((ids) => [...ids, created.id]);
+    setIsPickerOpen(false);
+  };
+
+  const reloadExercises = () => setExerciseState((state) => loadExerciseState(state.selectedExerciseId));
+
+  const handleToggleFavorite = (exerciseId: string) => {
+    const exercise = exerciseState.exercises.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    void Haptics.selectionAsync();
+    setExerciseFavorite(exerciseId, exercise.favorite !== 1);
+    reloadExercises();
+  };
+
+  const handleSetCategory = (exerciseId: string, categoryId: string | null) => {
+    setExerciseCategory(exerciseId, categoryId);
+    reloadExercises();
+  };
+
+  const handleManageCategories = () => {
+    setIsPickerOpen(false);
+    navigation.navigate('Categories');
   };
 
   // See ClimbSessionScreen.handleLog for why this guard exists.
@@ -466,7 +547,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         ) : null}
       </View>
 
-      {/* Exercise chips: one scrolling row keeps the card high on screen */}
+      {/* This session's exercises only -- the full list lives in the picker sheet */}
+      <Text style={styles.sectionLabel}>This session</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -474,69 +556,85 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         contentContainerStyle={styles.chipRow}
         keyboardShouldPersistTaps="handled"
       >
-        {exerciseState.exercises.map((exercise) => (
-          <Chip
-            key={exercise.id}
-            label={exercise.name}
-            selected={exercise.id === exerciseState.selectedExerciseId}
-            onPress={() => handleSelectExercise(exercise.id)}
-          />
-        ))}
-        <Chip
-          label="+ Exercise"
-          selected={false}
-          onPress={() => setIsAddExerciseOpen(true)}
-          style={styles.addExerciseChip}
-        />
+        {sessionExercises.map((exercise) => {
+          const selected = exercise.id === exerciseState.selectedExerciseId;
+          const sets = sessionSets.get(exercise.id) ?? 0;
+          return (
+            <PressableScale
+              key={exercise.id}
+              onPress={() => handlePickExercise(exercise.id)}
+              scaleTo={0.95}
+              accessibilityLabel={`${exercise.name}, ${sets} ${sets === 1 ? 'set' : 'sets'}${selected ? ', selected' : ''}`}
+              style={[styles.sessionChip, selected ? styles.sessionChipSelected : null]}
+            >
+              <Text style={[styles.sessionChipText, selected ? styles.sessionChipTextSelected : null]} numberOfLines={1}>
+                {exercise.name}
+              </Text>
+              <View style={[styles.sessionChipCount, selected ? styles.sessionChipCountSelected : null]}>
+                <Text style={[styles.sessionChipCountText, selected ? styles.sessionChipTextSelected : null]}>
+                  {sets}
+                </Text>
+              </View>
+            </PressableScale>
+          );
+        })}
+        <Chip label="+ Exercise" onPress={() => setIsPickerOpen(true)} style={styles.addExerciseChip} />
       </ScrollView>
 
-      <Modal
-        transparent
-        animationType="fade"
-        visible={isAddExerciseOpen}
-        onRequestClose={() => setIsAddExerciseOpen(false)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setIsAddExerciseOpen(false)}>
-          <Pressable style={styles.modalCard} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Add exercise</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newExerciseName}
-              onChangeText={setNewExerciseName}
-              placeholder="Exercise name"
-              placeholderTextColor={colors.textMuted}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={handleCreateExercise}
-            />
-            <View style={styles.modalActions}>
-              <Button
-                label="Cancel"
-                variant="ghost"
-                onPress={() => {
-                  setNewExerciseName('');
-                  setIsAddExerciseOpen(false);
-                }}
-                style={styles.modalButton}
-              />
-              <Button
-                label="Add"
-                onPress={handleCreateExercise}
-                disabled={newExerciseName.trim().length === 0}
-                style={styles.modalButton}
-              />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <ExercisePickerSheet
+        visible={isPickerOpen}
+        exercises={exerciseState.exercises}
+        categories={categories}
+        usage={usage}
+        sessionSets={sessionSets}
+        onPick={handlePickExercise}
+        onCreate={handleCreateExercise}
+        onToggleFavorite={handleToggleFavorite}
+        onSetCategory={handleSetCategory}
+        onManageCategories={handleManageCategories}
+        onClose={() => setIsPickerOpen(false)}
+      />
 
       {!selectedExercise ? (
-        <View style={styles.emptyExerciseBox}>
-          <Text style={styles.emptyText}>Add an exercise to start logging sets.</Text>
-        </View>
+        <Card style={styles.firstPick}>
+          <Text style={styles.firstPickTitle}>What are you starting with?</Text>
+          {quickStarts.length > 0 ? (
+            <View>
+              {quickStarts.map((exercise, index) => {
+                const used = usage.get(exercise.id);
+                return (
+                  <Pressable
+                    key={exercise.id}
+                    onPress={() => handlePickExercise(exercise.id)}
+                    style={({ pressed }) => [
+                      styles.quickRow,
+                      index > 0 ? styles.quickRowDivided : null,
+                      pressed ? styles.quickRowPressed : null,
+                    ]}
+                    accessibilityRole="button"
+                  >
+                    <View style={styles.quickText}>
+                      <Text style={styles.quickName}>{exercise.name}</Text>
+                      <Text style={styles.quickSub}>
+                        {used
+                          ? `Last: ${used.lastSet.weight === 0 ? 'BW' : `${formatWeight(used.lastSet.weight)} kg`} × ${used.lastSet.reps} · ${formatDaysAgo(used.lastAt)}`
+                          : 'Favourite'}
+                      </Text>
+                    </View>
+                    {exercise.favorite === 1 ? <StarIcon size={16} color={colors.accent} filled /> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.emptyText}>Pick an exercise, or search to add your own.</Text>
+          )}
+          <Button label="Browse all exercises" variant="secondary" onPress={() => setIsPickerOpen(true)} />
+        </Card>
       ) : null}
 
       {/* Input: reps and weight side by side, then log */}
+      {selectedExercise ? (
       <Card style={styles.inputSection}>
         {recordChip !== null ? (
           <View style={styles.recordChip}>
@@ -610,6 +708,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           disabled={!selectedExercise}
         />
       </Card>
+      ) : null}
 
       {/* Logged sets */}
       <View style={styles.logHeaderRow}>
@@ -718,7 +817,85 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: spacing.sm,
   },
   addExerciseChip: {
-    backgroundColor: colors.accentMuted,
+    borderStyle: 'dashed',
+    borderColor: colors.textMuted,
+  },
+  // Session chips carry a set count, so they're built here rather than with Chip.
+  sessionChip: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: 40,
+    paddingLeft: spacing.s + 2,
+    paddingRight: 6,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+  },
+  sessionChipSelected: {
+    backgroundColor: colors.action,
+    borderColor: colors.action,
+  },
+  sessionChipText: {
+    ...font('medium'),
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  sessionChipTextSelected: {
+    color: colors.onAction,
+  },
+  sessionChipCount: {
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.fill,
+  },
+  sessionChipCountSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  sessionChipCountText: {
+    ...font('semibold'),
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
+  firstPick: {
+    padding: spacing.sm,
+    gap: spacing.s,
+    marginBottom: spacing.sm,
+  },
+  firstPickTitle: {
+    ...typography.title,
+    fontSize: 18,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 56,
+  },
+  quickRowDivided: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
+  },
+  quickRowPressed: {
+    opacity: 0.6,
+  },
+  quickText: {
+    flex: 1,
+    gap: 1,
+  },
+  quickName: {
+    ...typography.body,
+  },
+  quickSub: {
+    ...font('regular'),
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
   },
   modalBackdrop: {
     flex: 1,
@@ -757,15 +934,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   modalButton: {
     flex: 1,
-  },
-  emptyExerciseBox: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    ...shadows.card,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
   },
   inputSection: {
     padding: spacing.s,

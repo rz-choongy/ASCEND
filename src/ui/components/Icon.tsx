@@ -104,6 +104,36 @@ export const MountainMarkIcon = ({ size = 18, color, strokeWidth = 2 }: IconProp
   </Svg>
 );
 
+/** Favourite star; `filled` for a starred item. */
+export const StarIcon = ({ size = 18, color, strokeWidth = 1.8, filled = false }: IconProps & { filled?: boolean }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 3.5l2.6 5.3 5.9.9-4.25 4.1 1 5.8L12 16.9l-5.25 2.7 1-5.8L3.5 9.7l5.9-.9z"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+/** Horizontal ellipsis, for a row's secondary actions. */
+export const MoreIcon = ({ size = 18, color }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx={5.5} cy={12} r={1.6} fill={color} />
+    <Circle cx={12} cy={12} r={1.6} fill={color} />
+    <Circle cx={18.5} cy={12} r={1.6} fill={color} />
+  </Svg>
+);
+
+/** Magnifying glass for search fields. */
+export const SearchIcon = ({ size = 16, color, strokeWidth = 2 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx={11} cy={11} r={6.5} stroke={color} strokeWidth={strokeWidth} />
+    <Path d="M16 16l4 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+  </Svg>
+);
+
 /** Dumbbell, for strength sessions alongside the climb mountain. */
 export const DumbbellIcon = ({ size = 18, color, strokeWidth = 2 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

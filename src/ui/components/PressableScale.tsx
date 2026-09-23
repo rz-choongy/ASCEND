@@ -18,6 +18,7 @@ type PressableScaleProps = {
 // cubic-bezier(0.16,1,0.3,1) ease), with a light dim for the pressed state.
 const SPRING_CONFIG = { damping: 26, stiffness: 520, mass: 0.6 };
 const PRESSED_OPACITY = 0.85;
+const DISABLED_OPACITY = 0.4;
 
 export const PressableScale = ({
   onPress,
@@ -30,10 +31,16 @@ export const PressableScale = ({
 }: PressableScaleProps) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
+  // The animated opacity wins over any opacity in `style`, so the disabled dim
+  // has to be applied here or disabled buttons look tappable.
+  const restingOpacity = disabled ? DISABLED_OPACITY : 1;
+  const animatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value * restingOpacity,
+    }),
+    [restingOpacity]
+  );
 
   return (
     <Animated.View style={[styles.base, style, animatedStyle]}>

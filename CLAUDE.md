@@ -64,7 +64,7 @@ import { colors, spacing, Button, Card, Chip } from '../ui';
 Tokens: `colors`, `spacing`, `radius`, `typography`. Components: `Button`, `Card`, `Chip`, `Divider`, `ListRow`.
 
 ## Database Migrations
-`src/db/migrate.ts` runs at app start (called once in `App.tsx`). Add new schema changes as a new `Migration` entry in the `migrations` array. Current schema version: `APP_SCHEMA_VERSION = 6`.
+`src/db/migrate.ts` runs at app start (called once in `App.tsx`). Add new schema changes as a new `Migration` entry in the `migrations` array. Current schema version: `APP_SCHEMA_VERSION = 8`.
 
 ## Tests
 Domain logic tests live alongside source (`*.test.ts`). Jest preset is `jest-expo`. Run a single file with `npx jest <path>`. No screen-level tests exist.

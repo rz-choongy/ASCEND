@@ -26,9 +26,12 @@ export {
   DumbbellIcon,
   LogTabIcon,
   MoonIcon,
+  MoreIcon,
   MountainMarkIcon,
   ProgressTabIcon,
+  SearchIcon,
   SettingsGearIcon,
+  StarIcon,
   SunIcon,
 } from './components/Icon';
 export { IconButton } from './components/IconButton';
