@@ -18,10 +18,11 @@ import {
   IconButton,
   PressableScale,
   ScreenHeader,
-  getContrastText,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 
@@ -40,8 +41,8 @@ const gradingTypeLabel = (gradingType: string): string => {
 };
 
 export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
   const returnToSessionId = route.params?.returnToSessionId;
   const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
@@ -252,7 +253,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
+const createStyles = (colors: ThemeColors, shadows: Shadows) =>
   StyleSheet.create({
   screen: {
     flex: 1,
@@ -270,7 +271,7 @@ const createStyles = (colors: ThemeColors) =>
   backLabel: {
     color: colors.accent,
     fontSize: 17,
-    fontWeight: '400',
+    ...font('regular'),
     letterSpacing: -0.3,
   },
   content: {
@@ -283,11 +284,18 @@ const createStyles = (colors: ThemeColors) =>
     gap: spacing.xs,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
   },
   gymCardSelected: {
     backgroundColor: colors.accentMuted,
+    // A translucent tint over a shadow lets Android draw the elevation
+    // through the fill, so tinted cards sit flat.
+    elevation: 0,
+    shadowOpacity: 0,
   },
   gymTextCol: {
     flex: 1,
@@ -295,34 +303,37 @@ const createStyles = (colors: ThemeColors) =>
   gymName: {
     color: colors.textPrimary,
     fontSize: 17,
-    fontWeight: '600',
+    ...font('semibold'),
     letterSpacing: -0.3,
   },
   gymMeta: {
     color: colors.textSecondary,
     fontSize: 13,
-    fontWeight: '400',
+    ...font('regular'),
     marginTop: 2,
   },
-  // Capsule "Use" control -- the compact action shape iOS uses inside a row.
+  // Prism pill: outlined when idle, solid action fill once it's the gym in use.
   useButton: {
-    minHeight: 32,
+    minHeight: 44,
     borderRadius: radius.pill,
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
   useButtonSelected: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   useButtonText: {
-    color: colors.accent,
+    color: colors.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
+    ...font('semibold'),
   },
   useButtonTextSelected: {
-    color: getContrastText(colors.accent),
+    color: colors.onAction,
   },
   editIconGlyph: {
     color: colors.textSecondary,
@@ -331,17 +342,21 @@ const createStyles = (colors: ThemeColors) =>
   emptyCard: {
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.md,
     alignItems: 'center',
   },
   emptyText: {
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    ...font('semibold'),
   },
   emptySubText: {
     color: colors.textSecondary,
     fontSize: 14,
+    ...font('regular'),
     marginTop: 4,
   },
   footer: {
@@ -356,7 +371,7 @@ const createStyles = (colors: ThemeColors) =>
   emptyStateText: {
     color: colors.textMuted,
     fontSize: 16,
-    fontWeight: '400',
+    ...font('regular'),
     textAlign: 'center',
   },
 });

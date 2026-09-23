@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
 import { radius } from '../tokens/radius';
+import type { Shadows } from '../tokens/shadow';
 import { spacing } from '../tokens/spacing';
 import type { Typography } from '../tokens/typography';
 import { PressableScale } from './PressableScale';
@@ -18,8 +19,8 @@ type StatRowProps = {
 };
 
 export const StatRow = ({ items, style }: StatRowProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   return (
     <View style={[styles.strip, style]}>
       {items.map((item, index) => (
@@ -39,7 +40,7 @@ export const StatRow = ({ items, style }: StatRowProps) => {
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     strip: {
       flexDirection: 'row',
@@ -48,6 +49,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       paddingVertical: spacing.sm,
+      ...shadows.card,
     },
     cell: {
       flex: 1,
@@ -59,9 +61,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       fontSize: 22,
     },
     label: {
-      ...typography.meta,
-      fontSize: 12,
-      color: colors.textSecondary,
+      ...typography.section,
+      fontSize: 10,
     },
     divider: {
       width: StyleSheet.hairlineWidth,
@@ -98,8 +99,8 @@ export const StatTile = ({
   accessory,
   accessoryBeside = false,
 }: StatTileProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createTileStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createTileStyles(colors, typography, shadows), [colors, typography, shadows]);
   const subColor =
     subTone === 'positive' ? colors.success : subTone === 'negative' ? colors.danger : colors.textMuted;
 
@@ -167,14 +168,15 @@ const gridStyles = StyleSheet.create({
   pad: { flex: 1 },
 });
 
-const createTileStyles = (colors: ThemeColors, typography: Typography) =>
+const createTileStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     tile: {
       flex: 1,
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: 'transparent',
+      borderColor: colors.border,
+      ...shadows.card,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
     },
@@ -188,6 +190,10 @@ const createTileStyles = (colors: ThemeColors, typography: Typography) =>
     },
     tileHighlight: {
       backgroundColor: colors.accentMuted,
+      // A translucent tint over a shadow lets Android draw the elevation
+      // through the fill, so tinted cards sit flat.
+      elevation: 0,
+      shadowOpacity: 0,
       borderColor: colors.accent,
     },
     besideRow: {
@@ -215,8 +221,8 @@ const createTileStyles = (colors: ThemeColors, typography: Typography) =>
       color: colors.accent,
     },
     unit: {
+      ...typography.meta,
       fontSize: 13,
-      fontWeight: '500',
       color: colors.textSecondary,
     },
     sub: {

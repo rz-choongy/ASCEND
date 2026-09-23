@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { getContrastText, type ThemeColors } from '../tokens/colors';
+import type { ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
 import { PressableScale } from './PressableScale';
 
@@ -30,25 +31,29 @@ export const Chip = ({ label, selected = false, onPress, style }: ChipProps) => 
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    // Capsule filter, the shape iOS reserves for "pick one of these".
+    // Prism pill: hairline-bordered on the surface; selected fills with the
+    // accent, the same as the primary button.
     base: {
-      minHeight: 34,
+      minHeight: 36,
       paddingHorizontal: 14,
       borderRadius: radius.pill,
-      backgroundColor: colors.fill,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
     selected: {
-      backgroundColor: colors.accent,
+      backgroundColor: colors.action,
+      borderColor: colors.action,
     },
     text: {
+      ...font('medium'),
       color: colors.textSecondary,
       fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: -0.2,
+      letterSpacing: -0.1,
     },
     textSelected: {
-      color: getContrastText(colors.accent),
+      color: colors.onAction,
     },
   });

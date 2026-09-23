@@ -23,6 +23,7 @@ import {
   getSessionsForMonth,
 } from '../domain/sessionStore';
 import type { SessionRow, SessionType } from '../domain/types';
+import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import {
   ChevronLeftIcon,
@@ -30,8 +31,9 @@ import {
   Chip,
   IconButton,
   SegmentedControl,
-  getContrastText,
+  font,
   radius,
+  type Shadows,
   useTheme,
 } from '../ui';
 import { spacing } from '../ui';
@@ -127,8 +129,13 @@ function formatWeekRangeLabel(weekStart: Date): string {
 
 export function CalendarScreen() {
   const navigation = useNavigation<CalendarNavProp>();
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography, shadows),
+    [colors, typography, shadows]
+  );
+  const tabBarClearance = useTabBarClearance();
+  const panelContentStyle = [styles.sessionPanelContent, { paddingBottom: tabBarClearance }];
   const DOT_CLIMB = colors.accent;
   const DOT_STRENGTH = colors.success;
   const today = todayDate();
@@ -502,7 +509,7 @@ export function CalendarScreen() {
 
           <View style={styles.divider} />
 
-          <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+          <ScrollView style={styles.sessionPanel} contentContainerStyle={panelContentStyle}>
             <Text style={styles.panelDateLabel}>
               {WEEKDAY_FULL[selectedDate.getDay()]}, {MONTH_NAMES[selectedDate.getMonth()]}{' '}
               {selectedDate.getDate()}
@@ -546,7 +553,7 @@ export function CalendarScreen() {
             </IconButton>
           </View>
 
-          <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+          <ScrollView style={styles.sessionPanel} contentContainerStyle={panelContentStyle}>
             <View style={styles.panelHeader}>{filterChips}</View>
             {renderGroupedList(weekGroups, weekSessionReplayById)}
           </ScrollView>
@@ -554,7 +561,7 @@ export function CalendarScreen() {
       ) : null}
 
       {viewMode === 'list' ? (
-        <ScrollView style={styles.sessionPanel} contentContainerStyle={styles.sessionPanelContent}>
+        <ScrollView style={styles.sessionPanel} contentContainerStyle={panelContentStyle}>
           <View style={[styles.panelHeader, styles.listPanelHeader]}>{filterChips}</View>
           {renderGroupedList(allGroups, allSessionReplayById)}
         </ScrollView>
@@ -565,7 +572,7 @@ export function CalendarScreen() {
 
 const DAY_CELL_SIZE = 28;
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   root: {
     flex: 1,
@@ -608,7 +615,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   monthLabel: {
     ...typography.title,
     fontSize: 17,
-    fontWeight: '600',
   },
 
   // Weekday labels
@@ -625,7 +631,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   weekdayText: {
     ...typography.meta,
     fontSize: 12,
-    fontWeight: '600',
+    ...font('semibold'),
     color: colors.textMuted,
   },
 
@@ -650,21 +656,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'center',
   },
   dayNumberSelected: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.action,
   },
   dayNumber: {
     fontSize: 17,
-    fontWeight: '400',
+    ...font('regular'),
     letterSpacing: -0.4,
     color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
   },
   dayNumberTodayText: {
     color: colors.accent,
-    fontWeight: '600',
+    ...font('semibold'),
   },
   dayNumberSelectedText: {
-    color: getContrastText(colors.accent),
-    fontWeight: '600',
+    color: colors.onAction,
+    ...font('semibold'),
   },
   dayDot: {
     width: 5,
@@ -689,7 +696,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sessionPanelContent: {
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
   },
   panelHeader: {
     marginBottom: spacing.xs,
@@ -704,7 +710,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   panelDateLabel: {
     ...typography.title,
     fontSize: 17,
-    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   filterChips: {
@@ -738,11 +743,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   // Day card of bar-rows -- one inset-grouped panel per day.
+  // No overflow clip: the rows are transparent, and it would clip the shadow.
   dayCard: {
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     paddingHorizontal: spacing.sm,
-    overflow: 'hidden',
   },
   sessRow: {
     flexDirection: 'row',
@@ -765,24 +773,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   sessType: {
     ...typography.body,
     fontSize: 16,
-    fontWeight: '600',
+    ...font('semibold'),
   },
   sessMeta: {
     ...typography.bodyMuted,
     fontSize: 13,
     marginTop: 3,
+    fontVariant: ['tabular-nums'],
   },
   sessGradeChip: {
     ...typography.meta,
     fontSize: 11,
-    fontWeight: '600',
+    ...font('semibold'),
     color: colors.textPrimary,
     backgroundColor: colors.fill,
   },
   sessDur: {
     ...typography.numeric,
     fontSize: 15,
-    fontWeight: '500',
+    ...font('medium'),
     color: colors.textSecondary,
     marginLeft: 'auto',
     flexShrink: 0,

@@ -14,11 +14,13 @@ import {
   type ThemeColors,
   type ThemeMode,
 } from '../tokens/colors';
+import { createShadows, type Shadows } from '../tokens/shadow';
 import { createTypography, type Typography } from '../tokens/typography';
 
 type ThemeContextValue = {
   colors: ThemeColors;
   typography: Typography;
+  shadows: Shadows;
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
   accentId: AccentColorId;
@@ -50,6 +52,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     return {
       colors,
       typography: createTypography(colors),
+      shadows: createShadows(colors),
       mode,
       setMode,
       accentId,

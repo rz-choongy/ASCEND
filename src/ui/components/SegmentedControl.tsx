@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
+import { radius } from '../tokens/radius';
+import type { Shadows } from '../tokens/shadow';
 import { spacing } from '../tokens/spacing';
 import { PressableScale } from './PressableScale';
 
@@ -21,8 +24,8 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
 }: SegmentedControlProps<T>) {
-  const { colors, mode } = useTheme();
-  const styles = useMemo(() => createStyles(colors, mode === 'dark'), [colors, mode]);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
   return (
     <View style={styles.segmented}>
       {options.map((option) => {
@@ -44,43 +47,41 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-// UISegmentedControl proper: a translucent track with a lifted neutral thumb.
-// The thumb is a surface, not the accent -- selection reads from elevation, so
-// the accent stays reserved for actions.
-const createStyles = (colors: ThemeColors, isDark: boolean) =>
+// Prism's pill track with a lifted surface thumb. The thumb is a surface, not
+// the accent -- selection reads from elevation, so colour stays for highlights.
+const createStyles = (colors: ThemeColors, shadows: Shadows) =>
   StyleSheet.create({
     segmented: {
       flexDirection: 'row',
       backgroundColor: colors.fill,
-      borderRadius: 9,
-      padding: 2,
+      borderRadius: radius.pill,
+      padding: 3,
       gap: 2,
     },
     segment: {
       flex: 1,
+      minHeight: 36,
       paddingHorizontal: spacing.s,
-      paddingVertical: 7,
-      borderRadius: 7,
+      paddingVertical: 8,
+      borderRadius: radius.pill,
     },
     segmentActive: {
-      backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
-      shadowColor: '#000',
-      shadowOpacity: isDark ? 0 : 0.12,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-      elevation: isDark ? 0 : 2,
+      backgroundColor: colors.surfaceRaised,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.sm,
     },
     segmentText: {
-      fontSize: 13,
-      fontWeight: '500',
-      letterSpacing: -0.08,
+      ...font('medium'),
+      fontSize: 14,
+      letterSpacing: -0.1,
       color: colors.textSecondary,
       textAlign: 'center',
     },
     segmentTextActive: {
-      fontSize: 13,
-      fontWeight: '600',
-      letterSpacing: -0.08,
+      ...font('semibold'),
+      fontSize: 14,
+      letterSpacing: -0.1,
       color: colors.textPrimary,
       textAlign: 'center',
     },

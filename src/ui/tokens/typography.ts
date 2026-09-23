@@ -1,64 +1,70 @@
 import type { TextStyle } from 'react-native';
 import type { ThemeColors } from './colors';
+import { font } from './fonts';
 
-// The type scale follows the iOS text styles (large title / title / headline /
-// body / subhead / footnote), so the app reads as a native SwiftUI screen.
-// No `fontFamily` is set anywhere on purpose: that hands each platform its own
-// UI face -- SF Pro on iOS, Roboto on Android -- which is the whole point of the
-// system look, and sidesteps the RN "weight must name a loaded family" problem
-// that custom families have.
+// Prism's type, scaled up for a phone: Geist with tight tracking and tabular
+// figures, and small wide-tracked uppercase labels for sections. Prism's 13px
+// desktop base becomes 16px here so body copy stays readable at arm's length.
+// Weight comes from the family (see fonts.ts) -- don't add `fontWeight`.
 export const createTypography = (colors: ThemeColors) =>
   ({
-    // Large title. Screen headers that scroll under a nav bar.
+    // Screen titles.
     display: {
-      fontSize: 34,
-      fontWeight: '700' as const,
+      ...font('semibold'),
+      fontSize: 30,
       color: colors.textPrimary,
-      letterSpacing: 0.37,
+      letterSpacing: -0.6,
     },
-    // Title 2/3. Card and section headings.
+    // Card and sheet headings.
     title: {
-      fontSize: 22,
-      fontWeight: '700' as const,
+      ...font('semibold'),
+      fontSize: 20,
       color: colors.textPrimary,
-      letterSpacing: -0.4,
+      letterSpacing: -0.3,
     },
     // Figures. Tabular so columns of weights and counts stay aligned.
     numeric: {
+      ...font('semibold'),
       fontSize: 24,
-      fontWeight: '700' as const,
       color: colors.textPrimary,
       letterSpacing: -0.4,
       fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     },
-    // Grouped-list section header. Sentence case, not shouted -- modern iOS
-    // dropped the all-caps table headers.
+    // Prism's `--font-size-xs upper` label: "SETTINGS", "EXPORT".
     section: {
-      fontSize: 13,
-      fontWeight: '600' as const,
+      ...font('medium'),
+      fontSize: 11,
       color: colors.textSecondary,
-      letterSpacing: -0.08,
+      letterSpacing: 0.9,
+      textTransform: 'uppercase' as const,
     },
-    // Body / headline. The default reading size for row titles and content.
+    // Row titles and content.
     body: {
+      ...font('medium'),
       fontSize: 16,
-      fontWeight: '500' as const,
       color: colors.textPrimary,
-      letterSpacing: -0.24,
+      letterSpacing: -0.16,
     },
-    // Subhead. Supporting copy under a body line.
+    // Supporting copy under a body line.
     bodyMuted: {
+      ...font('regular'),
       fontSize: 14,
-      fontWeight: '400' as const,
       color: colors.textSecondary,
-      letterSpacing: -0.15,
+      letterSpacing: -0.07,
     },
-    // Footnote/caption. Timestamps, units, counts.
+    // Timestamps, units, counts.
     meta: {
+      ...font('medium'),
       fontSize: 12,
-      fontWeight: '500' as const,
       color: colors.textMuted,
-      letterSpacing: -0.05,
+      letterSpacing: -0.06,
+    },
+    // Durations and measurements: Prism's tabular mono (00:04.5s).
+    mono: {
+      ...font('mono'),
+      fontSize: 13,
+      color: colors.textSecondary,
+      fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     },
   }) as const;
 

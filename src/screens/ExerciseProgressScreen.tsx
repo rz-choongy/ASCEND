@@ -22,9 +22,11 @@ import {
   SegmentedControl,
   StatGrid,
   StatTile,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -57,8 +59,8 @@ const deltaSub = (delta: number | null, format: (d: number) => string) => {
 
 export function ExerciseProgressScreen({ navigation, route }: RootStackScreenProps<'ExerciseProgress'>) {
   const { exerciseKey, exerciseName } = route.params;
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [metric, setMetric] = useState<StrengthMetric>('e1rm');
@@ -232,8 +234,8 @@ type SessionRowProps = {
 };
 
 const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: SessionRowProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const { topSet, sets } = session;
 
   return (
@@ -274,11 +276,11 @@ const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: Session
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
     content: {
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: spacing.sm,
       paddingTop: spacing.xs,
       paddingBottom: spacing.lg,
     },
@@ -290,7 +292,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginLeft: -4,
       paddingVertical: spacing.xxs,
     },
-    backText: { fontSize: 17, color: colors.accent, letterSpacing: -0.4 },
+    backText: { ...font('regular'), fontSize: 17, color: colors.accent, letterSpacing: -0.4 },
     title: {
       ...typography.display,
       fontSize: 30,
@@ -302,6 +304,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
     },
@@ -311,7 +316,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       justifyContent: 'space-between',
       gap: spacing.xs,
     },
-    cardTitle: { ...typography.body, fontSize: 17, fontWeight: '600' },
+    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
     cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
     chart: { marginTop: spacing.s },
     range: { marginTop: spacing.s },
@@ -335,22 +340,23 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       alignItems: 'center',
       gap: 6,
     },
-    sessionDate: { ...typography.body, fontSize: 15, fontWeight: '500' },
+    sessionDate: { ...typography.body, fontSize: 15, fontVariant: ['tabular-nums'] },
     badge: {
       backgroundColor: colors.accentMuted,
-      borderRadius: 6,
-      paddingHorizontal: 5,
+      borderRadius: radius.pill,
+      paddingHorizontal: 6,
       paddingVertical: 1,
     },
-    badgeText: { fontSize: 11, fontWeight: '700', color: colors.accent },
+    badgeText: { ...font('bold'), fontSize: 11, color: colors.accent },
     sessionSummary: {
       flex: 1,
       ...typography.meta,
       fontSize: 14,
       color: colors.textSecondary,
       textAlign: 'right',
+      fontVariant: ['tabular-nums'],
     },
-    sessionTop: { color: colors.textPrimary, fontWeight: '600' },
+    sessionTop: { ...font('semibold'), color: colors.textPrimary },
     chevronOpen: { transform: [{ rotate: '90deg' }] },
     setList: { paddingBottom: spacing.s, gap: 6 },
     setRow: {
@@ -359,8 +365,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       paddingLeft: spacing.xs,
     },
     setIndex: { ...typography.meta, fontSize: 14, color: colors.textSecondary },
-    setValue: { ...typography.numeric, fontSize: 14, fontWeight: '500' },
+    setValue: { ...typography.numeric, ...font('medium'), fontSize: 14 },
 
     showAll: { alignItems: 'center', paddingTop: spacing.s },
-    showAllText: { fontSize: 15, color: colors.accent, fontWeight: '500' },
+    showAllText: { ...font('medium'), fontSize: 15, color: colors.accent },
   });

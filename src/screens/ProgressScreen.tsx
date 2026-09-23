@@ -10,12 +10,15 @@ import {
   ChevronRightIcon,
   IconButton,
   SegmentedControl,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
+import { useTabBarClearance } from '../navigation/tabBar';
 import { ClimbProgressView } from './progress/ClimbProgressView';
 import { StrengthProgressView } from './progress/StrengthProgressView';
 
@@ -30,8 +33,9 @@ type ProgressMode = 'climbing' | 'strength';
 type ProgressView = 'all' | 'month';
 
 export function ProgressScreen() {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const tabBarClearance = useTabBarClearance();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [streak, setStreak] = useState(0);
   const [mode, setMode] = useState<ProgressMode>('climbing');
@@ -89,7 +93,10 @@ export function ProgressScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
+      >
         <Text style={styles.screenTitle}>Progress</Text>
 
         <View style={styles.segmented}>
@@ -163,7 +170,7 @@ export function ProgressScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     root: {
       flex: 1,
@@ -173,7 +180,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flex: 1,
     },
     content: {
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: spacing.sm,
       paddingTop: spacing.md,
       paddingBottom: spacing.lg,
     },
@@ -197,7 +204,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     monthNavLabel: {
       ...typography.body,
-      fontWeight: '600',
+      ...font('semibold'),
       color: colors.textPrimary,
       minWidth: 150,
       textAlign: 'center',
@@ -205,6 +212,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     emptyMonth: {
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       padding: spacing.sm,
       alignItems: 'center',
       marginBottom: spacing.xs,
@@ -216,6 +226,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     emptyState: {
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       padding: spacing.md,
       alignItems: 'center',
       gap: spacing.xs,
@@ -223,7 +236,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     emptyStateTitle: {
       ...typography.body,
-      fontWeight: '600',
+      ...font('semibold'),
       textAlign: 'center',
     },
     emptyStateCopy: {

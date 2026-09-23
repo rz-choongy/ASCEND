@@ -56,14 +56,14 @@ export const LineChart = ({ points, height = 120, valueFormatter = defaultFormat
               <Polyline
                 points={plotted.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="none"
-                stroke={colors.accent}
+                stroke={colors.action}
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             ) : null}
             {showAllDots
-              ? plotted.slice(0, -1).map((p, i) => <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={colors.accent} />)
+              ? plotted.slice(0, -1).map((p, i) => <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={colors.action} />)
               : null}
             <Circle cx={last.x} cy={last.y} r={4.5} fill={colors.accent} />
           </Svg>

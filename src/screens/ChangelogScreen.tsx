@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { APP_VERSION, CHANGELOG, type ChangeKind } from '../changelog';
 import { formatMonthDay } from '../domain/strengthProgress';
 import type { RootStackScreenProps } from '../navigation/types';
-import { ChevronLeftIcon, IconButton, radius, spacing, useTheme } from '../ui';
+import { ChevronLeftIcon, IconButton, font, radius, spacing, useTheme, type Shadows } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -21,8 +21,8 @@ const formatEntryDate = (isoDate: string): string => {
 };
 
 export const ChangelogScreen = ({ navigation }: RootStackScreenProps<'Changelog'>) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
   const kindColor = (kind: ChangeKind): string =>
     kind === 'fixed' ? colors.success : kind === 'new' ? colors.accent : colors.textSecondary;
@@ -72,7 +72,7 @@ export const ChangelogScreen = ({ navigation }: RootStackScreenProps<'Changelog'
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     screen: {
       flex: 1,
@@ -111,7 +111,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     currentBadge: {
       backgroundColor: colors.accentMuted,
-      borderRadius: 6,
+      borderRadius: radius.pill,
       paddingHorizontal: 6,
       paddingVertical: 1,
       alignSelf: 'center',
@@ -119,7 +119,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     currentBadgeText: {
       color: colors.accent,
       fontSize: 11,
-      fontWeight: '700',
+      ...font('bold'),
     },
     date: {
       ...typography.meta,
@@ -129,6 +129,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       paddingHorizontal: spacing.s,
     },
     row: {
@@ -141,11 +144,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     kind: {
       ...typography.section,
-      fontWeight: '700',
+      ...font('bold'),
     },
     text: {
       ...typography.body,
-      fontWeight: '400',
+      ...font('regular'),
       lineHeight: 22,
     },
   });

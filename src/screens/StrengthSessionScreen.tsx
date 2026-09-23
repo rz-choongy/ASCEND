@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   Alert,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { formatElapsed } from '../domain/dateUtils';
 import { getExercises, createExercise } from '../domain/exerciseStore';
 import {
   appendEvent,
@@ -22,6 +23,7 @@ import {
   setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
+import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import {
   buildExerciseDetail,
@@ -44,12 +46,14 @@ import {
   Button,
   Card,
   Chip,
-  Divider,
-  ScreenHeader,
-  Stepper,
+  CloseIcon,
+  IconButton,
+  PressableScale,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -113,13 +117,96 @@ const formatLogTime = (ms: number): string => {
 };
 
 const formatSetLabel = (set: LoggedSet): string => {
-  const weightLabel = set.weight === 0 ? 'bw' : `${formatWeight(set.weight)}kg`;
-  return `${set.reps}x${weightLabel}`;
+  const weightLabel = set.weight === 0 ? 'BW' : `${formatWeight(set.weight)} kg`;
+  return `${weightLabel} × ${set.reps}`;
+};
+
+const stepHaptic = (fn: () => void) => () => {
+  void Haptics.selectionAsync();
+  fn();
+};
+
+type ValuePanelProps = {
+  label: string;
+  /** Formatted value shown at rest, e.g. "20" or "BW". */
+  value: string;
+  /** The bare number put in the field when tapped to type. */
+  editText: string;
+  keyboardType: 'numeric' | 'decimal-pad';
+  /** Called on every keystroke -- see Stepper for why this doesn't wait for blur. */
+  onChangeText: (text: string) => void;
+  onDecrement: () => void;
+  onIncrement: () => void;
+  /** Extra controls on the label row (the weight panel's -5 / +5). */
+  accessory?: ReactNode;
+};
+
+/** One half of the logging card: label, a big number you can tap to type, and - / + below. */
+const ValuePanel = ({
+  label,
+  value,
+  editText,
+  keyboardType,
+  onChangeText,
+  onDecrement,
+  onIncrement,
+  accessory,
+}: ValuePanelProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createPanelStyles(colors, typography), [colors, typography]);
+  const [draft, setDraft] = useState<string | null>(null);
+  const endEditing = () => setDraft(null);
+
+  return (
+    <View style={styles.panel}>
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>{label}</Text>
+        {accessory}
+      </View>
+      {draft !== null ? (
+        <TextInput
+          value={draft}
+          onChangeText={(text) => {
+            setDraft(text);
+            onChangeText(text);
+          }}
+          onBlur={endEditing}
+          onSubmitEditing={endEditing}
+          keyboardType={keyboardType}
+          returnKeyType="done"
+          autoFocus
+          selectTextOnFocus
+          style={[styles.value, styles.valueInput]}
+        />
+      ) : (
+        <Pressable
+          onPress={() => setDraft(editText)}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}: ${value}. Tap to type`}
+          style={styles.valueTap}
+        >
+          <Text style={styles.value}>{value}</Text>
+        </Pressable>
+      )}
+      <View style={styles.stepRow}>
+        <PressableScale onPress={stepHaptic(onDecrement)} scaleTo={0.92} style={styles.step} hitSlop={4} accessibilityLabel={`Decrease ${label}`}>
+          <Text style={styles.stepText}>−</Text>
+        </PressableScale>
+        <PressableScale onPress={stepHaptic(onIncrement)} scaleTo={0.92} style={styles.step} hitSlop={4} accessibilityLabel={`Increase ${label}`}>
+          <Text style={styles.stepText}>+</Text>
+        </PressableScale>
+      </View>
+    </View>
+  );
 };
 
 export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScreenProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography, shadows),
+    [colors, typography, shadows]
+  );
   const { sessionId } = route.params;
 
   const [session, setSession] = useState(() => getSessionById(sessionId));
@@ -135,6 +222,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   const [exerciseState, setExerciseState] = useState<ExerciseState>(() => loadExerciseState());
   const [title, setTitle] = useState(session?.title ?? '');
+  const [showTimer, setShowTimer] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
   // Start each exercise where you left off last time, not at a fixed 8 x 20.
@@ -157,8 +246,17 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   useFocusEffect(
     useCallback(() => {
       setSession(getSessionById(sessionId));
+      setShowTimer(getShowSessionTimer());
+      setNow(Date.now());
     }, [sessionId])
   );
+
+  // Passive session length, same as the climb logger; ticks only while it's shown.
+  useEffect(() => {
+    if (!showTimer || session?.status !== 'active') return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [showTimer, session?.status]);
 
   // See ClimbSessionScreen for why this listener exists: any exit path (header back,
   // hardware back, swipe, or Done) must never leave a session stuck 'active' forever.
@@ -336,18 +434,46 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   if (!session) {
     return (
       <SafeAreaView edges={['top']} style={styles.screen}>
-        <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
+        <Text style={{ ...font('regular'), color: colors.textMuted, padding: spacing.sm }}>Session not found.</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <ScreenHeader title="Log strength" onClose={() => navigation.navigate('Tabs')} />
+      {/* Header: close, the session's name (tap to rename), elapsed time */}
+      <View style={styles.headerRow}>
+        <IconButton onPress={() => navigation.navigate('Tabs')} accessibilityLabel="Close">
+          <CloseIcon size={16} color={colors.textPrimary} />
+        </IconButton>
+        <TextInput
+          style={styles.titleInput}
+          value={title}
+          onChangeText={setTitle}
+          onBlur={handleSaveTitle}
+          onSubmitEditing={handleSaveTitle}
+          placeholder={displayTitle}
+          placeholderTextColor={colors.textPrimary}
+          returnKeyType="done"
+          accessibilityLabel="Session name"
+          numberOfLines={1}
+        />
+        {showTimer && session.status === 'active' ? (
+          <View style={styles.timer} accessibilityLabel={`Elapsed ${formatElapsed(now - session.started_at)}`}>
+            <View style={styles.liveDot} />
+            <Text style={styles.timerValue}>{formatElapsed(Math.max(0, now - session.started_at))}</Text>
+          </View>
+        ) : null}
+      </View>
 
-      {/* Exercise chips */}
-      <Text style={styles.sectionLabel}>Exercise</Text>
-      <View style={styles.chipRow}>
+      {/* Exercise chips: one scrolling row keeps the card high on screen */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipScroller}
+        contentContainerStyle={styles.chipRow}
+        keyboardShouldPersistTaps="handled"
+      >
         {exerciseState.exercises.map((exercise) => (
           <Chip
             key={exercise.id}
@@ -362,7 +488,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           onPress={() => setIsAddExerciseOpen(true)}
           style={styles.addExerciseChip}
         />
-      </View>
+      </ScrollView>
 
       <Modal
         transparent
@@ -410,91 +536,80 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         </View>
       ) : null}
 
-      {/* Input controls */}
-      <Card accentColor={colors.accent} style={styles.inputSection}>
-        <View style={styles.loggingHeader}>
-          <Text style={styles.loggingEyebrow}>Logging</Text>
-          <Text style={styles.loggingExercise}>
-            {selectedExercise?.name ?? 'Select an exercise'}
-          </Text>
-          {reference ? (
-            <Text style={styles.lastTime} numberOfLines={2}>
-              {`Last time · ${formatMonthDay(reference.lastAt)} · `}
-              {reference.lastSets
-                .slice(0, LAST_TIME_SETS_SHOWN)
-                .map((set) => `${set.weight === 0 ? 'bw' : `${formatWeight(set.weight)} kg`} × ${set.reps}`)
-                .join(', ')}
-              {reference.lastSets.length > LAST_TIME_SETS_SHOWN
-                ? ` +${reference.lastSets.length - LAST_TIME_SETS_SHOWN} more`
-                : ''}
-            </Text>
-          ) : null}
-        </View>
-        <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Reps</Text>
-          <Stepper
-            value={`${reps}`}
-            editable={{
-              text: `${reps}`,
-              keyboardType: 'numeric',
-              onChangeText: (text) => {
-                const n = parseRepsInput(text);
-                if (n !== null) setReps(n);
-              },
-            }}
-            onDecrement={() => setReps((v) => Math.max(1, v - 1))}
-            onIncrement={() => setReps((v) => v + 1)}
-          />
-        </View>
-
-        <View style={styles.inputRow}>
-          <Text style={styles.inputLabel}>Weight (kg)</Text>
-          <Stepper
-            compact
-            value={weight === 0 ? 'Bodyweight' : `${formatWeight(weight)} kg`}
-            editable={{
-              text: formatWeight(weight),
-              keyboardType: 'decimal-pad',
-              onChangeText: (text) => {
-                const n = parseWeightInput(text);
-                if (n !== null) setWeight(n);
-              },
-            }}
-            onDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - WEIGHT_STEP)))}
-            onIncrement={() => setWeight((v) => roundWeight(v + WEIGHT_STEP))}
-            onBigDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - BIG_WEIGHT_STEP)))}
-            onBigIncrement={() => setWeight((v) => roundWeight(v + BIG_WEIGHT_STEP))}
-            bigStepLabel="5"
-          />
-        </View>
-
+      {/* Input: reps and weight side by side, then log */}
+      <Card style={styles.inputSection}>
         {recordChip !== null ? (
           <View style={styles.recordChip}>
             <Text style={styles.recordChipText}>New est. 1RM · {formatWeight(recordChip)} kg</Text>
           </View>
-        ) : null}
-
+        ) : reference ? (
+          <Text style={styles.lastTime} numberOfLines={1}>
+            <Text style={styles.lastTimeLead}>Last time</Text>
+            {` · ${formatMonthDay(reference.lastAt)} · `}
+            {reference.lastSets
+              .slice(0, LAST_TIME_SETS_SHOWN)
+              .map((set) => `${set.weight === 0 ? 'BW' : `${formatWeight(set.weight)}`} × ${set.reps}`)
+              .join(', ')}
+          </Text>
+        ) : (
+          <Text style={styles.lastTime} numberOfLines={1}>
+            First time logging {selectedExercise?.name ?? 'this'}
+          </Text>
+        )}
+        <View style={styles.panels}>
+          <ValuePanel
+            label="Reps"
+            value={`${reps}`}
+            editText={`${reps}`}
+            keyboardType="numeric"
+            onChangeText={(text) => {
+              const n = parseRepsInput(text);
+              if (n !== null) setReps(n);
+            }}
+            onDecrement={() => setReps((v) => Math.max(1, v - 1))}
+            onIncrement={() => setReps((v) => v + 1)}
+          />
+          <ValuePanel
+            label="Kg"
+            value={weight === 0 ? 'BW' : formatWeight(weight)}
+            editText={formatWeight(weight)}
+            keyboardType="decimal-pad"
+            onChangeText={(text) => {
+              const n = parseWeightInput(text);
+              if (n !== null) setWeight(n);
+            }}
+            onDecrement={() => setWeight((v) => Math.max(0, roundWeight(v - WEIGHT_STEP)))}
+            onIncrement={() => setWeight((v) => roundWeight(v + WEIGHT_STEP))}
+            accessory={
+              <View style={styles.bigSteps}>
+                <PressableScale
+                  onPress={stepHaptic(() => setWeight((v) => Math.max(0, roundWeight(v - BIG_WEIGHT_STEP))))}
+                  scaleTo={0.9}
+                  style={styles.bigStep}
+                  hitSlop={8}
+                  accessibilityLabel={`Minus ${BIG_WEIGHT_STEP} kg`}
+                >
+                  <Text style={styles.bigStepText}>−{BIG_WEIGHT_STEP}</Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={stepHaptic(() => setWeight((v) => roundWeight(v + BIG_WEIGHT_STEP)))}
+                  scaleTo={0.9}
+                  style={styles.bigStep}
+                  hitSlop={8}
+                  accessibilityLabel={`Plus ${BIG_WEIGHT_STEP} kg`}
+                >
+                  <Text style={styles.bigStepText}>+{BIG_WEIGHT_STEP}</Text>
+                </PressableScale>
+              </View>
+            }
+          />
+        </View>
         <Button
-          label="Log Set"
+          label={`Log set · ${weight === 0 ? 'BW' : `${formatWeight(weight)} kg`} × ${reps}`}
           onPress={handleLogSet}
           disabled={!selectedExercise}
-          style={styles.logSetButton}
         />
       </Card>
-
-      <View style={styles.titleBlock}>
-        <Text style={styles.titleLabel}>Optional title</Text>
-        <TextInput
-          style={styles.titleInput}
-          value={title}
-          onChangeText={setTitle}
-          onBlur={handleSaveTitle}
-          onSubmitEditing={handleSaveTitle}
-          placeholder={displayTitle}
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="done"
-        />
-      </View>
 
       {/* Logged sets */}
       <View style={styles.logHeaderRow}>
@@ -511,29 +626,29 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           />
         ) : null}
       </View>
-      <Divider style={styles.divider} />
-
       <ScrollView style={styles.logList} contentContainerStyle={styles.logListContent}>
         {recentSets.length === 0 ? (
           <Text style={styles.emptyText}>No sets logged yet.</Text>
         ) : null}
+        {recentSets.length > 0 ? (
+          <View style={styles.logCard}>
         {recentSets.map((set, index) => (
-          <View key={`${set.exerciseName}-${set.createdAt}-${index}`} style={styles.logRow}>
-            <View style={styles.logAccent} />
-            <View style={styles.logBody}>
-              <Text style={styles.logExercise}>{set.exerciseName}</Text>
-              <View style={styles.logDetailRow}>
-                <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
-                {recordEventIds.has(set.eventId) ? (
-                  <View style={styles.recordBadge}>
-                    <Text style={styles.recordBadgeText}>PR</Text>
-                  </View>
-                ) : null}
+          <View
+            key={`${set.exerciseName}-${set.createdAt}-${index}`}
+            style={[styles.logRow, index > 0 ? styles.logRowDivided : null]}
+          >
+            <Text style={styles.logExercise} numberOfLines={1}>{set.exerciseName}</Text>
+            {recordEventIds.has(set.eventId) ? (
+              <View style={styles.recordBadge}>
+                <Text style={styles.recordBadgeText}>PR</Text>
               </View>
-            </View>
+            ) : null}
+            <Text style={styles.logDetail}>{formatSetLabel(set)}</Text>
             <Text style={styles.logTime}>{formatLogTime(set.createdAt)}</Text>
           </View>
         ))}
+          </View>
+        ) : null}
       </ScrollView>
 
       {/* Bottom action */}
@@ -546,7 +661,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   screen: {
     flex: 1,
@@ -555,36 +670,52 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  titleBlock: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.s,
+  // Header row: close / editable session name / elapsed time.
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
     marginBottom: spacing.sm,
   },
-  titleLabel: {
-    ...typography.meta,
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 1,
-  },
   titleInput: {
-    color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-    minHeight: 30,
+    ...typography.title,
+    flex: 1,
+    minHeight: 38,
     padding: 0,
+  },
+  timer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.s,
+    minHeight: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.fill,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+  },
+  timerValue: {
+    ...typography.mono,
+    fontSize: 14,
+    color: colors.textPrimary,
   },
   sectionLabel: {
     ...typography.section,
     marginBottom: spacing.xs,
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
+  // Bleeds to the screen edges so chips scroll under the gutter, not clip at it.
+  chipScroller: {
+    flexGrow: 0,
+    marginHorizontal: -spacing.sm,
     marginBottom: spacing.sm,
+  },
+  chipRow: {
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   addExerciseChip: {
     backgroundColor: colors.accentMuted,
@@ -600,6 +731,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     width: '100%',
     borderRadius: radius.xl,
     backgroundColor: colors.surfaceAlt,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.lg,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -612,6 +746,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     minHeight: 48,
     borderRadius: radius.md,
     backgroundColor: colors.fill,
+    ...font('regular'),
     color: colors.textPrimary,
     fontSize: 17,
     paddingHorizontal: spacing.s,
@@ -626,47 +761,38 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   emptyExerciseBox: {
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.sm,
     marginBottom: spacing.sm,
   },
   inputSection: {
-    padding: spacing.sm,
-    paddingLeft: spacing.sm + 6,
-    gap: spacing.xs,
+    padding: spacing.s,
+    gap: spacing.s,
     marginBottom: spacing.sm,
   },
-  loggingHeader: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-    paddingBottom: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  loggingEyebrow: {
-    ...typography.meta,
-    fontSize: 13,
-    color: colors.accent,
-  },
-  loggingExercise: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.4,
-    marginTop: 1,
-  },
-  inputRow: {
+  panels: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
-  inputLabel: {
+  bigSteps: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  bigStep: {
+    minWidth: 34,
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
+  },
+  bigStepText: {
+    ...font('mono'),
+    fontSize: 11,
     color: colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '400',
-    letterSpacing: -0.24,
-    width: 82,
-  },
-  logSetButton: {
-    marginTop: spacing.xs,
   },
   logHeaderRow: {
     flexDirection: 'row',
@@ -674,7 +800,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     justifyContent: 'space-between',
   },
   undoButton: {
-    minHeight: 30,
+    minHeight: 44,
     paddingHorizontal: spacing.s,
     paddingVertical: spacing.xxs,
     borderRadius: radius.pill,
@@ -682,55 +808,62 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   undoText: {
     fontSize: 13,
   },
-  divider: {
-    marginVertical: spacing.xs,
-  },
   logList: {
     flex: 1,
   },
   logListContent: {
+    paddingTop: spacing.xs,
     paddingBottom: spacing.lg,
   },
+  logCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
+  },
+  // One line per set: exercise, PR flag, weight x reps, time.
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.s,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    marginBottom: 6,
+    gap: spacing.xs,
+    minHeight: 44,
+    paddingHorizontal: spacing.sm,
   },
-  logAccent: {
-    width: 4,
-    height: '70%',
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    marginRight: spacing.s,
-  },
-  logBody: {
-    flex: 1,
+  logRowDivided: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
   },
   logExercise: {
+    ...font('medium'),
+    flex: 1,
     color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.24,
+    fontSize: 15,
+    letterSpacing: -0.15,
   },
   logDetail: {
-    ...typography.numeric,
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 1,
+    ...font('semibold'),
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
   },
   logTime: {
+    ...typography.mono,
+    fontSize: 12,
     color: colors.textMuted,
-    fontSize: 13,
+    minWidth: 40,
+    textAlign: 'right',
   },
   lastTime: {
-    ...typography.meta,
+    ...font('regular'),
     fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 4,
+    fontVariant: ['tabular-nums'],
+    paddingHorizontal: 2,
+  },
+  lastTimeLead: {
+    ...font('medium'),
+    color: colors.textPrimary,
   },
   recordChip: {
     alignSelf: 'flex-start',
@@ -740,28 +873,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingVertical: 5,
   },
   recordChipText: {
+    ...font('bold'),
     color: colors.accent,
     fontSize: 13,
-    fontWeight: '700',
-  },
-  logDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    fontVariant: ['tabular-nums'],
   },
   recordBadge: {
     backgroundColor: colors.accentMuted,
-    borderRadius: 6,
+    borderRadius: radius.sm,
     paddingHorizontal: 5,
     paddingVertical: 1,
     marginTop: 1,
   },
   recordBadgeText: {
+    ...font('bold'),
     color: colors.accent,
     fontSize: 11,
-    fontWeight: '700',
   },
   emptyText: {
+    ...font('regular'),
     color: colors.textMuted,
     fontSize: 14,
   },
@@ -772,3 +902,65 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     width: '100%',
   },
 });
+
+// Each half sits as a flat inset well inside the card, so the two values read
+// as one control rather than two more boxes.
+const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
+  StyleSheet.create({
+    panel: {
+      flex: 1,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: radius.md,
+      padding: spacing.xs,
+      paddingTop: spacing.xs + 2,
+      gap: 2,
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 24,
+      paddingHorizontal: 4,
+    },
+    label: {
+      ...typography.section,
+    },
+    valueTap: {
+      alignSelf: 'stretch',
+      alignItems: 'center',
+    },
+    value: {
+      ...typography.numeric,
+      fontSize: 34,
+      lineHeight: 42,
+      letterSpacing: -0.8,
+      textAlign: 'center',
+    },
+    // Same footprint as the number it replaces, underlined so it reads as editing.
+    valueInput: {
+      alignSelf: 'center',
+      minWidth: 72,
+      padding: 0,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.action,
+    },
+    stepRow: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      marginTop: 2,
+    },
+    step: {
+      flex: 1,
+      height: 40,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderSoft,
+    },
+    stepText: {
+      ...font('regular'),
+      fontSize: 22,
+      lineHeight: 26,
+      color: colors.textPrimary,
+    },
+  });

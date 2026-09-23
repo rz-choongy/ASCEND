@@ -7,6 +7,8 @@ export {
 } from './tokens/colors';
 export { spacing } from './tokens/spacing';
 export { radius } from './tokens/radius';
+export { font, fontAssets, fontFamily, type FontWeightName } from './tokens/fonts';
+export { type Shadows } from './tokens/shadow';
 export { type Typography } from './tokens/typography';
 export { ThemeProvider, useTheme } from './theme/ThemeContext';
 
@@ -21,6 +23,7 @@ export {
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
+  DumbbellIcon,
   LogTabIcon,
   MoonIcon,
   MountainMarkIcon,
@@ -29,7 +32,7 @@ export {
   SunIcon,
 } from './components/Icon';
 export { IconButton } from './components/IconButton';
-export { ListGroup, ListRow } from './components/ListRow';
+export { ListGroup, ListRow, ListSectionHeader } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';
 export { SegmentedControl } from './components/SegmentedControl';

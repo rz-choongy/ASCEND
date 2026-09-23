@@ -18,7 +18,7 @@ import { getSessionEvents } from '../../domain/sessionStore';
 import { getProgressGradeGymId, setProgressGradeGymId } from '../../domain/settingsStore';
 import { formatMonthDay } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
-import { Chip, StatGrid, StatTile, radius, spacing, useTheme } from '../../ui';
+import { Chip, StatGrid, StatTile, font, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
@@ -37,8 +37,8 @@ type Props = {
 };
 
 export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   // undefined = user hasn't picked one this session yet -- fall back to the persisted
   // setting. A string is either a gym id or the ALL_GYMS sentinel.
   const [selectedScope, setSelectedScope] = useState<string | null | undefined>(undefined);
@@ -270,7 +270,7 @@ const miniStyles = StyleSheet.create({
   bar: { width: 6, borderRadius: 2 },
 });
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     stack: { gap: spacing.xs },
     dots: { flexDirection: 'row', gap: 4 },
@@ -280,6 +280,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
     },
@@ -289,7 +292,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       justifyContent: 'space-between',
       gap: spacing.xs,
     },
-    cardTitle: { ...typography.body, fontSize: 17, fontWeight: '600' },
+    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
     cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
 
     // Scrolls rather than wraps: the row stays one clean line however many gyms
@@ -309,7 +312,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.numeric,
       width: 46,
       fontSize: 12,
-      fontWeight: '600',
       textAlign: 'right',
       color: colors.textSecondary,
     },
@@ -319,7 +321,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.numeric,
       width: 20,
       fontSize: 12,
-      fontWeight: '500',
+      ...font('medium'),
       color: colors.textMuted,
     },
 
@@ -330,7 +332,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       top: -14,
       ...typography.numeric,
       fontSize: 12,
-      fontWeight: '500',
+      ...font('medium'),
       color: colors.textSecondary,
     },
     spark: { width: '100%', height: 44 },
@@ -346,8 +348,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     sparkLblText: {
       flex: 1,
       textAlign: 'center',
+      ...font('medium'),
       fontSize: 11,
       color: colors.textMuted,
-      fontWeight: '500',
     },
   });

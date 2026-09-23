@@ -14,10 +14,10 @@ type PressableScaleProps = {
   hitSlop?: HitSlop;
 };
 
-// Gentle and quick, the way UIKit's own controls respond: a slight settle
-// rather than a bounce, paired with the dim iOS uses for highlight state.
-const SPRING_CONFIG = { damping: 18, stiffness: 420, mass: 0.6 };
-const PRESSED_OPACITY = 0.72;
+// Prism's press: a fast spring that lands without overshoot (its
+// cubic-bezier(0.16,1,0.3,1) ease), with a light dim for the pressed state.
+const SPRING_CONFIG = { damping: 26, stiffness: 520, mass: 0.6 };
+const PRESSED_OPACITY = 0.85;
 
 export const PressableScale = ({
   onPress,

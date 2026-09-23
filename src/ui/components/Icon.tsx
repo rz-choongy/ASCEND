@@ -104,6 +104,19 @@ export const MountainMarkIcon = ({ size = 18, color, strokeWidth = 2 }: IconProp
   </Svg>
 );
 
+/** Dumbbell, for strength sessions alongside the climb mountain. */
+export const DumbbellIcon = ({ size = 18, color, strokeWidth = 2 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 /** Sun, matching SF Symbols' `sun.max` -- the light-mode side of the theme toggle. */
 export const SunIcon = ({ size = 17, color, strokeWidth = 1.7 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

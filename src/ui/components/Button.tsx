@@ -1,17 +1,18 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, type TextStyle, type ViewStyle } from 'react-native';
+import { useMemo, type ReactNode } from 'react';
+import { StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { getContrastText, type ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
 import { PressableScale } from './PressableScale';
 
 /**
- * Mirrors the SwiftUI button roles:
- * - `primary`   filled / `.borderedProminent`
- * - `secondary` tinted  / `.bordered` with a tint
- * - `ghost`     grey    / `.bordered`
- * - `plain`     text-only / `.plain` -- nav-bar and toolbar actions
- * - `success` / `warning` are filled buttons in a semantic colour.
+ * Prism's pill buttons:
+ * - `primary`   solid pill in the user's accent -- the CTA
+ * - `secondary` bordered pill on the surface ("Add audio")
+ * - `ghost`     soft filled pill
+ * - `plain`     text-only -- inline and header actions
+ * - `success` / `warning` are solid pills in a semantic colour.
  */
 export type ButtonVariant =
   | 'primary'
@@ -26,6 +27,8 @@ type ButtonProps = {
   onPress?: () => void;
   variant?: ButtonVariant;
   disabled?: boolean;
+  /** Leading icon, drawn in the label colour: `(color) => <Icon color={color} />`. */
+  icon?: (color: string) => ReactNode;
   style?: ViewStyle;
   textStyle?: TextStyle;
 };
@@ -34,8 +37,12 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
   switch (variant) {
     case 'secondary':
       return {
-        button: { backgroundColor: colors.accentMuted },
-        text: { color: colors.accent },
+        button: {
+          backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.borderSoft,
+        },
+        text: { color: colors.textPrimary },
       };
     case 'ghost':
       return {
@@ -45,7 +52,7 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
     case 'plain':
       return {
         button: { backgroundColor: 'transparent' },
-        text: { color: colors.accent },
+        text: { color: colors.textPrimary },
       };
     case 'success':
       return {
@@ -60,11 +67,8 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
     case 'primary':
     default:
       return {
-        button: { backgroundColor: colors.accent },
-        // Derived rather than fixed: the accent is user-selectable, and a
-        // bright tint (amber, teal) needs dark text where a saturated one
-        // (blue, purple) needs white.
-        text: { color: getContrastText(colors.accent) },
+        button: { backgroundColor: colors.action },
+        text: { color: colors.onAction },
       };
   }
 };
@@ -74,6 +78,7 @@ export const Button = ({
   onPress,
   variant = 'primary',
   disabled = false,
+  icon,
   style,
   textStyle,
 }: ButtonProps) => {
@@ -86,9 +91,12 @@ export const Button = ({
       disabled={disabled}
       style={[styles.base, variantStyles.button, disabled ? styles.disabled : null, style]}
     >
-      <Text style={[styles.text, variantStyles.text, textStyle]} numberOfLines={1}>
-        {label}
-      </Text>
+      <View style={styles.inner}>
+        {icon ? icon(variantStyles.text.color) : null}
+        <Text style={[styles.text, variantStyles.text, textStyle]} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
     </PressableScale>
   );
 };
@@ -96,17 +104,22 @@ export const Button = ({
 const createStyles = () =>
   StyleSheet.create({
     base: {
-      minHeight: 46,
-      borderRadius: radius.lg,
+      minHeight: 48,
+      borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 18,
+      paddingHorizontal: 20,
       paddingVertical: 10,
     },
+    inner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
     text: {
+      ...font('medium'),
       fontSize: 16,
-      fontWeight: '600',
-      letterSpacing: -0.3,
+      letterSpacing: -0.16,
     },
     disabled: {
       opacity: 0.4,

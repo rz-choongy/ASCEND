@@ -3,27 +3,47 @@ import { Children, Fragment, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
+import type { Shadows } from '../tokens/shadow';
 import { spacing } from '../tokens/spacing';
 import { ChevronRightIcon } from './Icon';
 
 /**
- * The rounded panel that holds a run of `ListRow`s -- iOS's inset-grouped
- * section. Separators are drawn between children and inset to the text column,
- * so the rows read as one card rather than a stack of boxes.
+ * Prism's uppercase group label ("SETTINGS", "EXPORT") that sits above a
+ * `ListGroup` or card.
+ */
+export const ListSectionHeader = ({ title, style }: { title: string; style?: ViewStyle }) => {
+  const { typography } = useTheme();
+  return <Text style={[typography.section, sectionHeaderStyles.header, style]}>{title}</Text>;
+};
+
+const sectionHeaderStyles = StyleSheet.create({
+  header: {
+    marginLeft: spacing.xxs,
+    marginBottom: spacing.xs,
+  },
+});
+
+/**
+ * The card that holds a run of `ListRow`s. Separators are drawn between
+ * children and inset to the text column, so the rows read as one card rather
+ * than a stack of boxes.
  */
 export const ListGroup = ({ children, style }: { children: ReactNode; style?: ViewStyle }) => {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
   const items = Children.toArray(children).filter(Boolean);
   return (
     <View style={[styles.group, style]}>
-      {items.map((child, index) => (
-        <Fragment key={index}>
-          {index > 0 ? <View style={styles.separator} /> : null}
-          {child}
-        </Fragment>
-      ))}
+      <View style={styles.groupInner}>
+        {items.map((child, index) => (
+          <Fragment key={index}>
+            {index > 0 ? <View style={styles.separator} /> : null}
+            {child}
+          </Fragment>
+        ))}
+      </View>
     </View>
   );
 };
@@ -48,8 +68,8 @@ export const ListRow = ({
   chevron,
   onPress,
 }: ListRowProps) => {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
   const showChevron = chevron ?? (onPress != null && right == null);
   const body = (
     <>
@@ -83,13 +103,19 @@ export const ListRow = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
+const createStyles = (colors: ThemeColors, shadows: Shadows) =>
   StyleSheet.create({
+    // Outer view carries the shadow; rows are clipped by `groupInner` so the
+    // pressed highlight respects the rounded corners without clipping the shadow.
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      ...shadows.card,
+    },
+    groupInner: {
+      borderRadius: radius.lg,
       overflow: 'hidden',
     },
     separator: {
@@ -100,8 +126,8 @@ const createStyles = (colors: ThemeColors) =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      minHeight: 44,
-      paddingVertical: 11,
+      minHeight: 48,
+      paddingVertical: 12,
       paddingHorizontal: spacing.sm,
       backgroundColor: colors.surface,
     },
@@ -115,12 +141,13 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
     },
     title: {
+      ...font('medium'),
       color: colors.textPrimary,
       fontSize: 16,
-      fontWeight: '500',
-      letterSpacing: -0.24,
+      letterSpacing: -0.16,
     },
     subtitle: {
+      ...font('regular'),
       color: colors.textSecondary,
       fontSize: 13,
       letterSpacing: -0.1,
@@ -131,9 +158,11 @@ const createStyles = (colors: ThemeColors) =>
       marginLeft: spacing.s,
     },
     meta: {
+      ...font('regular'),
       color: colors.textSecondary,
-      fontSize: 16,
-      letterSpacing: -0.24,
+      fontSize: 15,
+      letterSpacing: -0.1,
+      fontVariant: ['tabular-nums'],
     },
     right: {
       marginTop: 4,

@@ -6,13 +6,13 @@ import { kilterAuth } from '../integrations/kilter/kilterClient';
 import { syncKilter } from '../integrations/kilter/kilterSync';
 import { setKilterUsername } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
-import { Button, ScreenHeader, radius, spacing, useTheme } from '../ui';
+import { Button, ScreenHeader, font, radius, spacing, useTheme, type Shadows } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
 export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'KilterConnect'>) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -125,7 +125,7 @@ export const KilterConnectScreen = ({ navigation }: RootStackScreenProps<'Kilter
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     screen: {
       flex: 1,
@@ -144,12 +144,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     notice: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       padding: spacing.s,
       gap: spacing.xs,
     },
     noticeTitle: {
       ...typography.body,
-      fontWeight: '600',
+      ...font('semibold'),
     },
     noticeBody: {
       ...typography.bodyMuted,
@@ -175,7 +178,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       color: colors.textPrimary,
       paddingHorizontal: spacing.s,
       fontSize: 16,
-      fontWeight: '400',
+      ...font('regular'),
     },
     error: {
       ...typography.bodyMuted,

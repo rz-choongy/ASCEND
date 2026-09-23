@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
+import { Dock } from './src/navigation/Dock';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { ChangelogScreen } from './src/screens/ChangelogScreen';
@@ -22,6 +24,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
 import {
   CalendarTabIcon,
+  fontAssets,
   LogTabIcon,
   ProgressTabIcon,
   ThemeProvider,
@@ -39,36 +42,18 @@ type TabIconProps = {
 // A UITabBar item carries no chrome of its own -- the tint colour alone says
 // which tab is selected, so the icon is drawn bare.
 const TabIcon = ({ name, color }: TabIconProps) => {
-  if (name === 'Calendar') return <CalendarTabIcon size={25} color={color} />;
-  if (name === 'Progress') return <ProgressTabIcon size={25} color={color} />;
-  return <LogTabIcon size={25} color={color} />;
+  if (name === 'Calendar') return <CalendarTabIcon size={20} color={color} />;
+  if (name === 'Progress') return <ProgressTabIcon size={20} color={color} />;
+  return <LogTabIcon size={20} color={color} />;
 };
 
 function TabNavigator() {
-  const { colors } = useTheme();
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        // Labelled, hairline-topped, system-tinted: the iOS tab bar. Height is
-        // left to the navigator so the home-indicator inset is respected.
-        tabBarShowLabel: true,
-        tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.separator,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
-          letterSpacing: -0.05,
-          marginTop: 1,
-        },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarIcon: ({ color }) => <TabIcon name={route.name} color={color} />,
-      })}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => (
+        <Dock {...props} renderIcon={(name, color) => <TabIcon name={name as keyof TabParamList} color={color} />} />
+      )}
     >
       <Tab.Screen name="Log" component={LogScreen} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
@@ -92,7 +77,7 @@ function AppContent() {
         card: colors.background,
         border: colors.separator,
         text: colors.textPrimary,
-        primary: colors.accent,
+        primary: colors.action,
       },
     };
   }, [mode, colors]);
@@ -140,11 +125,13 @@ function AppContent() {
 
 // Matches darkColors.background — used only before the DB (and therefore ThemeProvider,
 // which reads the persisted theme preference from it) is confirmed ready.
-const FALLBACK_BACKGROUND = '#000000';
+const FALLBACK_BACKGROUND = '#0a0a0a';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  // A font that fails to load isn't fatal: text falls back to the system face.
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
 
   useEffect(() => {
     try {
@@ -185,7 +172,7 @@ export default function App() {
     );
   }
 
-  if (!isReady) {
+  if (!isReady || (!fontsLoaded && !fontError)) {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: FALLBACK_BACKGROUND }} />

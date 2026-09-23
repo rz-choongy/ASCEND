@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { font } from '../tokens/fonts';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
 import { spacing } from '../tokens/spacing';
@@ -151,8 +152,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   valueLabel: {
     color: colors.textSecondary,
+    ...font('medium'),
     fontSize: 11,
-    fontWeight: '500',
     fontVariant: ['tabular-nums'],
     marginBottom: 5,
   },
@@ -180,7 +181,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   categoryLabel: {
     color: colors.textMuted,
+    ...font('medium'),
     fontSize: 11,
-    fontWeight: '500',
   },
 });

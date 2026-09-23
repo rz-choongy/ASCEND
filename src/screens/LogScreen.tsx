@@ -1,49 +1,47 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { addDays, formatLocalDate } from '../domain/dateUtils';
-import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
+import { applyClimbEvents } from '../domain/climbLogUtils';
 import {
-  buildRecentSends,
-  buildWeekCompletion,
-  findHardestSendThisWeek,
-  type RecentSend,
-} from '../domain/progressInsights';
+  buildRecentSessions,
+  buildWeekActivity,
+  lastClimbSessions,
+  lastStrengthSessions,
+  type ClimbSessionSummary,
+  type LastSessions,
+  type RecentSession,
+  type StrengthSessionSummary,
+  type WeekActivity,
+} from '../domain/dashboard';
+import { addDays, startOfWeek } from '../domain/dateUtils';
+import { ensureSelectedClimbGym, getGymById, getSelectedClimbGym } from '../domain/gymStore';
 import {
   createSession,
   getActiveSession,
-  getAllCompletedSessionCount,
+  getCompletedSessions,
+  getSessionEvents,
   getSessionStreak,
-  getSessionsForDate,
   getSessionsForDateRange,
+  setSessionStatus,
 } from '../domain/sessionStore';
+import { getShowSessionTimer } from '../domain/settingsStore';
+import { applySetEvents } from '../domain/strengthLogUtils';
+import { formatWeight } from '../domain/strengthProgress';
 import type { SessionRow, SessionType } from '../domain/types';
+import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import {
-  Button,
-  Card,
-  ChevronRightIcon,
-  IconButton,
-  MoonIcon,
-  SettingsGearIcon,
-  SunIcon,
-  getContrastText,
-  radius,
-  spacing,
-  useTheme,
-} from '../ui';
+import { IconButton, SettingsGearIcon, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
+import { ActiveSessionCard } from './today/ActiveSessionCard';
+import { LastSessionCard } from './today/LastSessionCard';
+import { RecentSessionsList } from './today/RecentSessionsList';
+import { StartCard } from './today/StartCard';
+import { WeekCard } from './today/WeekCard';
 
 type LogNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Log'>,
@@ -56,24 +54,43 @@ const MONTH_NAMES = [
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-type GymLike = {
-  id: string;
-  name: string;
-};
+const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const RECENT_SHOWN = 4;
 
 function formatHeaderDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 }
 
-function formatRecentSendMeta(send: RecentSend): string {
-  const d = new Date(send.createdAt);
-  const h = `${d.getHours()}`.padStart(2, '0');
-  const min = `${d.getMinutes()}`.padStart(2, '0');
-  const time = `${h}:${min}`;
-  if (send.isToday) return time;
-  return `${DAY_NAMES[d.getDay()].slice(0, 3)}, ${time}`;
-}
+type Dashboard = {
+  activeSession: SessionRow | null;
+  gymName: string;
+  streak: number;
+  showTimer: boolean;
+  lastType: SessionType | null;
+  climb: LastSessions<ClimbSessionSummary> | null;
+  strength: LastSessions<StrengthSessionSummary> | null;
+  week: WeekActivity;
+  recent: RecentSession[];
+};
+
+const loadDashboard = (): Dashboard => {
+  const completed = getCompletedSessions();
+  const now = new Date();
+  const weekStart = startOfWeek(now);
+  const thisWeek = getSessionsForDateRange(weekStart.getTime(), addDays(weekStart, 7).getTime());
+  const strengthHistory = completed.filter((session) => session.type === 'strength');
+  return {
+    activeSession: getActiveSession(),
+    gymName: (getSelectedClimbGym() ?? ensureSelectedClimbGym()).name,
+    streak: getSessionStreak(),
+    showTimer: getShowSessionTimer(),
+    lastType: completed[completed.length - 1]?.type ?? null,
+    climb: lastClimbSessions(completed),
+    strength: lastStrengthSessions(strengthHistory),
+    week: buildWeekActivity(thisWeek, now),
+    recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),
+  };
+};
 
 const SettingsButton = ({ colors, onPress }: { colors: ThemeColors; onPress: () => void }) => (
   <IconButton onPress={onPress} accessibilityLabel="Settings">
@@ -81,59 +98,34 @@ const SettingsButton = ({ colors, onPress }: { colors: ThemeColors; onPress: () 
   </IconButton>
 );
 
-const ThemeToggle = ({ colors }: { colors: ThemeColors }) => {
-  const { mode, setMode } = useTheme();
-  const isDark = mode === 'dark';
-  return (
-    <IconButton
-      onPress={() => setMode(isDark ? 'light' : 'dark')}
-      accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-    >
-      {isDark ? (
-        <MoonIcon color={colors.textSecondary} />
-      ) : (
-        <SunIcon color={colors.textSecondary} />
-      )}
-    </IconButton>
-  );
-};
-
 export function LogScreen() {
   const navigation = useNavigation<LogNavProp>();
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const tabBarClearance = useTabBarClearance();
 
-  const today = new Date();
-
-  const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
-  const [selectedGym, setSelectedGym] = useState<GymLike | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [weekDots, setWeekDots] = useState<ReturnType<typeof buildWeekCompletion>>([]);
-  const [hardestThisWeek, setHardestThisWeek] = useState<ReturnType<typeof findHardestSendThisWeek>>(null);
-  const [recentSends, setRecentSends] = useState<RecentSend[]>([]);
-  const [hasEverLogged, setHasEverLogged] = useState(true);
+  const [data, setData] = useState<Dashboard | null>(null);
+  // Which kind of session the start card is set up for; follows the last one
+  // logged until the user picks.
+  const [pickedMode, setPickedMode] = useState<SessionType | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      const active = getActiveSession();
-      setActiveSession(active);
-      setSelectedGym(getSelectedClimbGym() ?? ensureSelectedClimbGym());
-      setStreak(getSessionStreak());
-      setHasEverLogged(getAllCompletedSessionCount() > 0 || active !== null);
-
-      const now = new Date();
-      const last7Start = addDays(now, -6);
-      last7Start.setHours(0, 0, 0, 0);
-      const last7 = getSessionsForDateRange(last7Start.getTime(), now.getTime() + 1);
-      setWeekDots(buildWeekCompletion(last7));
-      setHardestThisWeek(findHardestSendThisWeek(last7));
-
-      const recentWindowStart = addDays(now, -30);
-      recentWindowStart.setHours(0, 0, 0, 0);
-      const recentSessions = getSessionsForDateRange(recentWindowStart.getTime(), now.getTime() + 1);
-      setRecentSends(buildRecentSends(recentSessions, 4));
+      setData(loadDashboard());
     }, [])
   );
+
+  if (!data) return <SafeAreaView edges={['top']} style={styles.root} />;
+
+  const mode: SessionType = pickedMode ?? data.lastType ?? 'climb';
+  const { activeSession, strength } = data;
+  const firstExercise = strength?.latest.exercises[0];
+  const strengthHint = strength
+    ? `Last: ${strength.latest.title ?? DAY_SHORT[new Date(strength.latest.startedAt).getDay()]}`
+    : 'Sets, reps and PRs';
+  const strengthStartsFrom = firstExercise
+    ? `${firstExercise.name} · ${firstExercise.weight === 0 ? 'BW' : `${formatWeight(firstExercise.weight)} kg`} × ${firstExercise.reps}`
+    : 'Each exercise opens at your last weight';
 
   function navigateToSession(type: SessionType, sessionId: string) {
     if (type === 'climb') {
@@ -143,193 +135,86 @@ export function LogScreen() {
     }
   }
 
-  function handleResume() {
-    if (!activeSession) return;
-    navigateToSession(activeSession.type, activeSession.id);
-  }
-
-  function handleLog(type: SessionType) {
-    // Re-check for active session to avoid duplicates
+  function handleStart() {
+    // Re-check for an active session to avoid duplicates
     const existing = getActiveSession();
     if (existing) {
       navigateToSession(existing.type, existing.id);
       return;
     }
-    const gym = type === 'climb' ? ensureSelectedClimbGym() : null;
-    const sessionId = createSession(type, gym ? { gymId: gym.id } : undefined);
-    navigateToSession(type, sessionId);
+    const gym = mode === 'climb' ? ensureSelectedClimbGym() : null;
+    const sessionId = createSession(mode, gym ? { gymId: gym.id } : undefined);
+    navigateToSession(mode, sessionId);
   }
+
+  // Same rule as the loggers' exit guard: a session with nothing in it is
+  // abandoned rather than saved, so it never shows up as an empty workout.
+  function handleFinish() {
+    if (!activeSession) return;
+    const events = getSessionEvents(activeSession.id);
+    const logged =
+      activeSession.type === 'climb' ? applyClimbEvents(events).length : applySetEvents(events).length;
+    setSessionStatus(activeSession.id, logged > 0 ? 'completed' : 'abandoned');
+    setData(loadDashboard());
+  }
+
+  const activeWhere = activeSession
+    ? activeSession.type === 'climb'
+      ? (activeSession.gym_id && getGymById(activeSession.gym_id)?.name) || data.gymName
+      : activeSession.title?.trim() || ''
+    : '';
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
         keyboardShouldPersistTaps="handled"
       >
-      {/* Header */}
-      <View style={styles.headerBlock}>
         <View style={styles.headerRow}>
-          <Text style={styles.screenTitle}>Today</Text>
-          <View style={styles.headerRight}>
-            <ThemeToggle colors={colors} />
-            <SettingsButton colors={colors} onPress={() => navigation.navigate('Settings')} />
+          <View style={styles.headerText}>
+            <Text style={styles.date}>{formatHeaderDate(new Date())}</Text>
+            <Text style={styles.screenTitle}>Today</Text>
           </View>
+          <SettingsButton colors={colors} onPress={() => navigation.navigate('Settings')} />
         </View>
-        <Text style={styles.dateHeader}>{formatHeaderDate(today)}</Text>
 
-        {/* Streak numeral + week dot strip */}
-        <View style={styles.streakRow}>
-          <View style={styles.streakNumWrap}>
-            <Text style={styles.streakNum}>{streak}</Text>
-            <Text style={styles.streakLabel}>Day{'\n'}Streak</Text>
-          </View>
-          <View style={styles.weekStrip}>
-            {weekDots.map((day, i) => (
-              <View key={i} style={styles.weekCell}>
-                <View style={[styles.weekDot, day.done ? styles.weekDotDone : null]} />
-                <Text style={styles.weekDayLabel}>{day.weekdayLabel}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* Active session banner */}
-      {activeSession ? (
-        <Card style={styles.banner}>
-          <View style={styles.bannerInner}>
-            <View style={styles.bannerDot} />
-            <View style={styles.bannerTextCol}>
-              <Text style={styles.bannerLabel}>Session in progress</Text>
-              <Text style={styles.bannerType}>
-                {activeSession.title?.trim() || (activeSession.type === 'climb' ? 'Climbing' : 'Strength')}
-              </Text>
-            </View>
-            <Button
-              label="Resume session"
-              variant="primary"
-              onPress={handleResume}
-              style={styles.resumeButton}
-            />
-          </View>
-        </Card>
-      ) : null}
-
-      {/* Quick-log CTAs */}
-      <View style={styles.ctaSection}>
         {activeSession ? (
-          <View style={styles.activeLockBox}>
-            <Text style={styles.activeLockTitle}>Finish current session first</Text>
-            <Text style={styles.activeLockCopy}>
-              Resume the active session above before starting a new one.
-            </Text>
-          </View>
+          <ActiveSessionCard
+            session={activeSession}
+            where={activeWhere}
+            showTimer={data.showTimer}
+            onResume={() => navigateToSession(activeSession.type, activeSession.id)}
+            onFinish={handleFinish}
+          />
         ) : (
-          <>
-            <TouchableOpacity
-              style={styles.gymRow}
-              onPress={() => navigation.navigate('GymSelect')}
-              activeOpacity={0.75}
-            >
-              <View>
-                <Text style={styles.gymLabel}>Climb grades</Text>
-                <Text style={styles.gymName}>{selectedGym?.name ?? 'Default V-Scale'}</Text>
-              </View>
-              <ChevronRightIcon size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-            <View style={styles.ctaRow}>
-              <Button
-                label="Start Climbing"
-                variant="primary"
-                onPress={() => handleLog('climb')}
-                style={styles.ctaPrimary}
-              />
-              <Button
-                label="Strength"
-                variant="secondary"
-                onPress={() => handleLog('strength')}
-                style={styles.ctaSecondary}
-              />
-            </View>
-          </>
+          <StartCard
+            mode={mode}
+            onModeChange={setPickedMode}
+            gymName={data.gymName}
+            strengthHint={strengthHint}
+            strengthStartsFrom={strengthStartsFrom}
+            onChangeGym={() => navigation.navigate('GymSelect')}
+            onStart={handleStart}
+          />
         )}
-      </View>
 
-      {/* First-time empty state */}
-      {!hasEverLogged && !activeSession ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateTitle}>Start your first session</Text>
-          <Text style={styles.emptyStateCopy}>
-            Tap "Start Climbing" or "Strength" above to log your first session. It'll show up here.
-          </Text>
-        </View>
-      ) : null}
+        <LastSessionCard
+          mode={activeSession ? activeSession.type : mode}
+          climb={data.climb}
+          strength={data.strength}
+          onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
+        />
 
-      {/* This week's hardest send */}
-      {hardestThisWeek ? (
-        <View style={styles.prCallout}>
-          <Text style={styles.prGrade}>{hardestThisWeek.gradeLabel}</Text>
-          <View style={styles.prInfo}>
-            <Text style={styles.prLabel}>This week's hardest send</Text>
-            <Text style={styles.prGym}>{hardestThisWeek.gymName}</Text>
-            <Text style={styles.prMeta}>
-              {formatRecentSendMeta({ ...hardestThisWeek, eventId: '', gradeColor: null, isToday: false })}
-              {hardestThisWeek.result === 'FLASH' ? ' · Flash' : ''}
-            </Text>
-          </View>
-        </View>
-      ) : null}
+        <WeekCard week={data.week} streak={data.streak} />
 
-      {/* Recent sends */}
-      {recentSends.length > 0 ? (
-        <View style={styles.sessionSection}>
-          <Text style={styles.sectionLabel}>Recent sends</Text>
-          <View style={styles.sendList}>
-            {recentSends.map((send, index) => {
-              const chipColor = send.gradeColor ?? colors.surfaceRaised;
-              return (
-                <View key={send.eventId}>
-                  {index > 0 ? <View style={styles.sendSeparator} /> : null}
-                  <View style={styles.sendRow}>
-                    <View style={[styles.gradeChip, { backgroundColor: chipColor }]}>
-                      <Text
-                        style={[styles.gradeChipText, { color: getContrastText(chipColor) }]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        {send.gradeLabel}
-                      </Text>
-                    </View>
-                    <View style={styles.sendInfo}>
-                      <View style={styles.sendGymRow}>
-                        <Text style={styles.sendGym}>{send.gymName}</Text>
-                        {send.isToday ? (
-                          <View style={styles.todayChip}>
-                            <Text style={styles.todayChipText}>Today</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text style={styles.sendMeta}>{formatRecentSendMeta(send)}</Text>
-                    </View>
-                    {send.result === 'FLASH' ? (
-                      <Text style={styles.sendResult}>Flash</Text>
-                    ) : null}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-          <TouchableOpacity
-            style={styles.viewAll}
-            onPress={() => navigation.navigate('Calendar')}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.viewAllText}>View all sessions</Text>
-            <ChevronRightIcon size={15} color={colors.accent} />
-          </TouchableOpacity>
-        </View>
-      ) : null}
+        {data.recent.length > 0 ? (
+          <RecentSessionsList
+            sessions={data.recent}
+            onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
+            onSeeAll={() => navigation.navigate('Calendar')}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -337,324 +222,31 @@ export function LogScreen() {
 
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-    gap: spacing.sm,
-  },
-
-  // Header
-  headerBlock: {
-    gap: 8,
-    marginBottom: spacing.xs,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  screenTitle: {
-    ...typography.display,
-  },
-  dateHeader: {
-    ...typography.bodyMuted,
-  },
-
-  // Streak module
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-    marginTop: spacing.xxs,
-  },
-  streakNumWrap: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-    flexShrink: 0,
-    paddingBottom: 2,
-  },
-  streakNum: {
-    ...typography.display,
-    fontSize: 32,
-    lineHeight: 34,
-    letterSpacing: -0.6,
-  },
-  streakLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    letterSpacing: -0.05,
-    color: colors.textSecondary,
-    lineHeight: 14,
-  },
-  weekStrip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  weekCell: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  // Round: an activity dot, the same read as the rings iOS Fitness uses.
-  weekDot: {
-    width: 11,
-    height: 11,
-    borderRadius: 5.5,
-    backgroundColor: colors.fill,
-  },
-  weekDotDone: {
-    backgroundColor: colors.accent,
-  },
-  weekDayLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    letterSpacing: -0.05,
-    color: colors.textMuted,
-  },
-
-  // Active session banner
-  banner: {
-    borderColor: colors.accentSoft,
-    backgroundColor: colors.accentMuted,
-    padding: spacing.sm,
-  },
-  bannerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  bannerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.accent,
-  },
-  bannerTextCol: {
-    flex: 1,
-  },
-  bannerLabel: {
-    ...typography.meta,
-    fontSize: 13,
-    color: colors.accent,
-  },
-  bannerType: {
-    ...typography.body,
-    fontWeight: '600',
-    marginTop: 1,
-  },
-  resumeButton: {
-    minWidth: 126,
-  },
-
-  // CTA buttons
-  ctaSection: {
-    gap: spacing.s,
-    marginTop: spacing.xs,
-  },
-  activeLockBox: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.s,
-  },
-  activeLockTitle: {
-    ...typography.body,
-    fontWeight: '600',
-  },
-  activeLockCopy: {
-    ...typography.bodyMuted,
-    marginTop: 2,
-  },
-  gymRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.s,
-  },
-  gymLabel: {
-    ...typography.meta,
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  gymName: {
-    ...typography.body,
-    fontWeight: '600',
-    marginTop: 1,
-  },
-  ctaRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  ctaPrimary: {
-    flex: 2.6,
-  },
-  ctaSecondary: {
-    flex: 1,
-  },
-
-  emptyState: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  emptyStateTitle: {
-    ...typography.body,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  emptyStateCopy: {
-    ...typography.bodyMuted,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-
-  // PR callout
-  prCallout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-  },
-  prGrade: {
-    ...typography.display,
-    fontSize: 28,
-    lineHeight: 30,
-    letterSpacing: -0.6,
-    color: colors.accent,
-    flexShrink: 0,
-  },
-  prInfo: {
-    flex: 1,
-  },
-  prLabel: {
-    ...typography.meta,
-    fontSize: 12,
-  },
-  prGym: {
-    ...typography.body,
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  prMeta: {
-    ...typography.bodyMuted,
-    fontSize: 13,
-    marginTop: 1,
-  },
-
-  // Recent sends section
-  // A grouped-list section: header outside, rows inside one rounded card.
-  sessionSection: {
-    gap: 0,
-  },
-  sectionLabel: {
-    ...typography.section,
-    marginBottom: spacing.xs,
-    marginLeft: 2,
-  },
-  sendList: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-  },
-  sendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.sm,
-  },
-  sendSeparator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.separator,
-    marginLeft: 56,
-  },
-  gradeChip: {
-    minWidth: 34,
-    height: 34,
-    maxWidth: 66,
-    borderRadius: radius.sm,
-    paddingHorizontal: 6,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gradeChipText: {
-    ...typography.numeric,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  sendInfo: {
-    flex: 1,
-  },
-  sendGymRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  sendGym: {
-    ...typography.body,
-    fontSize: 16,
-  },
-  todayChip: {
-    backgroundColor: colors.fill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  todayChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: -0.05,
-    color: colors.textSecondary,
-  },
-  sendMeta: {
-    ...typography.bodyMuted,
-    fontSize: 13,
-    marginTop: 1,
-  },
-  sendResult: {
-    ...typography.meta,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.accent,
-    flexShrink: 0,
-  },
-  viewAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    paddingVertical: spacing.s,
-    marginTop: spacing.xxs,
-  },
-  viewAllText: {
-    ...typography.body,
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.accent,
-  },
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: spacing.sm,
+      paddingTop: spacing.sm,
+      gap: spacing.sm,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      marginBottom: spacing.xxs,
+    },
+    headerText: {
+      gap: 2,
+    },
+    date: {
+      ...typography.section,
+    },
+    screenTitle: {
+      ...typography.display,
+    },
   });

@@ -24,58 +24,87 @@ const gradePalette = [
 ];
 
 /**
- * iOS dark: a true-black ground with the system's layered greys stacked on top,
- * so grouped cards read as elevation rather than as outlined boxes. Separators
- * and fills are translucent (as UIKit's are) so they hold up over any surface.
+ * Prism's semantic range. Status colours (success/warning/danger) draw from it,
+ * and the `subtle` tints are the washes behind a status badge or PR flag.
+ */
+const semantic = {
+  red: '#ef4444',
+  orange: '#f97316',
+  yellow: '#eab308',
+  green: '#22c55e',
+  sky: '#0ea5e9',
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  pink: '#ec4899',
+};
+
+/**
+ * Prism dark: near-black ground, cards one step up, hairline borders doing the
+ * separating. Neutral everywhere except `action`: Prism's solid pills and
+ * selections, filled with the user's accent by `applyAccent`.
  */
 export const darkColors = {
-  background: '#000000',
-  backgroundWarm: '#0b0b0d',
-  surface: '#1c1c1e',
-  surfaceAlt: '#2c2c2e',
-  surfaceRaised: '#3a3a3c',
-  border: '#2c2c2e',
-  borderSoft: '#3a3a3c',
-  separator: 'rgba(84, 84, 88, 0.6)',
-  fill: 'rgba(120, 120, 128, 0.24)',
-  fillSoft: 'rgba(120, 120, 128, 0.14)',
-  textPrimary: '#ffffff',
-  textSecondary: 'rgba(235, 235, 245, 0.62)',
-  textMuted: 'rgba(235, 235, 245, 0.4)',
-  textInverse: '#000000',
+  background: '#0a0a0a',
+  surface: '#161616',
+  surfaceAlt: '#1e1e1e',
+  surfaceRaised: '#333333',
+  border: '#2a2a2a',
+  borderSoft: '#3d3d3d',
+  separator: '#2a2a2a',
+  fill: '#1e1e1e',
+  fillSoft: '#161616',
+  // Solid fills for primary actions and selections (Prism's black pill).
+  // Overwritten by `applyAccent`, so the user's accent drives them.
+  action: '#eac60f',
+  onAction: '#000000',
+  textPrimary: '#f5f5f5',
+  textSecondary: '#a3a3a3',
+  textMuted: '#6b6b6b',
+  textInverse: '#0a0a0a',
   accent: '#eac60f',
   accentMuted: 'rgba(234, 198, 15, 0.16)',
   accentSoft: 'rgba(234, 198, 15, 0.28)',
-  success: '#30d158',
-  warning: '#ffd60a',
-  danger: '#ff453a',
+  success: semantic.green,
+  successSubtle: 'rgba(34, 197, 94, 0.16)',
+  warning: semantic.orange,
+  warningSubtle: 'rgba(249, 115, 22, 0.16)',
+  danger: semantic.red,
+  dangerSubtle: 'rgba(239, 68, 68, 0.16)',
   overlay: 'rgba(0, 0, 0, 0.6)',
+  shadow: 'transparent',
+  semantic,
   gradePalette,
 };
 
-/** iOS light: the grouped-table pairing -- grey ground, white cards floating on it. */
+/** Prism light: white cards floating on the soft-grey ground, accent-filled actions. */
 export const lightColors = {
-  background: '#f2f2f7',
-  backgroundWarm: '#ebebf0',
+  background: '#f4f4f5',
   surface: '#ffffff',
-  surfaceAlt: '#f2f2f7',
+  surfaceAlt: '#f4f4f5',
   surfaceRaised: '#ffffff',
-  border: '#e5e5ea',
-  borderSoft: '#d1d1d6',
-  separator: 'rgba(60, 60, 67, 0.29)',
-  fill: 'rgba(118, 118, 128, 0.12)',
-  fillSoft: 'rgba(118, 118, 128, 0.08)',
-  textPrimary: '#000000',
-  textSecondary: 'rgba(60, 60, 67, 0.6)',
-  textMuted: 'rgba(60, 60, 67, 0.4)',
+  border: '#e5e5e5',
+  borderSoft: '#d4d4d4',
+  separator: '#e5e5e5',
+  fill: '#ececef',
+  fillSoft: '#f4f4f5',
+  action: '#b8860a',
+  onAction: '#ffffff',
+  textPrimary: '#0a0a0a',
+  textSecondary: '#737373',
+  textMuted: '#a3a3a3',
   textInverse: '#ffffff',
   accent: '#b8860a',
   accentMuted: 'rgba(184, 134, 10, 0.12)',
   accentSoft: 'rgba(184, 134, 10, 0.22)',
-  success: '#34c759',
-  warning: '#ff9f0a',
-  danger: '#ff3b30',
+  success: '#16a34a',
+  successSubtle: '#dcfce7',
+  warning: semantic.orange,
+  warningSubtle: '#ffedd5',
+  danger: '#dc2626',
+  dangerSubtle: '#fee2e2',
   overlay: 'rgba(0, 0, 0, 0.4)',
+  shadow: '#000000',
+  semantic,
   gradePalette,
 };
 
@@ -128,5 +157,7 @@ export const DEFAULT_ACCENT_ID: AccentColorId = 'amber';
 
 export const applyAccent = (base: ThemeColors, accentId: AccentColorId, mode: ThemeMode): ThemeColors => {
   const tint = ACCENT_PALETTE[accentId]?.[mode] ?? ACCENT_PALETTE[DEFAULT_ACCENT_ID][mode];
-  return { ...base, ...tint };
+  // Derived rather than fixed: a bright tint (amber, teal) needs dark text on
+  // its fill where a saturated one (blue, purple) needs white.
+  return { ...base, ...tint, action: tint.accent, onAction: getContrastText(tint.accent) };
 };

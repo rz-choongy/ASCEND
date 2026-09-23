@@ -30,9 +30,11 @@ import {
   PressableScale,
   ScreenHeader,
   Stepper,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -153,8 +155,8 @@ const rowsMatchSeed = (rows: EditableGradeRow[], type: GradingType): boolean => 
 };
 
 export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const returnToSessionId = route.params?.returnToSessionId;
   const editingGymId = route.params?.gymId;
   const parentId = route.params?.parentId ?? null;
@@ -581,7 +583,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   screen: {
     flex: 1,
@@ -609,32 +611,36 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textPrimary,
     paddingHorizontal: spacing.s,
     fontSize: 16,
-    fontWeight: '400',
+    ...font('regular'),
   },
   typeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
+  // Prism pill toggle: outlined when idle, solid action fill when chosen.
   typeChip: {
-    minHeight: 36,
+    minHeight: 44,
     borderRadius: radius.pill,
-    backgroundColor: colors.fill,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
   },
   typeChipSelected: {
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   typeText: {
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
+    ...font('semibold'),
     letterSpacing: -0.2,
   },
   typeTextSelected: {
-    color: colors.accent,
+    color: colors.onAction,
   },
   gradeHeader: {
     flexDirection: 'row',
@@ -645,15 +651,18 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   addRowText: {
     color: colors.accent,
     fontSize: 16,
-    fontWeight: '500',
+    ...font('medium'),
   },
   gradeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.xs,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.xs,
   },
   gradeLabelInput: {
@@ -669,7 +678,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   rangeDash: {
     color: colors.textMuted,
     fontSize: 16,
-    fontWeight: '500',
+    ...font('medium'),
   },
   currentSwatch: {
     width: 32,
@@ -681,7 +690,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   deleteGlyph: {
     color: colors.textMuted,
     fontSize: 17,
-    fontWeight: '500',
+    ...font('medium'),
     lineHeight: 20,
   },
   modalBackdrop: {
@@ -694,7 +703,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   modalCard: {
     width: '100%',
     borderRadius: radius.xl,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.lg,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -729,20 +741,23 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   deleteLinkText: {
     color: colors.danger,
     fontSize: 17,
-    fontWeight: '400',
+    ...font('regular'),
   },
   inheritedNotice: {
     flexDirection: 'row',
     gap: spacing.xs,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.sm,
     marginTop: spacing.xs,
   },
   inheritedIcon: {
     color: colors.accent,
     fontSize: 18,
-    fontWeight: '700',
+    ...font('bold'),
     lineHeight: 22,
   },
   inheritedText: {
@@ -752,11 +767,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   inheritedTitle: {
     color: colors.textPrimary,
     fontSize: 15,
-    fontWeight: '600',
+    ...font('semibold'),
   },
   inheritedBody: {
     color: colors.textSecondary,
     fontSize: 14,
+    ...font('regular'),
     lineHeight: 19,
   },
 });

@@ -21,9 +21,11 @@ import {
   PressableScale,
   StatGrid,
   StatTile,
+  font,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
@@ -43,8 +45,8 @@ type Props = {
 };
 
 export function StrengthProgressView({ sessions, scopedSessions }: Props) {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const navigation = useNavigation<NavProp>();
 
   const strengthSessions = useMemo(() => scopedSessions.filter((s) => s.type === 'strength'), [scopedSessions]);
@@ -126,8 +128,8 @@ type ExerciseRowProps = {
 };
 
 const ExerciseRow = ({ exercise, bordered, onPress }: ExerciseRowProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const { changePct, lastSet } = exercise;
   const changeColor =
     changePct === null || changePct === 0 ? colors.textMuted : changePct > 0 ? colors.success : colors.danger;
@@ -177,12 +179,15 @@ const Sparkline = ({ values, color }: { values: number[]; color: string }) => {
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     stack: { gap: spacing.xs },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
     },
@@ -193,7 +198,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       gap: spacing.xs,
       marginBottom: spacing.xxs,
     },
-    cardTitle: { ...typography.body, fontSize: 17, fontWeight: '600' },
+    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
     cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
     chart: { marginTop: spacing.xs },
 
@@ -210,23 +215,31 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       borderTopColor: colors.separator,
     },
     rowText: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-    rowName: { ...typography.body, fontSize: 16, fontWeight: '600' },
-    rowSub: { ...typography.meta, fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    rowName: { ...typography.body, ...font('semibold'), fontSize: 16 },
+    rowSub: {
+      ...typography.meta,
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+      fontVariant: ['tabular-nums'],
+    },
     rowChange: {
       ...typography.numeric,
       width: 42,
       fontSize: 13,
-      fontWeight: '600',
       textAlign: 'right',
     },
 
     empty: {
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      ...shadows.card,
       padding: spacing.md,
       alignItems: 'center',
       gap: spacing.xs,
     },
-    emptyTitle: { ...typography.body, fontWeight: '600', textAlign: 'center' },
+    emptyTitle: { ...typography.body, ...font('semibold'), textAlign: 'center' },
     emptyCopy: { ...typography.bodyMuted, textAlign: 'center', lineHeight: 20 },
   });

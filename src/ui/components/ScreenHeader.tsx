@@ -6,11 +6,14 @@ import type { ThemeColors } from '../tokens/colors';
 import { spacing } from '../tokens/spacing';
 import type { Typography } from '../tokens/typography';
 import { Button } from './Button';
+import { CloseIcon } from './Icon';
+import { IconButton } from './IconButton';
 
 type ScreenHeaderProps = {
   eyebrow?: string;
   title: string;
   onClose?: () => void;
+  /** A text action (e.g. "Cancel") instead of the default close circle. */
   closeLabel?: string;
   left?: ReactNode;
 };
@@ -19,7 +22,7 @@ export const ScreenHeader = ({
   eyebrow,
   title,
   onClose,
-  closeLabel = 'Done',
+  closeLabel,
   left,
 }: ScreenHeaderProps) => {
   const { colors, typography } = useTheme();
@@ -33,8 +36,7 @@ export const ScreenHeader = ({
           {title}
         </Text>
       </View>
-      {onClose ? (
-        // Nav-bar action: text only, in the accent -- the iOS toolbar button.
+      {onClose && closeLabel ? (
         <Button
           label={closeLabel}
           variant="plain"
@@ -42,6 +44,11 @@ export const ScreenHeader = ({
           style={styles.closeButton}
           textStyle={styles.closeText}
         />
+      ) : onClose ? (
+        // Prism's bordered icon circle, top-right like its settings trigger.
+        <IconButton onPress={onClose} accessibilityLabel="Close">
+          <CloseIcon size={16} color={colors.textPrimary} />
+        </IconButton>
       ) : null}
     </View>
   );
@@ -60,10 +67,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flex: 1,
     },
     eyebrow: {
-      ...typography.meta,
-      fontSize: 13,
-      fontWeight: '500',
-      color: colors.textSecondary,
+      ...typography.section,
+      marginBottom: 2,
     },
     title: {
       ...typography.title,
@@ -75,7 +80,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginRight: -4,
     },
     closeText: {
-      fontSize: 17,
-      fontWeight: '400',
+      fontSize: 16,
     },
   });

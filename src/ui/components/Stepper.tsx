@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View, type ViewStyle } from 're
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
 import { spacing } from '../tokens/spacing';
 import { PressableScale } from './PressableScale';
@@ -119,42 +120,48 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       gap: spacing.xs,
     },
-    // UIStepper's two halves: filled, borderless, softly rounded.
+    // Prism's bordered circle, sized up for a thumb mid-session.
     button: {
       width: 48,
       height: 48,
-      borderRadius: radius.md,
-      backgroundColor: colors.fill,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
     buttonCompact: {
-      width: 38,
+      width: 44,
       height: 44,
-      borderRadius: radius.sm,
-      backgroundColor: colors.fill,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.borderSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
+    // The big-step buttons are secondary: a soft fill instead of the border.
     bigButton: {
-      width: 40,
+      width: 44,
+      backgroundColor: colors.fill,
+      borderColor: 'transparent',
     },
     symbolText: {
+      ...font('regular'),
       color: colors.textPrimary,
-      fontSize: 24,
-      fontWeight: '500',
-      lineHeight: 28,
+      fontSize: 22,
+      lineHeight: 26,
     },
     bigText: {
+      ...font('mono'),
       color: colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '600',
-      letterSpacing: -0.1,
+      fontSize: 12,
     },
     value: {
+      ...font('semibold'),
       color: colors.textPrimary,
       fontSize: 20,
-      fontWeight: '600',
       letterSpacing: -0.4,
       fontVariant: ['tabular-nums'],
       minWidth: 76,
@@ -168,6 +175,6 @@ const createStyles = (colors: ThemeColors) =>
       minWidth: 64,
       padding: 0,
       borderBottomWidth: 2,
-      borderBottomColor: colors.accent,
+      borderBottomColor: colors.action,
     },
   });

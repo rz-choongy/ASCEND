@@ -4,19 +4,49 @@
     {
       "name": "ascend-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web", "-c", "--port", "8090"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--web",
+        "-c",
+        "--port",
+        "8090"
+      ],
       "port": 8090
     },
     {
       "name": "ascend-web-coi",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["scripts/web-coi-proxy.js", "8091", "8090"],
+      "runtimeArgs": [
+        "scripts/web-coi-proxy.js",
+        "8091",
+        "8090"
+      ],
       "port": 8091
     },
     {
       "name": "ascend-metro",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--clear", "--port", "8081"],
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--clear",
+        "--port",
+        "8081"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "ascend-android",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "expo",
+        "start",
+        "--android",
+        "--clear",
+        "--port",
+        "8081"
+      ],
       "port": 8081
     }
   ]

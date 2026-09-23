@@ -31,6 +31,7 @@ import {
   MountainMarkIcon,
   PressableScale,
   SegmentedControl,
+  font,
   spacing,
   useTheme,
 } from '../ui';
@@ -435,7 +436,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     footerWord: {
       ...typography.meta,
       fontSize: 13,
-      fontWeight: '600',
+      ...font('semibold'),
       letterSpacing: 0.6,
       color: colors.textSecondary,
     },

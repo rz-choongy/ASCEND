@@ -29,11 +29,14 @@ import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
   ChevronLeftIcon,
+  font,
+  getContrastText,
   ListGroup,
   ListRow,
-  StatRow,
   radius,
+  type Shadows,
   spacing,
+  StatRow,
   useTheme,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
@@ -130,8 +133,8 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
 // Screen
 
 export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const { sessionId } = route.params;
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -510,7 +513,14 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                           ]}
                           onPress={() => selectGrade(grade)}
                         >
-                          <Text style={styles.gradeChipText}>{grade.label}</Text>
+                          <Text
+                            style={[
+                              styles.gradeChipText,
+                              { color: grade.colorHex ? getContrastText(grade.colorHex) : colors.textPrimary },
+                            ]}
+                          >
+                            {grade.label}
+                          </Text>
                         </Pressable>
                       );
                     })}
@@ -619,7 +629,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   container: {
     flex: 1,
@@ -639,9 +649,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.xs,
   },
   backLabel: {
+    ...font('regular'),
     color: colors.accent,
     fontSize: 17,
-    fontWeight: '400',
     letterSpacing: -0.3,
   },
   metaBlock: {
@@ -649,9 +659,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     gap: 4,
   },
   titleLabel: {
-    ...typography.meta,
-    fontSize: 13,
-    color: colors.textSecondary,
+    ...typography.section,
   },
   titleInput: {
     ...typography.title,
@@ -666,8 +674,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: 2,
   },
   metaLine: {
+    ...font('regular'),
     color: colors.textSecondary,
     fontSize: 15,
+    fontVariant: ['tabular-nums'],
   },
   sectionLabel: {
     ...typography.section,
@@ -678,6 +688,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginTop: spacing.md,
   },
   emptyText: {
+    ...font('regular'),
     color: colors.textMuted,
     fontSize: 14,
     paddingVertical: spacing.xs,
@@ -688,8 +699,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     borderRadius: 5,
   },
   notesInput: {
+    ...font('regular'),
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     color: colors.textPrimary,
     fontSize: 16,
     padding: spacing.sm,
@@ -699,16 +714,20 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginTop: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.sm,
     gap: spacing.xs,
   },
   dangerLabel: {
     ...typography.meta,
+    ...font('semibold'),
     fontSize: 13,
-    fontWeight: '600',
     color: colors.danger,
   },
   dangerCopy: {
+    ...font('regular'),
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 19,
@@ -732,7 +751,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   modalCard: {
     width: '100%',
     borderRadius: radius.xl,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.lg,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -748,8 +770,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     borderRadius: radius.md,
     backgroundColor: colors.fill,
     color: colors.textPrimary,
+    ...font('regular'),
     fontSize: 17,
-    fontWeight: '400',
     paddingHorizontal: spacing.s,
   },
   modalRow: {
@@ -765,23 +787,22 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     gap: spacing.xs,
   },
   gradeChip: {
-    minHeight: 42,
+    minHeight: 44,
     minWidth: 64,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     borderWidth: 2.5,
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.s,
     backgroundColor: colors.surfaceRaised,
   },
   gradeChipSelected: {
     borderColor: colors.textPrimary,
   },
   gradeChipText: {
-    color: colors.textInverse,
+    ...font('semibold'),
     fontSize: 15,
-    fontWeight: '600',
   },
   resultRow: {
     flexDirection: 'row',
@@ -790,23 +811,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   resultChip: {
     flex: 1,
     minHeight: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.fill,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resultChipSelected: {
-    backgroundColor: colors.accentMuted,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   resultText: {
+    ...font('medium'),
     color: colors.textSecondary,
     fontSize: 15,
-    fontWeight: '500',
     letterSpacing: -0.2,
   },
   resultTextSelected: {
-    color: colors.accent,
-    fontWeight: '600',
+    ...font('semibold'),
+    color: colors.onAction,
   },
   modalActions: {
     flexDirection: 'row',

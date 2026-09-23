@@ -37,10 +37,12 @@ import {
   CloseIcon,
   IconButton,
   PressableScale,
+  font,
   getContrastText,
   radius,
   spacing,
   useTheme,
+  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -117,8 +119,11 @@ const loadGrades = (gymId: string | null): GradeOption[] => {
 };
 
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography, shadows),
+    [colors, typography, shadows]
+  );
   const { sessionId } = route.params;
 
   const [session, setSession] = useState(() => getSessionById(sessionId));
@@ -318,7 +323,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   if (!session) {
     return (
       <SafeAreaView edges={['top']} style={styles.screen}>
-        <Text style={{ color: colors.textMuted, padding: 16 }}>Session not found.</Text>
+        <Text style={{ ...font('regular'), color: colors.textMuted, padding: spacing.sm }}>Session not found.</Text>
       </SafeAreaView>
     );
   }
@@ -439,6 +444,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         />
       </View>
 
+      {/* Outer view carries the shadow; the inner one clips rows to the rounded corners. */}
+      <View style={styles.panelShadow}>
       <View style={styles.panel}>
         <View style={styles.panelHeaderRow}>
           <Text style={styles.panelHd}>This session</Text>
@@ -500,6 +507,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             <Text style={styles.statCaps}>sends      best      avg grade</Text>
           </View>
         ) : null}
+      </View>
       </View>
 
       {hasLogs ? (
@@ -564,7 +572,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   screen: {
     flex: 1,
@@ -583,15 +591,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: 10,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerGym: {
     ...typography.title,
     fontSize: 17,
-    fontWeight: '600',
     flex: 1,
     textAlign: 'center',
   },
@@ -612,14 +619,11 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backgroundColor: colors.success,
   },
   timerLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: colors.textSecondary,
+    ...typography.section,
   },
   timerValue: {
     ...typography.title,
     fontSize: 19,
-    fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
 
@@ -628,8 +632,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   titleInput: {
     ...typography.body,
+    ...font('semibold'),
     fontSize: 17,
-    fontWeight: '600',
     color: colors.textPrimary,
     minHeight: 30,
     padding: 0,
@@ -638,8 +642,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 44,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.card,
     padding: spacing.s,
     marginBottom: spacing.sm,
   },
@@ -649,15 +657,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.textSecondary,
   },
   gymSelectorName: {
+    ...font('semibold'),
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '600',
     marginTop: 1,
   },
   gymSelectorAction: {
+    ...font('medium'),
     color: colors.accent,
     fontSize: 16,
-    fontWeight: '400',
   },
 
   // Grade grid — each tile tinted with its grade's own color, tonal-ring active state
@@ -668,7 +676,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     marginBottom: spacing.sm,
   },
   gradeTile: {
-    width: '22.5%',
+    // Four per row: 4 x 23.9% + 3 x 4px gap fills the row at any phone width.
+    width: '23.9%',
     minHeight: 48,
     borderRadius: radius.md,
     paddingHorizontal: 4,
@@ -681,11 +690,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   gradeText: {
     ...typography.body,
+    ...font('semibold'),
     fontSize: 16,
-    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   gradeTextActive: {
-    fontWeight: '700',
+    ...font('bold'),
   },
 
   actionRow: {
@@ -701,10 +711,18 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   // Session panel
+  panelShadow: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    ...shadows.card,
+  },
   panel: {
     flex: 1,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   panelHeaderRow: {
@@ -717,12 +735,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   panelHd: {
     ...typography.section,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
   },
   undoButton: {
-    minHeight: 30,
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: radius.pill,
@@ -760,7 +775,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   gradeChipText: {
     ...typography.numeric,
     fontSize: 15,
-    fontWeight: '600',
   },
   pbBadge: {
     backgroundColor: colors.danger,
@@ -769,8 +783,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingVertical: 3,
   },
   pbBadgeText: {
+    ...font('semibold'),
     fontSize: 11,
-    fontWeight: '600',
     color: '#ffffff',
     letterSpacing: -0.05,
   },
@@ -779,12 +793,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 13,
     marginLeft: 'auto',
     textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
   logTimeLatest: {
+    ...font('semibold'),
     color: colors.textSecondary,
-    fontWeight: '600',
   },
   emptyText: {
+    ...font('regular'),
     color: colors.textMuted,
     fontSize: 14,
     paddingHorizontal: spacing.sm,
@@ -809,9 +825,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     fontSize: 24,
   },
   statCaps: {
+    ...font('regular'),
     fontSize: 13,
     color: colors.textSecondary,
-    fontWeight: '400',
   },
 
   finishBar: {
@@ -834,6 +850,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     width: '100%',
     borderRadius: radius.xl,
     backgroundColor: colors.surfaceAlt,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    ...shadows.lg,
     padding: spacing.sm,
   },
   pickerEyebrow: {
