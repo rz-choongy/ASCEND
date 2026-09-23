@@ -20,6 +20,18 @@ export type KilterLog = {
   /** ms since epoch */
   createdAt: number;
   difficultyId: number | null;
+  climbName: string | null;
+};
+
+/** The field the undocumented endpoint uses for a climb's display name is unconfirmed, so try the plausible ones. */
+const CLIMB_NAME_KEYS = ['climbName', 'climb_name', 'name', 'routeName'] as const;
+
+const readClimbName = (e: Record<string, unknown>): string | null => {
+  for (const key of CLIMB_NAME_KEYS) {
+    const value = e[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  }
+  return null;
 };
 
 /**
@@ -51,6 +63,7 @@ export const parseKilterLogs = (raw: unknown): KilterLog[] => {
       flashed: e.flashed === true,
       createdAt,
       difficultyId: typeof e.currentDifficultyId === 'number' ? e.currentDifficultyId : null,
+      climbName: readClimbName(e),
     });
   });
   return logs;
@@ -127,6 +140,7 @@ export const mapKilterLogs = (
           gradeColor: option.colorHex,
           gradeId: option.id,
           gymId,
+          climbName: log.climbName,
         },
       };
       const key = dayKeyOf(log.createdAt);

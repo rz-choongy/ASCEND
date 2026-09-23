@@ -64,6 +64,11 @@ type Deps = {
 export const createKilterAuth = ({ store, fetchImpl = fetch, now = Date.now }: Deps) => {
   let accessToken: { value: string; expiresAt: number } | null = null;
   let lockedUntil = 0;
+  // Kilter's refresh tokens are single-use and rotate on every exchange. Without this,
+  // two callers racing on the same stale refresh token (e.g. a fast double-tap on
+  // "Sync now") would both try to use it -- the loser gets a 400 invalid_grant, which
+  // reads as "your session expired" and wrongly signs the user out entirely.
+  let refreshInFlight: Promise<string> | null = null;
 
   const requestTokens = async (fields: Record<string, string>): Promise<Response> => {
     try {
@@ -123,23 +128,35 @@ export const createKilterAuth = ({ store, fetchImpl = fetch, now = Date.now }: D
   const getAccessToken = async (): Promise<string> => {
     if (accessToken && accessToken.expiresAt - EXPIRY_MARGIN_MS > now()) return accessToken.value;
 
-    const stored = await store.get();
-    if (!stored) throw new KilterAuthError('signed_out', 'Connect your Kilter account first.');
+    // Share one in-flight refresh across concurrent callers instead of each
+    // independently exchanging the same (single-use) stored refresh token.
+    if (refreshInFlight) return refreshInFlight;
 
-    const response = await requestTokens({ grant_type: 'refresh_token', refresh_token: stored.refreshToken });
-    if (response.status === 400 || response.status === 401) {
-      accessToken = null;
-      await store.clear();
-      throw new KilterAuthError('signed_out', 'Your Kilter session expired. Connect again.');
-    }
-    if (!response.ok) {
-      throw new KilterAuthError('server', `Kilter token refresh failed (${response.status}).`);
-    }
+    refreshInFlight = (async () => {
+      const stored = await store.get();
+      if (!stored) throw new KilterAuthError('signed_out', 'Connect your Kilter account first.');
 
-    const { access, refresh } = await readTokens(response);
-    // Refresh tokens rotate: the old one is dead the moment a new one is issued.
-    if (refresh) await store.set({ ...stored, refreshToken: refresh });
-    return access;
+      const response = await requestTokens({ grant_type: 'refresh_token', refresh_token: stored.refreshToken });
+      if (response.status === 400 || response.status === 401) {
+        accessToken = null;
+        await store.clear();
+        throw new KilterAuthError('signed_out', 'Your Kilter session expired. Connect again.');
+      }
+      if (!response.ok) {
+        throw new KilterAuthError('server', `Kilter token refresh failed (${response.status}).`);
+      }
+
+      const { access, refresh } = await readTokens(response);
+      // Refresh tokens rotate: the old one is dead the moment a new one is issued.
+      if (refresh) await store.set({ ...stored, refreshToken: refresh });
+      return access;
+    })();
+
+    try {
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
+    }
   };
 
   const disconnect = async (): Promise<void> => {

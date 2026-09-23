@@ -132,6 +132,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[0]);
   const [title, setTitle] = useState('');
+  const [climbName, setClimbName] = useState('');
   const [showTimer, setShowTimer] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   /** Set while waiting for the climber to pin down a wide band's exact grade. */
@@ -275,7 +276,9 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       gradeColor: grade.color ?? undefined,
       gymId: currentGym?.id,
       result,
+      climbName: climbName.trim() || null,
     });
+    setClimbName('');
     bump();
   };
 
@@ -429,6 +432,15 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         })}
       </View>
 
+      <TextInput
+        style={styles.climbNameInput}
+        value={climbName}
+        onChangeText={setClimbName}
+        placeholder="Name this climb (optional)"
+        placeholderTextColor={colors.textMuted}
+        returnKeyType="done"
+      />
+
       <View style={styles.actionRow}>
         <Button
           label={`Send ${selectedGrade.label}`}
@@ -487,10 +499,14 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                     <Text style={styles.pbBadgeText}>PB</Text>
                   </View>
                 ) : null}
-                <Text style={[styles.logTime, isLatest ? styles.logTimeLatest : null]}>
+                <Text
+                  style={[styles.logTime, isLatest ? styles.logTimeLatest : null]}
+                  numberOfLines={1}
+                >
                   {formatElapsed(log.createdAt - session.started_at)}
                   {isLatest ? ' · just now' : ''}
                   {log.result === 'FLASH' ? ' · Flash' : ''}
+                  {log.climbName ? ` · ${log.climbName}` : ''}
                 </Text>
               </View>
             );
@@ -696,6 +712,19 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gradeTextActive: {
     ...font('bold'),
+  },
+
+  climbNameInput: {
+    ...typography.body,
+    fontSize: 15,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.s,
+    minHeight: 44,
+    marginBottom: spacing.xxs,
   },
 
   actionRow: {

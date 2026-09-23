@@ -64,6 +64,7 @@ type ClimbDraft = {
   gradeColor: string | null;
   gradeId?: string;
   result: 'SEND' | 'FLASH';
+  climbName: string;
 };
 
 type SetDraft = {
@@ -99,6 +100,7 @@ const formatSetLabel = (set: LoggedSet): string => {
 };
 
 const toNumber = (value: string, fallback: number): number => {
+  if (value.trim() === '') return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
@@ -145,6 +147,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     gradeMax: '0',
     gradeColor: null,
     result: 'SEND',
+    climbName: '',
   });
   const [setDraft, setSetDraft] = useState<SetDraft>({
     exerciseName: '',
@@ -233,6 +236,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
       gradeColor: entry.gradeColor ?? null,
       gradeId: entry.gradeId,
       result: entry.result,
+      climbName: entry.climbName ?? '',
     });
   };
 
@@ -273,6 +277,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
         gradeId: climbDraft.gradeId,
         gymId: session?.gym_id ?? editingEntry.entry.gymId,
         result: climbDraft.result,
+        climbName: climbDraft.climbName.trim() || null,
       });
       closeEdit();
       bump();
@@ -402,8 +407,14 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               {climbs.map((climb) => (
                 <ListRow
                   key={climb.eventId}
-                  title={climb.gradeLabel}
-                  subtitle={climb.result === 'FLASH' ? 'Flash' : 'Send'}
+                  title={climb.climbName || climb.gradeLabel}
+                  subtitle={
+                    climb.climbName
+                      ? `${climb.gradeLabel} · ${climb.result === 'FLASH' ? 'Flash' : 'Send'}`
+                      : climb.result === 'FLASH'
+                        ? 'Flash'
+                        : 'Send'
+                  }
                   meta={formatLogTime(climb.createdAt)}
                   left={
                     climb.gradeColor ? (
@@ -578,6 +589,14 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                     );
                   })}
                 </View>
+
+                <TextInput
+                  style={styles.modalInput}
+                  value={climbDraft.climbName}
+                  onChangeText={(value) => setClimbDraft((draft) => ({ ...draft, climbName: value }))}
+                  placeholder="Name this climb (optional)"
+                  placeholderTextColor={colors.textMuted}
+                />
               </View>
             ) : (
               <View style={styles.modalContent}>

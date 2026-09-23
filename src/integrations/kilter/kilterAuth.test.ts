@@ -124,6 +124,22 @@ describe('getAccessToken', () => {
     await expect(auth.getAccessToken()).rejects.toMatchObject({ kind: 'signed_out' });
     expect(read()).toBeNull();
   });
+
+  it('shares one in-flight refresh across concurrent callers instead of racing on the same refresh token', async () => {
+    const { auth, fetchMock, read } = setup({ refreshToken: 'r0', username: 'u' });
+    fetchMock.mockResolvedValueOnce(json(200, { access_token: 'a1', refresh_token: 'r1', expires_in: 300 }));
+
+    // A fast double-tap on "Sync now" fires two overlapping getAccessToken calls
+    // before either resolves. Without single-flighting, the second call would
+    // read the not-yet-rotated 'r0' too, and one of the two would 400 as if the
+    // session were dead.
+    const [first, second] = await Promise.all([auth.getAccessToken(), auth.getAccessToken()]);
+
+    expect(first).toBe('a1');
+    expect(second).toBe('a1');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(read()).toEqual({ refreshToken: 'r1', username: 'u' });
+  });
 });
 
 describe('disconnect', () => {

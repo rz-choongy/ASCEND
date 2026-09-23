@@ -19,6 +19,7 @@ import {
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { useTabBarClearance } from '../navigation/tabBar';
+import { BodyweightCard } from './progress/BodyweightCard';
 import { ClimbProgressView } from './progress/ClimbProgressView';
 import { StrengthProgressView } from './progress/StrengthProgressView';
 
@@ -98,6 +99,8 @@ export function ProgressScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
       >
         <Text style={styles.screenTitle}>Progress</Text>
+
+        <BodyweightCard />
 
         <View style={styles.segmented}>
           <SegmentedControl

@@ -5,6 +5,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getLatestBodyweight } from '../domain/bodyweightStore';
 import { applyClimbEvents } from '../domain/climbLogUtils';
 import {
   buildRecentSessions,
@@ -31,13 +32,14 @@ import {
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
 import { formatWeight } from '../domain/strengthProgress';
-import type { SessionRow, SessionType } from '../domain/types';
+import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { IconButton, SettingsGearIcon, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { ActiveSessionCard } from './today/ActiveSessionCard';
+import { BodyweightRow } from './today/BodyweightRow';
 import { LastSessionCard } from './today/LastSessionCard';
 import { RecentSessionsList } from './today/RecentSessionsList';
 import { StartCard } from './today/StartCard';
@@ -71,6 +73,7 @@ type Dashboard = {
   strength: LastSessions<StrengthSessionSummary> | null;
   week: WeekActivity;
   recent: RecentSession[];
+  bodyweight: BodyweightLogRow | null;
 };
 
 const loadDashboard = (): Dashboard => {
@@ -89,6 +92,7 @@ const loadDashboard = (): Dashboard => {
     strength: lastStrengthSessions(strengthHistory),
     week: buildWeekActivity(thisWeek, now),
     recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),
+    bodyweight: getLatestBodyweight(),
   };
 };
 
@@ -207,6 +211,11 @@ export function LogScreen() {
         />
 
         <WeekCard week={data.week} streak={data.streak} />
+
+        <BodyweightRow
+          latest={data.bodyweight}
+          onLogged={(row) => setData((current) => (current ? { ...current, bodyweight: row } : current))}
+        />
 
         {data.recent.length > 0 ? (
           <RecentSessionsList

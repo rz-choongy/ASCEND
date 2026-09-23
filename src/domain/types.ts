@@ -55,6 +55,13 @@ export type ExerciseRow = {
   updated_at: number;
 };
 
+export type BodyweightLogRow = {
+  id: string;
+  weight_kg: number;
+  logged_at: number;
+  created_at: number;
+};
+
 export type ClimbResult = 'SEND' | 'FLASH';
 
 export type ClimbLogPayload = {
@@ -65,6 +72,7 @@ export type ClimbLogPayload = {
   gradeColor?: string | null;
   gradeId?: string;
   gymId?: string;
+  climbName?: string | null;
 };
 
 export type StrengthSetPayload = {

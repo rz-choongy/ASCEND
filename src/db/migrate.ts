@@ -33,7 +33,7 @@ const defaultExercises = [
   { id: 'exercise-dips', name: 'Dips', sort_order: 4 },
 ];
 
-const APP_SCHEMA_VERSION = 6;
+const APP_SCHEMA_VERSION = 7;
 
 type Migration = {
   version: number;
@@ -154,6 +154,7 @@ const ensureSchema = (): void => {
   `);
 
   createExternalLogsTable();
+  createBodyweightLogsTable();
 
   run(`
     CREATE TABLE IF NOT EXISTS exercises (
@@ -310,6 +311,18 @@ const backfillNumericGradeColors = (): void => {
   });
 };
 
+const createBodyweightLogsTable = (): void => {
+  run(`
+    CREATE TABLE IF NOT EXISTS bodyweight_logs (
+      id TEXT PRIMARY KEY NOT NULL,
+      weight_kg REAL NOT NULL,
+      logged_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+  `);
+  run('CREATE INDEX IF NOT EXISTS idx_bodyweight_logs_logged_at ON bodyweight_logs(logged_at);');
+};
+
 const migrations: Migration[] = [
   { version: 1, up: ensureBaseSchema },
   { version: 2, up: ensureBetaHardening },
@@ -317,6 +330,7 @@ const migrations: Migration[] = [
   { version: 4, up: dedupeGymGradeOptions },
   { version: 5, up: backfillNumericGradeColors },
   { version: 6, up: createExternalLogsTable },
+  { version: 7, up: createBodyweightLogsTable },
 ];
 
 export const migrate = (): void => {
