@@ -7,6 +7,7 @@ import type { SessionType } from '../../domain/types';
 import { Card, PressableScale, font, radius, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
+import { countDelta, percentDelta, type Delta } from './deltas';
 
 type Props = {
   mode: SessionType;
@@ -14,8 +15,6 @@ type Props = {
   strength: LastSessions<StrengthSessionSummary> | null;
   onOpen: (sessionId: string) => void;
 };
-
-type Delta = { text: string; tone: 'up' | 'flat' };
 
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -26,21 +25,6 @@ const dayLabel = (ms: number): string => {
   const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return DAY_SHORT[d.getDay()];
-};
-
-// Only improvements get colour; a dip reads neutral rather than as a telling-off.
-const countDelta = (latest: number, previous: number | undefined, unit = ''): Delta | null => {
-  if (previous === undefined) return null;
-  const diff = latest - previous;
-  if (diff === 0) return { text: 'same as last', tone: 'flat' };
-  return { text: `${diff > 0 ? '+' : '−'}${Math.abs(diff)}${unit} vs last`, tone: diff > 0 ? 'up' : 'flat' };
-};
-
-const percentDelta = (latest: number, previous: number | undefined): Delta | null => {
-  if (previous === undefined || previous === 0) return null;
-  const pct = Math.round(((latest - previous) / previous) * 100);
-  if (pct === 0) return { text: 'same as last', tone: 'flat' };
-  return { text: `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% vs last`, tone: pct > 0 ? 'up' : 'flat' };
 };
 
 /** Grade values are only comparable within one gym's scale. */
@@ -98,20 +82,22 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
           <View style={styles.stats}>
             {stat(`${latest.sends}`, latest.sends === 1 ? 'send' : 'sends', countDelta(latest.sends, previous?.sends))}
             {stat(latest.bestGradeLabel ?? '–', 'best', gradeDelta(latest, previous), true)}
-            {stat(`${latest.flashRate}%`, 'flashed', countDelta(latest.flashRate, previous?.flashRate, ' pts'))}
+            {stat(`${latest.flashRate}%`, 'flashed', countDelta(latest.flashRate, previous?.flashRate, 'vs last', ' pts'))}
           </View>
           {latest.grades.length > 0 ? (
             <View style={styles.chart}>
               <View style={styles.bars}>
-                {latest.grades.map((g) => (
-                  <View
-                    key={g.label}
-                    style={[
-                      styles.bar,
-                      { height: `${Math.max(12, (g.count / maxCount) * 100)}%`, backgroundColor: g.color ?? colors.textMuted },
-                    ]}
-                  />
-                ))}
+                {/* Same split as the Progress pyramid: flashes solid at the base, other sends faded above. */}
+                {latest.grades.map((g) => {
+                  const color = g.color ?? colors.textMuted;
+                  const sends = g.count - g.flashCount;
+                  return (
+                    <View key={g.label} style={[styles.bar, { height: `${Math.max(12, (g.count / maxCount) * 100)}%` }]}>
+                      {sends > 0 ? <View style={[styles.barSend, { flex: sends, backgroundColor: color }]} /> : null}
+                      {g.flashCount > 0 ? <View style={{ flex: g.flashCount, backgroundColor: color }} /> : null}
+                    </View>
+                  );
+                })}
               </View>
               <View style={styles.barLabels}>
                 {latest.grades.map((g) => (
@@ -143,7 +129,14 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
         {header(latest.title ? `Last · ${latest.title}` : 'Last strength', latest.startedAt, latest.durationMs)}
         <View style={styles.stats}>
           {stat(`${latest.sets}`, latest.sets === 1 ? 'set' : 'sets', countDelta(latest.sets, previous?.sets))}
-          {stat(`${volume.value}${volume.unit === 't' ? 't' : ''}`, volume.unit === 't' ? 'volume' : 'kg volume', percentDelta(latest.volume, previous?.volume))}
+          {/* Bodyweight work has no kg volume to speak of, so count reps instead of showing 0. */}
+          {latest.volume > 0
+            ? stat(
+                `${volume.value}${volume.unit === 't' ? 't' : ''}`,
+                volume.unit === 't' ? 'volume' : 'kg volume',
+                previous && previous.volume > 0 ? percentDelta(latest.volume, previous.volume) : null
+              )
+            : stat(`${latest.reps}`, latest.reps === 1 ? 'rep' : 'reps', countDelta(latest.reps, previous?.reps))}
           {stat(`${latest.records}`, latest.records === 1 ? 'PR' : 'PRs', null, latest.records > 0)}
         </View>
         {latest.exercises.length > 0 ? (
@@ -237,6 +230,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     bar: {
       flex: 1,
       borderRadius: 3,
+      overflow: 'hidden',
+    },
+    barSend: {
+      opacity: 0.42,
     },
     barLabels: {
       flexDirection: 'row',

@@ -17,6 +17,18 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.1',
+    date: '2026-09-24',
+    changes: [
+      { kind: 'new', text: 'Grade pyramid bars now split into flashes and sends, and read top to bottom from your easiest grade.' },
+      { kind: 'new', text: 'Pin your regular gyms to the grade pyramid. Gyms you rarely visit sit under More, where you can star them to pin them.' },
+      { kind: 'improved', text: 'This week on Today now compares sessions, sends and sets with last week, laid out like the last-session card.' },
+      { kind: 'improved', text: 'The Calendar filter sits above the calendar and filters its dots too. Day dots now mark a climb (filled) or strength (ring) instead of a grade colour.' },
+      { kind: 'improved', text: 'Bodyweight on Progress is a compact row with a small trend line.' },
+      { kind: 'fixed', text: 'Chart labels no longer overlap the line or the card title, and bodyweight sets show BW and reps instead of 0 kg.' },
+    ],
+  },
+  {
     version: '2.0',
     date: '2026-09-23',
     changes: [

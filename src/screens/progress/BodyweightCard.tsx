@@ -33,22 +33,21 @@ export function BodyweightCard() {
 
   return (
     <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Bodyweight</Text>
-        <Text style={styles.cardMeta}>last {logs.length} logged</Text>
-      </View>
-      <View style={styles.latestRow}>
+      {/* One row: the number that matters, with the trend as a glance, not a chart to read. */}
+      <View style={styles.text}>
+        <Text style={styles.label}>Bodyweight</Text>
         <Text style={styles.latestValue}>
-          {formatWeight(latest.weight_kg)} <Text style={styles.latestUnit}>kg</Text>
+          {formatWeight(latest.weight_kg)}
+          <Text style={styles.latestUnit}> kg</Text>
         </Text>
-        <Text style={styles.latestMeta}>
+        <Text style={styles.latestMeta} numberOfLines={1}>
           {formatDaysAgo(latest.logged_at)}
-          {logs.length > 1 ? ` · ${deltaKg.startsWith('-') ? '' : '+'}${deltaKg} kg` : ''}
+          {logs.length > 1 ? ` · ${deltaKg.startsWith('-') ? '' : '+'}${deltaKg} kg over ${logs.length} logs` : ''}
         </Text>
       </View>
       {logs.length > 1 ? (
         <View style={styles.chart}>
-          <LineChart points={points} height={70} valueFormatter={(value) => `${formatWeight(value)} kg`} />
+          <LineChart points={points} height={44} compact />
         </View>
       ) : null}
     </View>
@@ -58,6 +57,9 @@ export function BodyweightCard() {
 const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
     card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
@@ -67,35 +69,29 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       paddingVertical: spacing.s,
       marginBottom: spacing.xs,
     },
-    cardHeader: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'space-between',
-      gap: spacing.xs,
+    text: {
+      flex: 1,
+      gap: 1,
     },
-    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
-    cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
-    latestRow: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'space-between',
-      marginTop: spacing.xxs,
+    label: {
+      ...typography.section,
     },
     latestValue: {
-      ...typography.display,
-      fontSize: 26,
-      letterSpacing: -0.5,
+      ...typography.numeric,
+      fontSize: 22,
     },
     latestUnit: {
-      ...typography.body,
-      fontSize: 15,
+      ...font('medium'),
+      fontSize: 13,
       color: colors.textSecondary,
     },
     latestMeta: {
-      ...typography.bodyMuted,
-      fontSize: 13,
+      ...font('regular'),
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontVariant: ['tabular-nums'],
     },
     chart: {
-      marginTop: spacing.xs,
+      width: 120,
     },
   });

@@ -44,7 +44,10 @@ export type WeekFrequency = {
 
 export type GradeDistributionBar = {
   label: string;
+  /** Every logged climb at this grade, flashes included. */
   count: number;
+  /** The subset of `count` sent first try. */
+  flashCount: number;
   color: string;
 };
 
@@ -107,18 +110,21 @@ export const buildGradeDistribution = (
   const climbSessions = sessions.filter(
     (session) => session.type === 'climb' && session.gym_id === gymId
   );
-  const byLabel = new Map<string, { count: number; color: string; sortKey: number }>();
+  const byLabel = new Map<string, { count: number; flashCount: number; color: string; sortKey: number }>();
 
   climbSessions.forEach((session) => {
     const logs = applyClimbEvents(getSessionEvents(session.id));
     logs.forEach((log: ClimbLog) => {
       const existing = byLabel.get(log.gradeLabel);
       const sortKey = (log.gradeMin + log.gradeMax) / 2;
+      const flash = log.result === 'FLASH' ? 1 : 0;
       if (existing) {
         existing.count += 1;
+        existing.flashCount += flash;
       } else {
         byLabel.set(log.gradeLabel, {
           count: 1,
+          flashCount: flash,
           color: log.gradeColor ?? '#3ecf6e',
           sortKey,
         });
@@ -127,9 +133,8 @@ export const buildGradeDistribution = (
   });
 
   return Array.from(byLabel.entries())
-    .map(([label, value]) => ({ label, count: value.count, color: value.color, sortKey: value.sortKey }))
-    .sort((a, b) => a.sortKey - b.sortKey)
-    .map(({ label, count, color }) => ({ label, count, color }));
+    .sort(([, a], [, b]) => a.sortKey - b.sortKey)
+    .map(([label, { count, flashCount, color }]) => ({ label, count, flashCount, color }));
 };
 
 /**
@@ -151,22 +156,26 @@ export const buildGradeDistributionAcrossGyms = (
   sessions: SessionRow[],
   palette: string[]
 ): GradeDistributionBar[] => {
-  const byGrade = new Map<number, number>();
+  const byGrade = new Map<number, { count: number; flashCount: number }>();
 
   sessions
     .filter((session) => session.type === 'climb')
     .forEach((session) => {
       applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
         const grade = midpointGrade(log.gradeMin, log.gradeMax);
-        byGrade.set(grade, (byGrade.get(grade) ?? 0) + 1);
+        const entry = byGrade.get(grade) ?? { count: 0, flashCount: 0 };
+        entry.count += 1;
+        if (log.result === 'FLASH') entry.flashCount += 1;
+        byGrade.set(grade, entry);
       });
     });
 
   return Array.from(byGrade.entries())
     .sort(([a], [b]) => a - b)
-    .map(([grade, count]) => ({
+    .map(([grade, { count, flashCount }]) => ({
       label: `V${grade}`,
       count,
+      flashCount,
       color: palette.length > 0 ? palette[grade % palette.length] : '#3ecf6e',
     }));
 };

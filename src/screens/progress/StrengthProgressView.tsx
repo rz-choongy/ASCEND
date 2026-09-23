@@ -141,7 +141,7 @@ const ExerciseRow = ({ exercise, bordered, onPress }: ExerciseRowProps) => {
           {exercise.name}
         </Text>
         <Text style={styles.rowSub} numberOfLines={1}>
-          {formatWeight(lastSet.weight)} kg × {lastSet.reps} · {formatDaysAgo(exercise.lastAt)}
+          {lastSet.weight === 0 ? 'BW' : `${formatWeight(lastSet.weight)} kg`} × {lastSet.reps} · {formatDaysAgo(exercise.lastAt)}
         </Text>
       </View>
       <Sparkline values={exercise.trend} color={colors.accent} />

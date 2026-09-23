@@ -8,7 +8,7 @@ jest.mock('./gymStore', () => ({
 }));
 
 import { getSessionEvents } from './sessionStore';
-import { buildGradeDistributionAcrossGyms } from './progressInsights';
+import { buildGradeDistribution, buildGradeDistributionAcrossGyms } from './progressInsights';
 import type { SessionRow } from './types';
 
 const mockGetSessionEvents = getSessionEvents as jest.Mock;
@@ -117,5 +117,33 @@ describe('buildGradeDistributionAcrossGyms', () => {
     const bars = buildGradeDistributionAcrossGyms([strengthSession], PALETTE);
 
     expect(bars).toEqual([]);
+  });
+});
+
+describe('flash counts', () => {
+  const flashEvent = (id: string, gradeLabel: string, grade: number) => ({
+    ...climbEvent(id, gradeLabel, grade, grade),
+    payload: { ...climbEvent(id, gradeLabel, grade, grade).payload, result: 'FLASH' },
+  });
+
+  it('splits each bar into flashes and sends, per gym', () => {
+    mockGetSessionEvents.mockReturnValue([
+      climbEvent('e1', 'V3', 3, 3),
+      flashEvent('e2', 'V3', 3),
+      flashEvent('e3', 'V5', 5),
+    ]);
+    const bars = buildGradeDistribution([makeSession('a', 'gym-1')], 'gym-1');
+    expect(bars.map((b) => [b.label, b.count, b.flashCount])).toEqual([
+      ['V3', 2, 1],
+      ['V5', 1, 1],
+    ]);
+  });
+
+  it('pools flashes across gyms too', () => {
+    mockGetSessionEvents.mockImplementation((sessionId: string) =>
+      sessionId === 'a' ? [flashEvent('e1', 'Yellow', 4)] : [climbEvent('e2', 'Blue', 4, 4)]
+    );
+    const bars = buildGradeDistributionAcrossGyms([makeSession('a', 'gym-1'), makeSession('b', 'gym-2')], PALETTE);
+    expect(bars[0]).toMatchObject({ label: 'V4', count: 2, flashCount: 1 });
   });
 });

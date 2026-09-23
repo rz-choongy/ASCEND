@@ -33,6 +33,8 @@ const BAR_MAX_WIDTH = 20;
 const SEGMENT_GAP = 2;
 const BAR_RADIUS = 5;
 const MIN_SEGMENT_HEIGHT = 2;
+/** Headroom for the value label over the tallest bar, so it stays inside the chart. */
+const VALUE_LABEL_SPACE = 18;
 
 const defaultFormatter = (value: number): string => `${Math.round(value)}`;
 
@@ -81,7 +83,7 @@ export const BarChart = ({
                     const isTopmost = segmentIndex === 0;
                     const segmentHeight =
                       segment.value > 0
-                        ? Math.max(MIN_SEGMENT_HEIGHT, (segment.value / computedMax) * height)
+                        ? Math.max(MIN_SEGMENT_HEIGHT, (segment.value / computedMax) * (height - VALUE_LABEL_SPACE))
                         : 0;
                     return (
                       <View

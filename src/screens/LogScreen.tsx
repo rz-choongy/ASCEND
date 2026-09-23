@@ -71,6 +71,7 @@ type Dashboard = {
   climb: LastSessions<ClimbSessionSummary> | null;
   strength: LastSessions<StrengthSessionSummary> | null;
   week: WeekActivity;
+  lastWeek: WeekActivity;
   recent: RecentSession[];
   bodyweight: BodyweightLogRow | null;
 };
@@ -79,7 +80,8 @@ const loadDashboard = (): Dashboard => {
   const completed = getCompletedSessions();
   const now = new Date();
   const weekStart = startOfWeek(now);
-  const thisWeek = getSessionsForDateRange(weekStart.getTime(), addDays(weekStart, 7).getTime());
+  // Two weeks in one query: this week for the card, last week for its comparisons.
+  const twoWeeks = getSessionsForDateRange(addDays(weekStart, -7).getTime(), addDays(weekStart, 7).getTime());
   const strengthHistory = completed.filter((session) => session.type === 'strength');
   return {
     activeSession: getActiveSession(),
@@ -89,7 +91,8 @@ const loadDashboard = (): Dashboard => {
     lastType: completed[completed.length - 1]?.type ?? null,
     climb: lastClimbSessions(completed),
     strength: lastStrengthSessions(strengthHistory),
-    week: buildWeekActivity(thisWeek, now),
+    week: buildWeekActivity(twoWeeks, now),
+    lastWeek: buildWeekActivity(twoWeeks, addDays(now, -7)),
     recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),
     bodyweight: getLatestBodyweight(),
   };
@@ -209,7 +212,7 @@ export function LogScreen() {
           onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
         />
 
-        <WeekCard week={data.week} streak={data.streak} />
+        <WeekCard week={data.week} lastWeek={data.lastWeek} streak={data.streak} />
 
         <BodyweightRow
           latest={data.bodyweight}

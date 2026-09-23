@@ -251,7 +251,7 @@ const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: Session
         </View>
         <Text style={styles.sessionSummary} numberOfLines={1}>
           <Text style={styles.sessionTop}>
-            {formatWeight(topSet.weight)} kg × {topSet.reps}
+            {topSet.weight === 0 ? 'BW' : `${formatWeight(topSet.weight)} kg`} × {topSet.reps}
           </Text>
           {`  ${sets.length} set${sets.length === 1 ? '' : 's'}`}
         </Text>
@@ -266,7 +266,7 @@ const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: Session
             <View key={set.eventId} style={styles.setRow}>
               <Text style={styles.setIndex}>Set {i + 1}</Text>
               <Text style={styles.setValue}>
-                {formatWeight(set.weight)} kg × {set.reps}
+                {set.weight === 0 ? 'BW' : `${formatWeight(set.weight)} kg`} × {set.reps}
               </Text>
             </View>
           ))}

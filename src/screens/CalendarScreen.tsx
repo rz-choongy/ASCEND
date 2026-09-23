@@ -289,31 +289,6 @@ export function CalendarScreen() {
     return `${WEEKDAY_FULL[date.getDay()]} · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
   }
 
-  /**
-   * Color for a day's marker: the grade color of the hardest climb logged that day.
-   * Reuses `SessionReplay.dotColor` (already "hardest climb's gradeColor, else the
-   * type color") rather than deriving grade colors a second way.
-   */
-  function gradeAccentFor(
-    daySessions: SessionRow[],
-    replayById: Map<string, SessionReplay>
-  ): string {
-    let bestColor: string | null = null;
-    let bestGrade = -Infinity;
-    let fallback: string | null = null;
-    for (const session of daySessions) {
-      const replay = replayById.get(session.id);
-      if (!replay) continue;
-      fallback = fallback ?? replay.dotColor;
-      const hardest = replay.climbs.reduce((max, climb) => Math.max(max, climb.gradeMax), -Infinity);
-      if (hardest > bestGrade) {
-        bestGrade = hardest;
-        bestColor = replay.dotColor;
-      }
-    }
-    return bestColor ?? fallback ?? DOT_CLIMB;
-  }
-
   /** A single bar-row for one session, matching Direction A's `.sess-row`/`.sess-bar`. */
   function renderSessionRow(
     session: SessionRow,
@@ -415,6 +390,9 @@ export function CalendarScreen() {
         />
       </View>
 
+      {/* One filter for every view, above what it filters -- including the month's dots. */}
+      <View style={styles.filterRow}>{filterChips}</View>
+
       {showDiscarded ? (
         <Text style={styles.discardedBanner}>
           Showing sessions you closed without finishing — tap one to restore or delete it for good.
@@ -464,10 +442,13 @@ export function CalendarScreen() {
               }
 
               const key = formatLocalDate(day);
-              const daySessions = sessionsByDate.get(key) ?? [];
+              const daySessions = (sessionsByDate.get(key) ?? []).filter(
+                (s) => !typeFilter || s.type === typeFilter
+              );
+              const climbed = daySessions.some((s) => s.type === 'climb');
+              const trained = daySessions.some((s) => s.type === 'strength');
               const isToday = sameDay(day, today);
               const isSelected = sameDay(day, selectedDate);
-              const hasSessions = daySessions.length > 0;
 
               return (
                 <TouchableOpacity
@@ -492,12 +473,12 @@ export function CalendarScreen() {
                       {day.getDate()}
                     </Text>
                   </View>
+                  {/* Same marks as the Today week strip: filled for a climb, ring for strength. */}
                   <View
                     style={[
                       styles.dayDot,
-                      hasSessions && !isSelected
-                        ? { backgroundColor: gradeAccentFor(daySessions, sessionReplayById) }
-                        : null,
+                      climbed ? styles.dayDotClimb : null,
+                      trained ? styles.dayDotStrength : null,
                     ]}
                   />
                 </TouchableOpacity>
@@ -515,7 +496,6 @@ export function CalendarScreen() {
 
             {renderDayCard(selectedSessions, sessionReplayById)}
 
-            <View style={styles.panelHeaderBelow}>{filterChips}</View>
 
             <Text style={styles.monthCountFooter}>
               {monthSessions.length} session{monthSessions.length === 1 ? '' : 's'}{' '}
@@ -552,7 +532,6 @@ export function CalendarScreen() {
           </View>
 
           <ScrollView style={styles.sessionPanel} contentContainerStyle={panelContentStyle}>
-            <View style={styles.panelHeader}>{filterChips}</View>
             {renderGroupedList(weekGroups, weekSessionReplayById)}
           </ScrollView>
         </>
@@ -560,7 +539,6 @@ export function CalendarScreen() {
 
       {viewMode === 'list' ? (
         <ScrollView style={styles.sessionPanel} contentContainerStyle={panelContentStyle}>
-          <View style={[styles.panelHeader, styles.listPanelHeader]}>{filterChips}</View>
           {renderGroupedList(allGroups, allSessionReplayById)}
         </ScrollView>
       ) : null}
@@ -672,11 +650,18 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     ...font('semibold'),
   },
   dayDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginTop: 2,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    marginTop: 3,
     backgroundColor: 'transparent',
+  },
+  dayDotClimb: {
+    backgroundColor: colors.accent,
+  },
+  dayDotStrength: {
+    borderWidth: 1.5,
+    borderColor: colors.textPrimary,
   },
 
   // Divider
@@ -695,15 +680,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
   },
-  panelHeader: {
+  filterRow: {
+    paddingHorizontal: spacing.sm,
     marginBottom: spacing.xs,
-    gap: spacing.xs,
-  },
-  panelHeaderBelow: {
-    marginTop: spacing.md,
-  },
-  listPanelHeader: {
-    marginTop: spacing.xs,
   },
   panelDateLabel: {
     ...typography.title,

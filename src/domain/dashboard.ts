@@ -12,6 +12,8 @@ import type { SessionRow } from './types';
 export type GradeCount = {
   label: string;
   count: number;
+  /** The subset of `count` flashed. */
+  flashCount: number;
   color: string | null;
 };
 
@@ -44,8 +46,9 @@ export type StrengthSessionSummary = {
   durationMs: number | null;
   title: string | null;
   sets: number;
-  /** Sum of weight x reps, kg. */
+  /** Sum of weight x reps, kg. Zero for a bodyweight-only session. */
   volume: number;
+  reps: number;
   records: number;
   /** In the order each exercise was first logged. */
   exercises: ExerciseTopSet[];
@@ -68,9 +71,20 @@ export const summarizeClimbSession = (session: SessionRow): ClimbSessionSummary 
   logs.forEach((log) => {
     if (log.result === 'FLASH') flashes += 1;
     if (!best || log.gradeMax > best.value) best = { label: log.gradeLabel, value: log.gradeMax };
+    const flash = log.result === 'FLASH' ? 1 : 0;
     const entry = byGrade.get(log.gradeLabel);
-    if (entry) entry.count += 1;
-    else byGrade.set(log.gradeLabel, { label: log.gradeLabel, count: 1, color: log.gradeColor ?? null, order: log.gradeMin });
+    if (entry) {
+      entry.count += 1;
+      entry.flashCount += flash;
+    } else {
+      byGrade.set(log.gradeLabel, {
+        label: log.gradeLabel,
+        count: 1,
+        flashCount: flash,
+        color: log.gradeColor ?? null,
+        order: log.gradeMin,
+      });
+    }
   });
 
   const hardest = best as { label: string; value: number } | null;
@@ -85,7 +99,7 @@ export const summarizeClimbSession = (session: SessionRow): ClimbSessionSummary 
     bestGradeValue: hardest?.value ?? null,
     grades: [...byGrade.values()]
       .sort((a, b) => a.order - b.order)
-      .map(({ label, count, color }) => ({ label, count, color })),
+      .map(({ label, count, flashCount, color }) => ({ label, count, flashCount, color })),
   };
 };
 
@@ -102,6 +116,7 @@ export const summarizeStrengthSessions = (sessions: SessionRow[]): StrengthSessi
     const sessionBest = new Map<string, number>();
     const exercises = new Map<string, ExerciseTopSet & { e1rm: number }>();
     let volume = 0;
+    let reps = 0;
     let records = 0;
 
     sets.forEach((set) => {
@@ -111,6 +126,7 @@ export const summarizeStrengthSessions = (sessions: SessionRow[]): StrengthSessi
       if (isRecord) records += 1;
       sessionBest.set(key, Math.max(sessionBest.get(key) ?? 0, e1rm));
       volume += set.weight * set.reps;
+      reps += set.reps;
 
       const current = exercises.get(key);
       if (!current) {
@@ -131,6 +147,7 @@ export const summarizeStrengthSessions = (sessions: SessionRow[]): StrengthSessi
       title: session.title?.trim() || null,
       sets: sets.length,
       volume,
+      reps,
       records,
       exercises: [...exercises.values()].map(({ e1rm: _e1rm, ...rest }) => rest),
     };

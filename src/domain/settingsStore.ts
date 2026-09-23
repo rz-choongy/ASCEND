@@ -4,6 +4,7 @@ import { DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tok
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
+const PROGRESS_FAVORITE_GYMS_KEY = 'progress_favorite_gym_ids';
 const ACCENT_COLOR_KEY = 'accent_color';
 const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 const KILTER_USERNAME_KEY = 'kilter_username';
@@ -56,6 +57,27 @@ export const getProgressGradeGymId = (): string | null => {
 
 export const setProgressGradeGymId = (gymId: string): void => {
   setSetting(PROGRESS_GRADE_GYM_ID_KEY, gymId);
+};
+
+/**
+ * Gyms pinned as chips on the grade pyramid; the rest sit behind "More". null means
+ * the user hasn't chosen yet (the screen then picks the most-visited gyms).
+ */
+export const getFavoriteGradeGymIds = (): string[] | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    PROGRESS_FAVORITE_GYMS_KEY,
+  ]);
+  if (!setting) return null;
+  try {
+    const parsed: unknown = JSON.parse(setting.value);
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : null;
+  } catch {
+    return null;
+  }
+};
+
+export const setFavoriteGradeGymIds = (gymIds: string[]): void => {
+  setSetting(PROGRESS_FAVORITE_GYMS_KEY, JSON.stringify(gymIds));
 };
 
 export const getAccentColorId = (): AccentColorId => {

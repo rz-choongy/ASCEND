@@ -15,18 +15,31 @@ import {
   getAvailableClimbGyms,
 } from '../../domain/progressInsights';
 import { getSessionEvents } from '../../domain/sessionStore';
-import { getProgressGradeGymId, setProgressGradeGymId } from '../../domain/settingsStore';
+import {
+  getFavoriteGradeGymIds,
+  getProgressGradeGymId,
+  setFavoriteGradeGymIds,
+  setProgressGradeGymId,
+} from '../../domain/settingsStore';
 import { formatMonthDay } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
 import { Chip, StatGrid, StatTile, font, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
+import { GymScopeSheet, type GymScopeOption } from './GymScopeSheet';
 
 const WEEKS_SHOWN = 8;
 const SENDS_BARS_SHOWN = 6;
 
 /** Sentinel scope meaning "pool every gym", stored alongside real gym ids. */
 const ALL_GYMS = '__all__';
+/** Climbs logged before gyms were tracked have no gym id; this stands in for it as a key. */
+const UNSPECIFIED = '__unspecified__';
+/** Before the user pins any, the most-visited gyms get the chips. */
+const DEFAULT_PINNED = 2;
+
+const keyOf = (gymId: string | null) => gymId ?? UNSPECIFIED;
+const gymIdOf = (key: string) => (key === UNSPECIFIED ? null : key);
 
 type Props = {
   /** Full history: streaks, personal bests, and the weekly trend ignore the month toggle. */
@@ -42,6 +55,8 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
   // undefined = user hasn't picked one this session yet -- fall back to the persisted
   // setting. A string is either a gym id or the ALL_GYMS sentinel.
   const [selectedScope, setSelectedScope] = useState<string | null | undefined>(undefined);
+  const [storedFavorites, setStoredFavorites] = useState<string[] | null>(() => getFavoriteGradeGymIds());
+  const [isGymSheetOpen, setIsGymSheetOpen] = useState(false);
 
   const allTimeStats = useMemo(() => buildAllTimeStats(scopedSessions), [scopedSessions]);
   const weeklyFrequency = useMemo(() => buildWeeklyFrequency(sessions, WEEKS_SHOWN), [sessions]);
@@ -61,6 +76,34 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
   function handleSelectScope(scope: string | null) {
     setSelectedScope(scope);
     if (scope) setProgressGradeGymId(scope);
+  }
+
+  const gymOptions = useMemo<GymScopeOption[]>(() => {
+    const counts = new Map<string, number>();
+    scopedSessions
+      .filter((s) => s.type === 'climb')
+      .forEach((s) => counts.set(keyOf(s.gym_id), (counts.get(keyOf(s.gym_id)) ?? 0) + 1));
+    return availableGyms
+      .map((gym) => ({ key: keyOf(gym.gymId), name: gym.gymName, sessions: counts.get(keyOf(gym.gymId)) ?? 0 }))
+      .sort((a, b) => b.sessions - a.sessions);
+  }, [availableGyms, scopedSessions]);
+
+  const favoriteKeys = useMemo(
+    () => new Set(storedFavorites ?? gymOptions.slice(0, DEFAULT_PINNED).map((g) => g.key)),
+    [storedFavorites, gymOptions]
+  );
+  const activeKey = isAllScope ? null : keyOf(activeScope);
+  // Pinned gyms, plus whichever unpinned gym is being viewed so the selection stays visible.
+  const chipGyms = gymOptions.filter((g) => favoriteKeys.has(g.key) || g.key === activeKey);
+  const hasUnpinned = gymOptions.some((g) => !favoriteKeys.has(g.key));
+
+  function handleToggleFavoriteGym(key: string) {
+    const next = new Set(favoriteKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    const ids = [...next];
+    setStoredFavorites(ids);
+    setFavoriteGradeGymIds(ids);
   }
 
   const gradeDistribution = useMemo(() => {
@@ -147,38 +190,79 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
           {availableGyms.length > 1 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scopeChips}>
               <Chip label="All" selected={isAllScope} onPress={() => handleSelectScope(ALL_GYMS)} />
-              {availableGyms.map((gym) => (
+              {chipGyms.map((gym) => (
                 <Chip
-                  key={gym.gymId ?? '__unspecified__'}
-                  label={gym.gymName}
-                  selected={!isAllScope && gym.gymId === activeScope}
-                  onPress={() => handleSelectScope(gym.gymId)}
+                  key={gym.key}
+                  label={gym.name}
+                  selected={gym.key === activeKey}
+                  onPress={() => handleSelectScope(gymIdOf(gym.key))}
                 />
               ))}
+              <Chip
+                label={hasUnpinned ? 'More ▾' : 'Gyms ▾'}
+                onPress={() => setIsGymSheetOpen(true)}
+                style={styles.moreChip}
+              />
             </ScrollView>
           ) : null}
 
+          <View style={styles.legend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSwatch, { backgroundColor: colors.textSecondary }]} />
+              <Text style={styles.legendText}>Flash</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSwatch, styles.legendSend, { backgroundColor: colors.textSecondary }]} />
+              <Text style={styles.legendText}>Send</Text>
+            </View>
+          </View>
+
+          {/* Easiest first, reading down -- the order grades are climbed in. Each bar is
+              flashes (solid) then the other sends (faded) in the grade's colour. */}
           <View style={styles.pyramid}>
-            {gradeDistribution
-              .slice()
-              .reverse()
-              .map((bar) => (
-                <View key={bar.label} style={styles.pyrRow}>
+            {gradeDistribution.map((bar) => {
+              const sends = bar.count - bar.flashCount;
+              return (
+                <View
+                  key={bar.label}
+                  style={styles.pyrRow}
+                  accessible
+                  accessibilityLabel={`${bar.label}: ${bar.count} climbs, ${bar.flashCount} flashed`}
+                >
                   <Text style={styles.pyrGrade} numberOfLines={1} adjustsFontSizeToFit>
                     {bar.label}
                   </Text>
                   <View style={styles.pyrTrack}>
-                    <View
-                      style={[
-                        styles.pyrBar,
-                        { width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%`, backgroundColor: bar.color },
-                      ]}
-                    />
+                    <View style={[styles.pyrBar, { width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%` }]}>
+                      {bar.flashCount > 0 ? (
+                        <View style={{ flex: bar.flashCount, backgroundColor: bar.color }} />
+                      ) : null}
+                      {sends > 0 ? (
+                        <View style={[styles.pyrSend, { flex: sends, backgroundColor: bar.color }]} />
+                      ) : null}
+                    </View>
                   </View>
-                  <Text style={styles.pyrCount}>{bar.count}</Text>
+                  <Text style={styles.pyrCount}>
+                    {bar.count}
+                    {bar.flashCount > 0 ? <Text style={styles.pyrFlashCount}> · {bar.flashCount}F</Text> : null}
+                  </Text>
                 </View>
-              ))}
+              );
+            })}
           </View>
+
+          <GymScopeSheet
+            visible={isGymSheetOpen}
+            gyms={gymOptions}
+            favoriteKeys={favoriteKeys}
+            selectedKey={activeKey}
+            onSelect={(key) => {
+              handleSelectScope(gymIdOf(key));
+              setIsGymSheetOpen(false);
+            }}
+            onToggleFavorite={handleToggleFavoriteGym}
+            onClose={() => setIsGymSheetOpen(false)}
+          />
           {isAllScope ? (
             <Text style={styles.scopeNote}>
               Pooled by V-scale across {availableGyms.length} gyms — grade names differ per gym, the numeric
@@ -191,10 +275,11 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Frequency</Text>
-          <Text style={styles.cardMeta}>last {WEEKS_SHOWN} weeks</Text>
+          <Text style={styles.cardMeta}>
+            last {WEEKS_SHOWN} weeks · peak {weekMax}/wk
+          </Text>
         </View>
         <View style={styles.sparkWrap}>
-          <Text style={styles.sparkPeakLbl}>{weekMax}</Text>
           <Svg style={styles.spark} viewBox="0 0 100 100" preserveAspectRatio="none">
             <Polyline
               points={sparkPoints.map((p) => `${p.x},${p.y}`).join(' ')}
@@ -316,25 +401,24 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       color: colors.textSecondary,
     },
     pyrTrack: { flex: 1 },
-    pyrBar: { height: 14, borderRadius: 7 },
+    pyrBar: { height: 14, borderRadius: 7, flexDirection: 'row', overflow: 'hidden' },
+    pyrSend: { opacity: 0.42 },
     pyrCount: {
       ...typography.numeric,
-      width: 20,
-      fontSize: 12,
-      ...font('medium'),
-      color: colors.textMuted,
-    },
-
-    sparkWrap: { marginTop: spacing.s, height: 44, position: 'relative' },
-    sparkPeakLbl: {
-      position: 'absolute',
-      right: 0,
-      top: -14,
-      ...typography.numeric,
+      minWidth: 44,
       fontSize: 12,
       ...font('medium'),
       color: colors.textSecondary,
     },
+    pyrFlashCount: { color: colors.textMuted },
+    moreChip: { borderStyle: 'dashed' },
+    legend: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.xs },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    legendSwatch: { width: 10, height: 10, borderRadius: 3 },
+    legendSend: { opacity: 0.42 },
+    legendText: { ...typography.meta, fontSize: 11, color: colors.textSecondary },
+
+    sparkWrap: { marginTop: spacing.s, height: 44, position: 'relative' },
     spark: { width: '100%', height: 44 },
     sparkDot: {
       position: 'absolute',

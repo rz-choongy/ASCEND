@@ -1,24 +1,33 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { WeekActivity } from '../../domain/dashboard';
-import { Card, font, spacing, useTheme } from '../../ui';
+import { Card, font, radius, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
+import { countDelta, type Delta } from './deltas';
 
 type Props = {
   week: WeekActivity;
+  /** Last week's totals, for the "vs last week" line under each number. */
+  lastWeek: WeekActivity;
   streak: number;
 };
 
 /** Mon-Sun: a filled dot for a climb, a ring for strength, both for both. */
-export const WeekCard = ({ week, streak }: Props) => {
+export const WeekCard = ({ week, lastWeek, streak }: Props) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
-  const total = (value: number, label: string) => (
+  // Laid out exactly like the Last session card's stats, so the two read as one system.
+  const total = (value: number, label: string, delta: Delta | null) => (
     <View style={styles.total} key={label}>
       <Text style={styles.totalValue}>{value}</Text>
       <Text style={styles.totalLabel}>{label}</Text>
+      {delta ? (
+        <Text style={[styles.delta, delta.tone === 'up' ? styles.deltaUp : null]} numberOfLines={1}>
+          {delta.text}
+        </Text>
+      ) : null}
     </View>
   );
 
@@ -30,24 +39,26 @@ export const WeekCard = ({ week, streak }: Props) => {
           {streak > 0 ? `${streak}-day streak` : 'No streak yet'}
         </Text>
       </View>
-      <View style={styles.days}>
-        {week.days.map((day, i) => (
-          <View key={i} style={styles.day} accessibilityLabel={`${day.label}: ${[day.climbed && 'climbed', day.trained && 'strength'].filter(Boolean).join(' and ') || 'rest'}`}>
-            <View
-              style={[
-                styles.dot,
-                day.climbed ? styles.dotClimb : null,
-                day.trained ? styles.dotStrength : null,
-              ]}
-            />
-            <Text style={[styles.dayLabel, day.isToday ? styles.dayLabelToday : null]}>{day.label}</Text>
-          </View>
-        ))}
+      <View style={styles.daysWell}>
+        <View style={styles.days}>
+          {week.days.map((day, i) => (
+            <View key={i} style={styles.day} accessibilityLabel={`${day.label}: ${[day.climbed && 'climbed', day.trained && 'strength'].filter(Boolean).join(' and ') || 'rest'}`}>
+              <View
+                style={[
+                  styles.dot,
+                  day.climbed ? styles.dotClimb : null,
+                  day.trained ? styles.dotStrength : null,
+                ]}
+              />
+              <Text style={[styles.dayLabel, day.isToday ? styles.dayLabelToday : null]}>{day.label}</Text>
+            </View>
+          ))}
+        </View>
       </View>
       <View style={styles.totals}>
-        {total(week.sessions, week.sessions === 1 ? 'session' : 'sessions')}
-        {total(week.sends, week.sends === 1 ? 'send' : 'sends')}
-        {total(week.sets, week.sets === 1 ? 'set' : 'sets')}
+        {total(week.sessions, week.sessions === 1 ? 'session' : 'sessions', countDelta(week.sessions, lastWeek.sessions, 'vs last wk'))}
+        {total(week.sends, week.sends === 1 ? 'send' : 'sends', countDelta(week.sends, lastWeek.sends, 'vs last wk'))}
+        {total(week.sets, week.sets === 1 ? 'set' : 'sets', countDelta(week.sets, lastWeek.sets, 'vs last wk'))}
       </View>
     </Card>
   );
@@ -71,6 +82,14 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.meta,
       color: colors.textSecondary,
     },
+    // The dots sit in their own inset well, so they read as one strip rather than
+    // a second row of columns competing with the totals below.
+    daysWell: {
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: radius.md,
+      paddingVertical: spacing.s,
+      paddingHorizontal: spacing.xxs,
+    },
     days: {
       flexDirection: 'row',
     },
@@ -83,7 +102,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       width: 10,
       height: 10,
       borderRadius: 5,
-      backgroundColor: colors.fill,
+      backgroundColor: colors.borderSoft,
     },
     dotClimb: {
       backgroundColor: colors.accent,
@@ -102,9 +121,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     totals: {
       flexDirection: 'row',
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.separator,
-      paddingTop: spacing.s,
+      gap: spacing.xs,
     },
     total: {
       flex: 1,
@@ -112,7 +129,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     totalValue: {
       ...typography.numeric,
-      fontSize: 20,
+      fontSize: 22,
+    },
+    delta: {
+      ...font('medium'),
+      fontSize: 11,
+      color: colors.textMuted,
+      fontVariant: ['tabular-nums'],
+    },
+    deltaUp: {
+      color: colors.success,
     },
     totalLabel: {
       ...font('regular'),
