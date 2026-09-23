@@ -178,3 +178,29 @@ export const deleteCategory = (categoryId: string): void => {
   run('UPDATE exercises SET category_id = NULL WHERE category_id = ?;', [categoryId]);
   run('DELETE FROM exercise_categories WHERE id = ?;', [categoryId]);
 };
+
+// --- Renaming ---------------------------------------------------------------
+// Logged sets keep the name they were logged under (events are never rewritten);
+// screens show the current name by looking sets up by exercise id instead.
+
+/** Current name per exercise id, including deleted ones, for displaying logged sets. */
+export const getExerciseNames = (): Map<string, string> =>
+  new Map(getAll<ExerciseRow>('SELECT * FROM exercises;').map((e) => [e.id, e.name]));
+
+/** Throws if another active exercise already has the name (case-insensitive). */
+export const renameExercise = (exerciseId: string, name: string): void => {
+  const normalizedName = normalizeExerciseName(name);
+  const clash = getFirst<ExerciseRow>(
+    'SELECT * FROM exercises WHERE lower(name) = lower(?) AND id != ? AND active = 1 LIMIT 1;',
+    [normalizedName, exerciseId]
+  );
+  if (clash) {
+    throw new Error(`You already have an exercise called ${clash.name}.`);
+  }
+  run('UPDATE exercises SET name = ?, updated_at = ? WHERE id = ?;', [normalizedName, Date.now(), exerciseId]);
+};
+
+/** Hides the exercise from every list; its logged sets are removed separately (exerciseData.ts). */
+export const deactivateExercise = (exerciseId: string): void => {
+  run('UPDATE exercises SET active = 0, favorite = 0, updated_at = ? WHERE id = ?;', [Date.now(), exerciseId]);
+};

@@ -117,6 +117,19 @@ export const StarIcon = ({ size = 18, color, strokeWidth = 1.8, filled = false }
   </Svg>
 );
 
+/** Pencil, for "edit this". */
+export const PencilIcon = ({ size = 16, color, strokeWidth = 1.8 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 20h4L19 9a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 /** Horizontal ellipsis, for a row's secondary actions. */
 export const MoreIcon = ({ size = 18, color }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

@@ -17,6 +17,17 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2',
+    date: '2026-09-24',
+    changes: [
+      { kind: 'new', text: 'Rename an exercise from the exercise picker (tap ⋯). Its history keeps up with the new name.' },
+      { kind: 'new', text: 'Delete an exercise from the same place. You\'re told exactly how many logged sets go with it before anything is deleted, and a session left empty is removed too.' },
+      { kind: 'improved', text: 'Grade pyramid bars show flashes in the grade colour and sends in grey, with the counts inside the bars.' },
+      { kind: 'improved', text: 'Days with both a climb and a strength session are easier to read on Today and the Calendar.' },
+      { kind: 'fixed', text: 'Today no longer headlines a strength session whose sets were all deleted.' },
+    ],
+  },
+  {
     version: '2.1',
     date: '2026-09-24',
     changes: [

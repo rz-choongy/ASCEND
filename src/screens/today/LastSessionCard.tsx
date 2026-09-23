@@ -87,13 +87,13 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
           {latest.grades.length > 0 ? (
             <View style={styles.chart}>
               <View style={styles.bars}>
-                {/* Same split as the Progress pyramid: flashes solid at the base, other sends faded above. */}
+                {/* Same split as the Progress pyramid: flashes in the grade colour at the base, other sends grey above. */}
                 {latest.grades.map((g) => {
                   const color = g.color ?? colors.textMuted;
                   const sends = g.count - g.flashCount;
                   return (
                     <View key={g.label} style={[styles.bar, { height: `${Math.max(12, (g.count / maxCount) * 100)}%` }]}>
-                      {sends > 0 ? <View style={[styles.barSend, { flex: sends, backgroundColor: color }]} /> : null}
+                      {sends > 0 ? <View style={[styles.barSend, { flex: sends }]} /> : null}
                       {g.flashCount > 0 ? <View style={{ flex: g.flashCount, backgroundColor: color }} /> : null}
                     </View>
                   );
@@ -233,7 +233,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       overflow: 'hidden',
     },
     barSend: {
-      opacity: 0.42,
+      backgroundColor: colors.borderSoft,
     },
     barLabels: {
       flexDirection: 'row',

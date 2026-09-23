@@ -43,13 +43,11 @@ export const WeekCard = ({ week, lastWeek, streak }: Props) => {
         <View style={styles.days}>
           {week.days.map((day, i) => (
             <View key={i} style={styles.day} accessibilityLabel={`${day.label}: ${[day.climbed && 'climbed', day.trained && 'strength'].filter(Boolean).join(' and ') || 'rest'}`}>
-              <View
-                style={[
-                  styles.dot,
-                  day.climbed ? styles.dotClimb : null,
-                  day.trained ? styles.dotStrength : null,
-                ]}
-              />
+              {/* Strength is a ring drawn around the dot with a gap, so a day with both
+                  still shows the climb fill clearly. */}
+              <View style={[styles.ring, day.trained ? styles.ringStrength : null]}>
+                <View style={[styles.dot, day.climbed ? styles.dotClimb : null]} />
+              </View>
               <Text style={[styles.dayLabel, day.isToday ? styles.dayLabelToday : null]}>{day.label}</Text>
             </View>
           ))}
@@ -98,18 +96,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       alignItems: 'center',
       gap: 6,
     },
+    ring: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ringStrength: {
+      borderColor: colors.textPrimary,
+    },
     dot: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
       backgroundColor: colors.borderSoft,
     },
     dotClimb: {
       backgroundColor: colors.accent,
-    },
-    dotStrength: {
-      borderWidth: 2,
-      borderColor: colors.textPrimary,
     },
     dayLabel: {
       ...typography.meta,

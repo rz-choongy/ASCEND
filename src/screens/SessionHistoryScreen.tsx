@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getExerciseNames } from '../domain/exerciseStore';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
 import { formatDuration } from '../domain/dateUtils';
 import { getGradeOptionsForGym } from '../domain/gymStore';
@@ -183,16 +184,22 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     return { total: climbs.length, sends, flashes, flashRate };
   }, [climbs, session?.type]);
 
+  // Sets keep the name they were logged under; show the exercise's current name.
+  const exerciseNames = useMemo(() => getExerciseNames(), []);
+  const displayName = (set: { exerciseId?: string; exerciseName: string }) =>
+    (set.exerciseId && exerciseNames.get(set.exerciseId)) || set.exerciseName;
+
   const strengthStats = useMemo(() => {
     if (session?.type !== 'strength' || sets.length === 0) return null;
     const totalSets = sets.length;
     const totalVolume = sets.reduce((sum, s) => sum + s.reps * s.weight, 0);
     const exerciseCounts = sets.reduce<Record<string, number>>((acc, s) => {
-      acc[s.exerciseName] = (acc[s.exerciseName] ?? 0) + 1;
+      acc[displayName(s)] = (acc[displayName(s)] ?? 0) + 1;
       return acc;
     }, {});
     return { totalSets, totalVolume, exerciseCounts };
-  }, [sets, session?.type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sets, session?.type, exerciseNames]);
 
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [title, setTitle] = useState(session?.title ?? '');
@@ -433,7 +440,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
             {sets.map((set) => (
               <ListRow
                 key={set.eventId}
-                title={set.exerciseName}
+                title={displayName(set)}
                 subtitle={formatSetLabel(set)}
                 meta={formatLogTime(set.createdAt)}
                 onPress={() => openSetEdit(set)}

@@ -3,7 +3,7 @@ import { addDays, startOfWeek } from './dateUtils';
 import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
-import { estimateOneRepMax, exerciseKeyFor, isNewRecord } from './strengthProgress';
+import { estimateOneRepMax, exerciseKeyFor, isNewRecord, type ExerciseNames } from './strengthProgress';
 import type { SessionRow } from './types';
 
 // Read-only summaries for the Today dashboard. Everything is derived by
@@ -108,7 +108,7 @@ export const summarizeClimbSession = (session: SessionRow): ClimbSessionSummary 
  * the sessions before it only. `sessions` must be completed strength sessions
  * sorted oldest first (as `getCompletedSessions('strength')` returns them).
  */
-export const summarizeStrengthSessions = (sessions: SessionRow[]): StrengthSessionSummary[] => {
+export const summarizeStrengthSessions = (sessions: SessionRow[], names?: ExerciseNames): StrengthSessionSummary[] => {
   const historyBest = new Map<string, number>();
 
   return sessions.map((session) => {
@@ -130,7 +130,7 @@ export const summarizeStrengthSessions = (sessions: SessionRow[]): StrengthSessi
 
       const current = exercises.get(key);
       if (!current) {
-        exercises.set(key, { name: set.exerciseName, sets: 1, weight: set.weight, reps: set.reps, isRecord, e1rm });
+        exercises.set(key, { name: (set.exerciseId && names?.get(set.exerciseId)) || set.exerciseName, sets: 1, weight: set.weight, reps: set.reps, isRecord, e1rm });
         return;
       }
       current.sets += 1;
@@ -164,8 +164,15 @@ export const lastClimbSessions = (sessions: SessionRow[]): LastSessions<ClimbSes
 };
 
 /** The newest strength session and the one before it, from sessions sorted oldest first. */
-export const lastStrengthSessions = (sessions: SessionRow[]): LastSessions<StrengthSessionSummary> | null => {
-  const summaries = summarizeStrengthSessions(sessions.filter((s) => s.type === 'strength'));
+export const lastStrengthSessions = (
+  sessions: SessionRow[],
+  names?: ExerciseNames
+): LastSessions<StrengthSessionSummary> | null => {
+  // PRs are judged across every session, but an emptied session (all its sets deleted)
+  // isn't a workout to headline or compare against.
+  const summaries = summarizeStrengthSessions(sessions.filter((s) => s.type === 'strength'), names).filter(
+    (s) => s.sets > 0
+  );
   if (summaries.length === 0) return null;
   return {
     latest: summaries[summaries.length - 1],

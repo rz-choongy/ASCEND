@@ -23,6 +23,7 @@ import {
   spacing,
   useTheme,
   type Shadows,
+  PencilIcon,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 
@@ -150,7 +151,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                   }
                   accessibilityLabel={`Edit ${branch.name}`}
                 >
-                  <Text style={styles.editIconGlyph}>✎</Text>
+                  <PencilIcon size={16} color={colors.textSecondary} />
                 </IconButton>
               </View>
             );
@@ -236,7 +237,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                 }
                 accessibilityLabel={`Edit ${gym.name}`}
               >
-                <Text style={styles.editIconGlyph}>✎</Text>
+                <PencilIcon size={16} color={colors.textSecondary} />
               </IconButton>
             </View>
           );
@@ -334,10 +335,6 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
   },
   useButtonTextSelected: {
     color: colors.onAction,
-  },
-  editIconGlyph: {
-    color: colors.textSecondary,
-    fontSize: 15,
   },
   emptyCard: {
     borderRadius: radius.lg,

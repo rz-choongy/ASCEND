@@ -28,6 +28,7 @@ export {
   MoonIcon,
   MoreIcon,
   MountainMarkIcon,
+  PencilIcon,
   ProgressTabIcon,
   SearchIcon,
   SettingsGearIcon,

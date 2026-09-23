@@ -153,3 +153,18 @@ describe('buildRecentSessions', () => {
     ]);
   });
 });
+
+describe('lastStrengthSessions with an emptied session', () => {
+  it('skips a session whose sets were all deleted', () => {
+    eventsBySession({
+      s1: [set('a', 'Pull-ups', 20, 6)],
+      s2: [
+        set('b', 'Dips', 10, 10),
+        { id: 'c', type: 'SET_DELETED', payload: { eventId: 'b' }, createdAt: 2 },
+      ],
+    });
+    const result = lastStrengthSessions([session('s1', 'strength', 1), session('s2', 'strength', 2)]);
+    expect(result?.latest.sessionId).toBe('s1');
+    expect(result?.previous).toBeNull();
+  });
+});

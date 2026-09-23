@@ -13,15 +13,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { formatElapsed } from '../domain/dateUtils';
+import { countExerciseData, deleteExerciseWithData } from '../domain/exerciseData';
 import {
   createExercise,
   getCategories,
   getExercises,
+  renameExercise,
   setExerciseCategory,
   setExerciseFavorite,
 } from '../domain/exerciseStore';
 import {
   appendEvent,
+  getAbandonedSessions,
   getCompletedSessions,
   getSessionById,
   getSessionEvents,
@@ -449,6 +452,62 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     reloadExercises();
   };
 
+  const handleRenameExercise = (exerciseId: string, name: string): string | null => {
+    try {
+      renameExercise(exerciseId, name);
+      reloadExercises();
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Couldn't rename it.";
+    }
+  };
+
+  // Deleting takes the exercise's logged sets with it, so it always asks first and
+  // says how much will go.
+  const handleDeleteExercise = (exerciseId: string) => {
+    const exercise = exerciseState.exercises.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    const strengthSessions = [
+      ...getCompletedSessions('strength'),
+      ...getAbandonedSessions('strength'),
+      ...(session ? [session] : []),
+    ];
+    const count = countExerciseData(strengthSessions, exercise);
+    if (count.activeSets > 0) {
+      Alert.alert(
+        `${exercise.name} is in this session`,
+        `Undo its ${count.activeSets} ${count.activeSets === 1 ? 'set' : 'sets'} here first, then delete it.`
+      );
+      return;
+    }
+    const message =
+      count.sets > 0
+        ? `This also deletes its ${count.sets} logged ${count.sets === 1 ? 'set' : 'sets'} from ${count.sessions} ${
+            count.sessions === 1 ? 'session' : 'sessions'
+          }, and its progress history. Sessions with nothing else in them are removed too. This can't be undone.`
+        : "It hasn't been logged yet, so no history is lost.";
+    Alert.alert(`Delete ${exercise.name}?`, message, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: count.sets > 0 ? 'Delete exercise and data' : 'Delete exercise',
+        style: 'destructive',
+        onPress: () => {
+          try {
+            deleteExerciseWithData(strengthSessions, exercise);
+          } catch (error) {
+            Alert.alert("Couldn't delete it", error instanceof Error ? error.message : 'Try again.');
+            return;
+          }
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setPickedIds((ids) => ids.filter((id) => id !== exerciseId));
+          setExerciseState((state) =>
+            loadExerciseState(state.selectedExerciseId === exerciseId ? null : state.selectedExerciseId)
+          );
+        },
+      },
+    ]);
+  };
+
   const handleManageCategories = () => {
     setIsPickerOpen(false);
     navigation.navigate('Categories');
@@ -591,6 +650,8 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         onCreate={handleCreateExercise}
         onToggleFavorite={handleToggleFavorite}
         onSetCategory={handleSetCategory}
+        onRename={handleRenameExercise}
+        onDelete={handleDeleteExercise}
         onManageCategories={handleManageCategories}
         onClose={() => setIsPickerOpen(false)}
       />
@@ -736,7 +797,9 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             key={`${set.exerciseName}-${set.createdAt}-${index}`}
             style={[styles.logRow, index > 0 ? styles.logRowDivided : null]}
           >
-            <Text style={styles.logExercise} numberOfLines={1}>{set.exerciseName}</Text>
+            <Text style={styles.logExercise} numberOfLines={1}>
+              {exerciseState.exercises.find((e) => e.id === set.exerciseId)?.name ?? set.exerciseName}
+            </Text>
             {recordEventIds.has(set.eventId) ? (
               <View style={styles.recordBadge}>
                 <Text style={styles.recordBadgeText}>PR</Text>

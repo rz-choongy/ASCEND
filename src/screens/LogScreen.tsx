@@ -19,6 +19,7 @@ import {
   type WeekActivity,
 } from '../domain/dashboard';
 import { addDays, startOfWeek } from '../domain/dateUtils';
+import { getExerciseNames } from '../domain/exerciseStore';
 import { ensureSelectedClimbGym, getGymById, getSelectedClimbGym } from '../domain/gymStore';
 import {
   createSession,
@@ -90,7 +91,7 @@ const loadDashboard = (): Dashboard => {
     showTimer: getShowSessionTimer(),
     lastType: completed[completed.length - 1]?.type ?? null,
     climb: lastClimbSessions(completed),
-    strength: lastStrengthSessions(strengthHistory),
+    strength: lastStrengthSessions(strengthHistory, getExerciseNames()),
     week: buildWeekActivity(twoWeeks, now),
     lastWeek: buildWeekActivity(twoWeeks, addDays(now, -7)),
     recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),

@@ -12,6 +12,7 @@ import {
   type ExerciseSession,
   type StrengthMetric,
 } from '../domain/strengthProgress';
+import { getExerciseNames } from '../domain/exerciseStore';
 import { getCompletedSessions } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -70,7 +71,7 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
 
   useFocusEffect(
     useCallback(() => {
-      setDetail(buildExerciseDetail(getCompletedSessions('strength'), exerciseKey));
+      setDetail(buildExerciseDetail(getCompletedSessions('strength'), exerciseKey, new Date(), getExerciseNames()));
     }, [exerciseKey])
   );
 

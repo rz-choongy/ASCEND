@@ -5,6 +5,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Svg, { Polyline } from 'react-native-svg';
+import { getExerciseNames } from '../../domain/exerciseStore';
 import { buildAllTimeStats, buildStrengthVolumeTrend, buildWeeklyFrequency } from '../../domain/progressInsights';
 import {
   buildExerciseList,
@@ -50,7 +51,7 @@ export function StrengthProgressView({ sessions, scopedSessions }: Props) {
   const navigation = useNavigation<NavProp>();
 
   const strengthSessions = useMemo(() => scopedSessions.filter((s) => s.type === 'strength'), [scopedSessions]);
-  const exercises = useMemo(() => buildExerciseList(scopedSessions), [scopedSessions]);
+  const exercises = useMemo(() => buildExerciseList(scopedSessions, getExerciseNames()), [scopedSessions]);
   const totalVolume = useMemo(() => buildAllTimeStats(scopedSessions).totalStrengthVolume, [scopedSessions]);
   const volumeTrend = useMemo(
     () => buildStrengthVolumeTrend(scopedSessions, STRENGTH_SESSIONS_SHOWN),

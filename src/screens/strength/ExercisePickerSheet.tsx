@@ -45,6 +45,10 @@ type Props = {
   onCreate: (name: string, categoryId: string | null) => void;
   onToggleFavorite: (exerciseId: string) => void;
   onSetCategory: (exerciseId: string, categoryId: string | null) => void;
+  /** Returns an error to show under the name field, or null when saved. */
+  onRename: (exerciseId: string, name: string) => string | null;
+  /** The parent confirms first -- deleting takes the exercise's logged sets with it. */
+  onDelete: (exerciseId: string) => void;
   onManageCategories: () => void;
   onClose: () => void;
 };
@@ -66,6 +70,8 @@ export const ExercisePickerSheet = ({
   onCreate,
   onToggleFavorite,
   onSetCategory,
+  onRename,
+  onDelete,
   onManageCategories,
   onClose,
 }: Props) => {
@@ -75,6 +81,8 @@ export const ExercisePickerSheet = ({
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   // Every opening starts fresh: no stale search or half-finished edit.
   useEffect(() => {
@@ -105,6 +113,24 @@ export const ExercisePickerSheet = ({
     : [];
   const newCategoryId = filter !== 'all' && filter !== 'favorites' ? filter : null;
   const editing = editingId ? exercises.find((e) => e.id === editingId) ?? null : null;
+
+  // Seed the name field whenever a different exercise is opened for editing.
+  useEffect(() => {
+    setDraftName(editing?.name ?? '');
+    setRenameError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId]);
+
+  const saveName = () => {
+    if (!editing) return;
+    const trimmed = draftName.trim();
+    if (!trimmed || trimmed === editing.name) {
+      setDraftName(editing.name);
+      setRenameError(null);
+      return;
+    }
+    setRenameError(onRename(editing.id, trimmed));
+  };
 
   const subtitle = (e: ExerciseRow): string => {
     const parts: string[] = [];
@@ -195,7 +221,22 @@ export const ExercisePickerSheet = ({
                   <Text style={styles.backText}>Exercises</Text>
                 </Pressable>
               </View>
-              <Text style={styles.editTitle}>{editing.name}</Text>
+              <View style={styles.nameField}>
+                <Text style={styles.sectionTitle}>Name</Text>
+                <TextInput
+                  value={draftName}
+                  onChangeText={(text) => {
+                    setDraftName(text);
+                    setRenameError(null);
+                  }}
+                  onBlur={saveName}
+                  onSubmitEditing={saveName}
+                  returnKeyType="done"
+                  style={styles.nameInput}
+                  accessibilityLabel="Exercise name"
+                />
+                {renameError ? <Text style={styles.renameError}>{renameError}</Text> : null}
+              </View>
 
               <Text style={styles.sectionTitle}>Category</Text>
               <View style={styles.categoryWrap}>
@@ -225,6 +266,15 @@ export const ExercisePickerSheet = ({
                   accessibilityLabel="Favourite"
                 />
               </View>
+
+              <Pressable
+                onPress={() => onDelete(editing.id)}
+                style={({ pressed }) => [styles.deleteButton, pressed ? styles.rowPressed : null]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.deleteText}>Delete exercise</Text>
+                <Text style={styles.deleteHint}>Also deletes every set logged for it</Text>
+              </Pressable>
             </>
           ) : (
             <>
@@ -453,8 +503,40 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       fontSize: 15,
       color: colors.textPrimary,
     },
-    editTitle: {
+    nameField: {
+      gap: spacing.xxs,
+    },
+    // Underlined like the logger's typed values, so it reads as editable in place.
+    nameInput: {
       ...typography.title,
+      paddingVertical: spacing.xxs,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.action,
+    },
+    renameError: {
+      ...font('regular'),
+      fontSize: 13,
+      color: colors.danger,
+    },
+    deleteButton: {
+      marginTop: 'auto',
+      minHeight: 56,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: radius.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.danger,
+      gap: 1,
+    },
+    deleteText: {
+      ...font('semibold'),
+      fontSize: 15,
+      color: colors.danger,
+    },
+    deleteHint: {
+      ...font('regular'),
+      fontSize: 12,
+      color: colors.textSecondary,
     },
     categoryWrap: {
       flexDirection: 'row',

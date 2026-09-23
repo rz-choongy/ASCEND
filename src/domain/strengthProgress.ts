@@ -52,7 +52,13 @@ const toExerciseSession = (
 });
 
 /** Groups every strength set by exercise, one entry per exercise per session. */
-const collectHistories = (sessions: SessionRow[]): Map<string, ExerciseHistory> => {
+/** Current exercise names by id; logged sets keep the name they were logged under. */
+export type ExerciseNames = Map<string, string>;
+
+const nameOf = (set: LoggedSet, names?: ExerciseNames): string =>
+  (set.exerciseId && names?.get(set.exerciseId)) || set.exerciseName;
+
+const collectHistories = (sessions: SessionRow[], names?: ExerciseNames): Map<string, ExerciseHistory> => {
   const histories = new Map<string, ExerciseHistory>();
   sessions
     .filter((session) => session.type === 'strength')
@@ -65,9 +71,9 @@ const collectHistories = (sessions: SessionRow[]): Map<string, ExerciseHistory> 
         byExercise.set(key, [...(byExercise.get(key) ?? []), set]);
       });
       byExercise.forEach((sets, key) => {
-        const history = histories.get(key) ?? { key, name: sets[0].exerciseName, sessions: [] };
-        // Latest logged spelling wins if the exercise was renamed along the way.
-        history.name = sets[sets.length - 1].exerciseName;
+        const history = histories.get(key) ?? { key, name: nameOf(sets[0], names), sessions: [] };
+        // The exercise's current name wins; failing that, the latest logged spelling.
+        history.name = nameOf(sets[sets.length - 1], names);
         history.sessions.push(toExerciseSession(session, sets));
         histories.set(key, history);
       });
@@ -88,8 +94,8 @@ export type ExerciseSummary = {
 };
 
 /** Every exercise with logged sets, most recently trained first. */
-export const buildExerciseList = (sessions: SessionRow[]): ExerciseSummary[] =>
-  Array.from(collectHistories(sessions).values())
+export const buildExerciseList = (sessions: SessionRow[], names?: ExerciseNames): ExerciseSummary[] =>
+  Array.from(collectHistories(sessions, names).values())
     .map((history): ExerciseSummary => {
       const last = history.sessions[history.sessions.length - 1];
       const trend = history.sessions.slice(-TREND_SESSIONS).map((s) => s.e1rm);
@@ -143,9 +149,10 @@ const METRIC_OF: Record<StrengthMetric, (s: ExerciseSession) => number> = {
 export const buildExerciseDetail = (
   sessions: SessionRow[],
   exerciseKey: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  names?: ExerciseNames
 ): ExerciseDetail | null => {
-  const history = collectHistories(sessions).get(exerciseKey);
+  const history = collectHistories(sessions, names).get(exerciseKey);
   if (!history) return null;
 
   const chronological = history.sessions;

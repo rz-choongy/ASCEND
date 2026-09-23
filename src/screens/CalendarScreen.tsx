@@ -473,14 +473,11 @@ export function CalendarScreen() {
                       {day.getDate()}
                     </Text>
                   </View>
-                  {/* Same marks as the Today week strip: filled for a climb, ring for strength. */}
-                  <View
-                    style={[
-                      styles.dayDot,
-                      climbed ? styles.dayDotClimb : null,
-                      trained ? styles.dayDotStrength : null,
-                    ]}
-                  />
+                  {/* Same marks as the Today week strip: a filled dot for a climb, a ring
+                      around it for strength. */}
+                  <View style={[styles.dayRing, trained ? styles.dayRingStrength : null]}>
+                    <View style={[styles.dayDot, climbed ? styles.dayDotClimb : null]} />
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -649,19 +646,27 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     color: colors.onAction,
     ...font('semibold'),
   },
+  dayRing: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 2,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayRingStrength: {
+    borderColor: colors.textPrimary,
+  },
   dayDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    marginTop: 3,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: 'transparent',
   },
   dayDotClimb: {
     backgroundColor: colors.accent,
-  },
-  dayDotStrength: {
-    borderWidth: 1.5,
-    borderColor: colors.textPrimary,
   },
 
   // Divider

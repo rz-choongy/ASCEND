@@ -23,7 +23,7 @@ import {
 } from '../../domain/settingsStore';
 import { formatMonthDay } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
-import { Chip, StatGrid, StatTile, font, radius, spacing, useTheme, type Shadows } from '../../ui';
+import { Chip, StatGrid, StatTile, font, getContrastText, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 import { GymScopeSheet, type GymScopeOption } from './GymScopeSheet';
@@ -183,7 +183,7 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Grade pyramid</Text>
             <Text style={styles.cardMeta}>
-              {totalPyramidSends} send{totalPyramidSends === 1 ? '' : 's'}
+              {totalPyramidSends} climb{totalPyramidSends === 1 ? '' : 's'}
             </Text>
           </View>
 
@@ -208,17 +208,22 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
 
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendSwatch, { backgroundColor: colors.textSecondary }]} />
+              <View style={styles.legendFlash}>
+                {colors.gradePalette.slice(1, 4).map((c) => (
+                  <View key={c} style={{ flex: 1, backgroundColor: c }} />
+                ))}
+              </View>
               <Text style={styles.legendText}>Flash</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendSwatch, styles.legendSend, { backgroundColor: colors.textSecondary }]} />
+              <View style={[styles.legendSwatch, styles.pyrSend]} />
               <Text style={styles.legendText}>Send</Text>
             </View>
           </View>
 
           {/* Easiest first, reading down -- the order grades are climbed in. Each bar is
-              flashes (solid) then the other sends (faded) in the grade's colour. */}
+              flashes in the grade's colour, then the other sends in grey, each segment
+              carrying its own count. */}
           <View style={styles.pyramid}>
             {gradeDistribution.map((bar) => {
               const sends = bar.count - bar.flashCount;
@@ -233,19 +238,21 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
                     {bar.label}
                   </Text>
                   <View style={styles.pyrTrack}>
-                    <View style={[styles.pyrBar, { width: `${Math.max(8, (bar.count / pyramidMax) * 100)}%` }]}>
+                    <View style={[styles.pyrBar, { width: `${(bar.count / pyramidMax) * 100}%` }]}>
                       {bar.flashCount > 0 ? (
-                        <View style={{ flex: bar.flashCount, backgroundColor: bar.color }} />
+                        <View style={[styles.pyrSegment, { flex: bar.flashCount, backgroundColor: bar.color }]}>
+                          <Text style={[styles.pyrSegmentText, { color: getContrastText(bar.color) }]}>
+                            {bar.flashCount}
+                          </Text>
+                        </View>
                       ) : null}
                       {sends > 0 ? (
-                        <View style={[styles.pyrSend, { flex: sends, backgroundColor: bar.color }]} />
+                        <View style={[styles.pyrSegment, styles.pyrSend, { flex: sends }]}>
+                          <Text style={[styles.pyrSegmentText, styles.pyrSendText]}>{sends}</Text>
+                        </View>
                       ) : null}
                     </View>
                   </View>
-                  <Text style={styles.pyrCount}>
-                    {bar.count}
-                    {bar.flashCount > 0 ? <Text style={styles.pyrFlashCount}> · {bar.flashCount}F</Text> : null}
-                  </Text>
                 </View>
               );
             })}
@@ -401,21 +408,17 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       color: colors.textSecondary,
     },
     pyrTrack: { flex: 1 },
-    pyrBar: { height: 14, borderRadius: 7, flexDirection: 'row', overflow: 'hidden' },
-    pyrSend: { opacity: 0.42 },
-    pyrCount: {
-      ...typography.numeric,
-      minWidth: 44,
-      fontSize: 12,
-      ...font('medium'),
-      color: colors.textSecondary,
-    },
-    pyrFlashCount: { color: colors.textMuted },
+    // Tall enough to hold its numbers; a segment never shrinks below its count.
+    pyrBar: { height: 22, borderRadius: 6, flexDirection: 'row', overflow: 'hidden', gap: 2 },
+    pyrSegment: { minWidth: 24, alignItems: 'center', justifyContent: 'center' },
+    pyrSegmentText: { ...font('semibold'), fontSize: 11, fontVariant: ['tabular-nums'] },
+    pyrSend: { backgroundColor: colors.borderSoft },
+    pyrSendText: { color: colors.textPrimary },
     moreChip: { borderStyle: 'dashed' },
     legend: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.xs },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     legendSwatch: { width: 10, height: 10, borderRadius: 3 },
-    legendSend: { opacity: 0.42 },
+    legendFlash: { width: 10, height: 10, borderRadius: 3, overflow: 'hidden', flexDirection: 'row' },
     legendText: { ...typography.meta, fontSize: 11, color: colors.textSecondary },
 
     sparkWrap: { marginTop: spacing.s, height: 44, position: 'relative' },
