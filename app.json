@@ -30,7 +30,13 @@
     "plugins": [
       "expo-sqlite",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ASCEND uses your photo library to attach a screenshot to a bug report."
+        }
+      ]
     ],
     "extra": {
       "eas": {
