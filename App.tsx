@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
 import { Dock } from './src/navigation/Dock';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
+import { BugReportScreen } from './src/screens/BugReportScreen';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { CategoriesScreen } from './src/screens/CategoriesScreen';
 import { ChangelogScreen } from './src/screens/ChangelogScreen';
@@ -121,6 +122,11 @@ function AppContent() {
           <Stack.Screen
             name="KilterConnect"
             component={KilterConnectScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="BugReport"
+            component={BugReportScreen}
             options={{ presentation: 'modal' }}
           />
         </Stack.Navigator>
