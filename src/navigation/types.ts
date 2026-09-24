@@ -13,6 +13,7 @@ export type RootStackParamList = {
   KilterConnect: undefined;
   Changelog: undefined;
   Categories: undefined;
+  BugReport: undefined;
 };
 
 export type TabParamList = {

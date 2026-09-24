@@ -353,6 +353,15 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           />
         </ListGroup>
 
+        <Text style={styles.sectionLabel}>Support</Text>
+        <ListGroup>
+          <ListRow
+            title="Report a bug"
+            subtitle="Send a description and diagnostics by email"
+            onPress={() => navigation.navigate('BugReport')}
+          />
+        </ListGroup>
+
         <Text style={styles.sectionLabel}>About</Text>
         <ListGroup>
           <ListRow title="Version" meta={APP_VERSION} />
