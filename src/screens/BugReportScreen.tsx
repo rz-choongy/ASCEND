@@ -50,17 +50,23 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
   const canSend = description.trim().length > 0 && !sending;
 
   const handleAttachScreenshot = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      showDialog('Photo access needed', 'Allow photo library access to attach a screenshot.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setScreenshotUri(result.assets[0].uri);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        showDialog('Photo access needed', 'Allow photo library access to attach a screenshot.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setScreenshotUri(result.assets[0].uri);
+      }
+    } catch {
+      // Older installs (pre this feature's native build) don't have the photo
+      // picker module compiled in yet -- fail soft instead of crashing the screen.
+      showDialog("Can't attach a screenshot yet", 'Update the app to attach screenshots to bug reports.');
     }
   };
 
