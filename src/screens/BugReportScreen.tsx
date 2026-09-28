@@ -54,12 +54,16 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
       // that predates this feature. A top-level import would take the whole
       // app down on launch (BugReportScreen is imported eagerly by App.tsx);
       // deferring it to here keeps that failure local and catchable.
-      const ImagePicker = await import('expo-image-picker');
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        showDialog('Photo access needed', 'Allow photo library access to attach a screenshot.');
+      const ImagePicker = await import('expo-image-picker').catch(() => null);
+      if (!ImagePicker) {
+        // Older installs (pre this feature's native build) don't have the photo
+        // picker module compiled in yet -- fail soft instead of crashing the screen.
+        showDialog("Can't attach a screenshot yet", 'Update the app to attach screenshots to bug reports.');
         return;
       }
+      // No media-library permission request: launchImageLibraryAsync uses the system photo
+      // picker, which needs none. Asking anyway is worse than useless on Android 13+, where
+      // READ_EXTERNAL_STORAGE can never be granted, so the request always came back denied.
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.7,
@@ -67,10 +71,8 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
       if (!result.canceled && result.assets[0]) {
         setScreenshotUri(result.assets[0].uri);
       }
-    } catch {
-      // Older installs (pre this feature's native build) don't have the photo
-      // picker module compiled in yet -- fail soft instead of crashing the screen.
-      showDialog("Can't attach a screenshot yet", 'Update the app to attach screenshots to bug reports.');
+    } catch (e) {
+      showDialog("Couldn't attach the screenshot", e instanceof Error ? e.message : 'Something went wrong.');
     }
   };
 

@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.3',
+    date: '2026-09-28',
+    changes: [
+      { kind: 'fixed', text: 'Attaching a screenshot to a bug report no longer stops at a photo-access prompt on newer Android, and shows the real error if it can\'t attach.' },
+    ],
+  },
+  {
     version: '2.2.2',
     date: '2026-09-28',
     changes: [
