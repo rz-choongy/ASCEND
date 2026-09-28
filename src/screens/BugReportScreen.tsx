@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Image, Platform, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import * as MailComposer from 'expo-mail-composer';
 import * as Updates from 'expo-updates';
 import { APP_VERSION } from '../changelog';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -51,6 +49,12 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
 
   const handleAttachScreenshot = async () => {
     try {
+      // Imported lazily, not at module scope: expo-image-picker resolves its
+      // native module the instant it's imported, which throws on an install
+      // that predates this feature. A top-level import would take the whole
+      // app down on launch (BugReportScreen is imported eagerly by App.tsx);
+      // deferring it to here keeps that failure local and catchable.
+      const ImagePicker = await import('expo-image-picker');
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         showDialog('Photo access needed', 'Allow photo library access to attach a screenshot.');
@@ -76,6 +80,9 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
     const subject = `ASCEND Bug Report (v${APP_VERSION})`;
     const body = `${description.trim()}\n\n---\n${diagnostics}`;
     try {
+      // See the comment in handleAttachScreenshot -- same reason this is a
+      // lazy import rather than a module-level one.
+      const MailComposer = await import('expo-mail-composer');
       if (await MailComposer.isAvailableAsync()) {
         const result = await MailComposer.composeAsync({
           recipients: [REPORT_EMAIL],
