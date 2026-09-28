@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.4',
+    date: '2026-09-29',
+    changes: [
+      { kind: 'fixed', text: 'The bug report screen no longer freezes on installs without photo or email support. Attaching a screenshot says a new build is needed, and sending falls back to the share sheet.' },
+    ],
+  },
+  {
     version: '2.2.3',
     date: '2026-09-28',
     changes: [

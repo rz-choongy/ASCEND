@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Image, Platform, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { requireOptionalNativeModule } from 'expo';
 import * as Updates from 'expo-updates';
 import { APP_VERSION } from '../changelog';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -20,6 +21,15 @@ import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
 const REPORT_EMAIL = 'choongzhuocen@gmail.com';
+
+/**
+ * Whether this install has a native module compiled in. Both packages below resolve their native
+ * module the instant they're imported, and Metro reports a throw from module init as a *fatal* JS
+ * error -- a try/catch around `import()` never sees it, and in a release build it takes the app
+ * down. Probing with requireOptionalNativeModule (returns null instead of throwing) is the only
+ * safe way to find out before importing.
+ */
+const hasNativeModule = (name: string): boolean => requireOptionalNativeModule(name) != null;
 
 /** Same "what's actually running" logic as Settings' Build row -- see runningUpdateLabel there. */
 const buildLabel = Updates.isEmbeddedLaunch
@@ -49,18 +59,14 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
 
   const handleAttachScreenshot = async () => {
     try {
-      // Imported lazily, not at module scope: expo-image-picker resolves its
-      // native module the instant it's imported, which throws on an install
-      // that predates this feature. A top-level import would take the whole
-      // app down on launch (BugReportScreen is imported eagerly by App.tsx);
-      // deferring it to here keeps that failure local and catchable.
-      const ImagePicker = await import('expo-image-picker').catch(() => null);
-      if (!ImagePicker) {
-        // Older installs (pre this feature's native build) don't have the photo
-        // picker module compiled in yet -- fail soft instead of crashing the screen.
-        showDialog("Can't attach a screenshot yet", 'Update the app to attach screenshots to bug reports.');
+      // Imported lazily, not at module scope, and only after the probe: BugReportScreen is imported
+      // eagerly by App.tsx, and expo-image-picker throws (fatally, see hasNativeModule) when
+      // its native module isn't in the install.
+      if (!hasNativeModule('ExponentImagePicker')) {
+        showDialog("Can't attach a screenshot yet", 'This install needs a new build to attach screenshots to bug reports.');
         return;
       }
+      const ImagePicker = await import('expo-image-picker');
       // No media-library permission request: launchImageLibraryAsync uses the system photo
       // picker, which needs none. Asking anyway is worse than useless on Android 13+, where
       // READ_EXTERNAL_STORAGE can never be granted, so the request always came back denied.
@@ -84,9 +90,10 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
     try {
       // See the comment in handleAttachScreenshot -- same reason this is a
       // lazy import rather than a module-level one.
-      // Also fails on installs whose native build predates expo-mail-composer; treat that the
-      // same as "no mail account" so the report still goes out via the share sheet.
-      const MailComposer = await import('expo-mail-composer').catch(() => null);
+      // Installs whose native build predates expo-mail-composer are treated the same as "no mail
+      // account" so the report still goes out via the share sheet. Probe first -- see
+      // hasNativeModule for why a try/catch around the import isn't enough.
+      const MailComposer = hasNativeModule('ExpoMailComposer') ? await import('expo-mail-composer') : null;
       if (MailComposer && (await MailComposer.isAvailableAsync().catch(() => false))) {
         const result = await MailComposer.composeAsync({
           recipients: [REPORT_EMAIL],
