@@ -82,8 +82,10 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
     try {
       // See the comment in handleAttachScreenshot -- same reason this is a
       // lazy import rather than a module-level one.
-      const MailComposer = await import('expo-mail-composer');
-      if (await MailComposer.isAvailableAsync()) {
+      // Also fails on installs whose native build predates expo-mail-composer; treat that the
+      // same as "no mail account" so the report still goes out via the share sheet.
+      const MailComposer = await import('expo-mail-composer').catch(() => null);
+      if (MailComposer && (await MailComposer.isAvailableAsync().catch(() => false))) {
         const result = await MailComposer.composeAsync({
           recipients: [REPORT_EMAIL],
           subject,

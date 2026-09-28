@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.2',
+    date: '2026-09-28',
+    changes: [
+      { kind: 'new', text: 'Report a bug from Settings: describe what happened and it goes out by email with your app version attached. If email isn\'t set up, it opens the share sheet instead.' },
+    ],
+  },
+  {
     version: '2.2.1',
     date: '2026-09-24',
     changes: [
