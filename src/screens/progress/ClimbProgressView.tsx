@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LayoutAnimation, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { applyClimbEvents } from '../../domain/climbLogUtils';
 import {
@@ -74,6 +74,7 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
   const isAllScope = activeScope === ALL_GYMS;
 
   function handleSelectScope(scope: string | null) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedScope(scope);
     if (scope) setProgressGradeGymId(scope);
   }
@@ -407,9 +408,19 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       textAlign: 'right',
       color: colors.textSecondary,
     },
-    pyrTrack: { flex: 1 },
+    pyrTrack: { flex: 1, height: 22, borderRadius: 6, backgroundColor: colors.fill, overflow: 'hidden' },
     // Tall enough to hold its numbers; a segment never shrinks below its count.
-    pyrBar: { height: 22, borderRadius: 6, flexDirection: 'row', overflow: 'hidden', gap: 2 },
+    // Absolutely positioned so it reads as a fill on top of pyrTrack's full-width track.
+    pyrBar: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      borderRadius: 6,
+      flexDirection: 'row',
+      overflow: 'hidden',
+      gap: 2,
+    },
     pyrSegment: { minWidth: 24, alignItems: 'center', justifyContent: 'center' },
     pyrSegmentText: { ...font('semibold'), fontSize: 11, fontVariant: ['tabular-nums'] },
     pyrSend: { backgroundColor: colors.borderSoft },

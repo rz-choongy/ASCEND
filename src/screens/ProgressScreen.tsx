@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LayoutAnimation, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { firstOfMonth } from '../domain/dateUtils';
@@ -42,6 +42,11 @@ export function ProgressScreen() {
   const [mode, setMode] = useState<ProgressMode>('climbing');
   const [view, setView] = useState<ProgressView>('all');
   const [currentMonth, setCurrentMonth] = useState<Date>(() => firstOfMonth(new Date()));
+
+  const handleChangeView = (next: ProgressView) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setView(next);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -102,7 +107,7 @@ export function ProgressScreen() {
 
         <BodyweightCard />
 
-        <View style={styles.segmented}>
+        <View style={styles.segmentedPrimary}>
           <SegmentedControl
             options={[
               { value: 'climbing', label: 'Climbing' },
@@ -112,14 +117,15 @@ export function ProgressScreen() {
             onChange={setMode}
           />
         </View>
-        <View style={styles.segmented}>
+        <View style={styles.segmentedSecondary}>
           <SegmentedControl
+            compact
             options={[
               { value: 'all', label: 'All time' },
               { value: 'month', label: 'By month' },
             ]}
             value={view}
-            onChange={setView}
+            onChange={handleChangeView}
           />
         </View>
 
@@ -194,7 +200,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       marginBottom: spacing.s,
     },
 
-    segmented: {
+    segmentedPrimary: {
+      marginBottom: spacing.s,
+    },
+    segmentedSecondary: {
+      alignItems: 'center',
       marginBottom: spacing.xs,
     },
 
