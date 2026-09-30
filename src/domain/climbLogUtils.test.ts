@@ -2,7 +2,7 @@ import {
   applyClimbEvents,
   isGradeBand,
   midpointGrade,
-  spansMultipleGrades,
+  findSessionHighIndex,
 } from './climbLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
@@ -129,29 +129,18 @@ describe('applyClimbEvents', () => {
   });
 });
 
-describe('spansMultipleGrades', () => {
-  it('leaves exact grades and two-grade bands alone', () => {
-    expect(spansMultipleGrades(4, 4)).toBe(false);
-    expect(spansMultipleGrades(4, 5)).toBe(false);
-  });
-
-  it('flags bands covering three or more grades', () => {
-    expect(spansMultipleGrades(4, 6)).toBe(true);
-    expect(spansMultipleGrades(6, 9)).toBe(true);
-  });
-});
-
 describe('isGradeBand', () => {
   it('is false only for an exact grade', () => {
     expect(isGradeBand(4, 4)).toBe(false);
     expect(isGradeBand(0, 0)).toBe(false);
   });
 
-  // The regression: a V3-V4 hold is a range, so analytics and the refine pass
-  // have to see it as one even though logging waves it through without asking.
-  it('flags a two-grade band that logging deliberately allows', () => {
+  // The regression: a V3-V4 hold is a range, so logging must ask for the exact grade
+  // on it -- the same rule the refine pass uses, or it gets nagged about later.
+  it('flags every band wider than one grade', () => {
     expect(isGradeBand(3, 4)).toBe(true);
-    expect(spansMultipleGrades(3, 4)).toBe(false);
+    expect(isGradeBand(4, 6)).toBe(true);
+    expect(isGradeBand(6, 9)).toBe(true);
   });
 
   it('flags wider bands too', () => {
@@ -171,5 +160,29 @@ describe('midpointGrade', () => {
 
   it('is a no-op on an already-exact grade', () => {
     expect(midpointGrade(5, 5)).toBe(5);
+  });
+});
+
+describe('findSessionHighIndex', () => {
+  const logs = [{ gradeMax: 3 }, { gradeMax: 5 }, { gradeMax: 6 }, { gradeMax: 6 }];
+
+  it('is null with no prior history to beat', () => {
+    expect(findSessionHighIndex(logs, null)).toBeNull();
+  });
+
+  it('flags the first log at the session high when it beats the prior best', () => {
+    expect(findSessionHighIndex(logs, 4)).toBe(2);
+  });
+
+  it('moves to the later, higher climb rather than the first one over the bar', () => {
+    expect(findSessionHighIndex([{ gradeMax: 5 }, { gradeMax: 7 }], 4)).toBe(1);
+  });
+
+  it('is null for an empty session', () => {
+    expect(findSessionHighIndex([], 4)).toBeNull();
+  });
+
+  it('does not count a tie as a new high', () => {
+    expect(findSessionHighIndex(logs, 6)).toBeNull();
   });
 });

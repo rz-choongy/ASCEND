@@ -117,6 +117,19 @@ export const StarIcon = ({ size = 18, color, strokeWidth = 1.8, filled = false }
   </Svg>
 );
 
+/** Lightning bolt, marking a flash (sent first try). */
+export const BoltIcon = ({ size = 16, color, strokeWidth = 1.8, filled = false }: IconProps & { filled?: boolean }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z"
+      fill={filled ? color : 'none'}
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 /** Pencil, for "edit this". */
 export const PencilIcon = ({ size = 16, color, strokeWidth = 1.8 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

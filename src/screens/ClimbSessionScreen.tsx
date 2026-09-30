@@ -18,11 +18,12 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
-import { applyClimbEvents, spansMultipleGrades } from '../domain/climbLogUtils';
+import { applyClimbEvents, findSessionHighIndex, isGradeBand } from '../domain/climbLogUtils';
 import { formatElapsed } from '../domain/dateUtils';
 import {
   appendEvent,
   canChangeSessionGym,
+  getCompletedSessions,
   getSessionById,
   getSessionEvents,
   setSessionStatus,
@@ -32,6 +33,7 @@ import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
+  BoltIcon,
   Button,
   CloseIcon,
   IconButton,
@@ -41,6 +43,7 @@ import {
   radius,
   showDialog,
   spacing,
+  StarIcon,
   useTheme,
   type Shadows,
 } from '../ui';
@@ -144,6 +147,26 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
 
+  // Best grade from other completed sessions in the last 30 days: the bar a climb here has to
+  // beat to earn the "30-day high" badge. Read once -- it can't change while this one is open.
+  const priorMonthBest = useMemo(() => {
+    const since = Date.now() - 30 * 86_400_000;
+    let best: number | null = null;
+    getCompletedSessions('climb')
+      .filter((row) => row.id !== sessionId && row.started_at >= since)
+      .forEach((row) => {
+        applyClimbEvents(getSessionEvents(row.id)).forEach((log) => {
+          if (best == null || log.gradeMax > best) best = log.gradeMax;
+        });
+      });
+    return best;
+  }, [sessionId]);
+
+  const sessionHighEventId = useMemo(() => {
+    const index = findSessionHighIndex(logs, priorMonthBest);
+    return index == null ? null : logs[index].eventId;
+  }, [logs, priorMonthBest]);
+
   const sessionStats = useMemo(() => {
     if (logs.length === 0) return null;
     let bestLabel = logs[0].gradeLabel;
@@ -159,7 +182,6 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     return {
       count: logs.length,
       bestLabel,
-      bestValue,
       avg: (sum / logs.length).toFixed(1),
     };
   }, [logs]);
@@ -285,11 +307,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const handleLog = (result: 'SEND' | 'FLASH') => {
     if (session?.status !== 'active') return;
 
-    // A band covering three or more V grades is too coarse to pool accurately across
-    // gyms, so ask which one it actually was instead of silently storing the range.
+    // Any band wider than one grade pools with nothing else in the pyramid, so ask which
+    // grade it actually was rather than storing the range and making Settings refine it later.
     // Opening the picker is idempotent, so it needs no double-tap guard of its own —
     // commitLog owns that, covering both this path and the picker tiles.
-    if (spansMultipleGrades(selectedGrade.min, selectedGrade.max)) {
+    if (isGradeBand(selectedGrade.min, selectedGrade.max)) {
       void Haptics.selectionAsync();
       setPendingLog({ result, grade: selectedGrade });
       return;
@@ -479,11 +501,22 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           ) : null}
           {recentLogs.map((log, index) => {
             const chipColor = log.gradeColor ?? colors.surfaceRaised;
-            const isPB = sessionStats != null && log.gradeMax === sessionStats.bestValue;
+            const isSessionHigh = log.eventId === sessionHighEventId;
             const isLatest = index === 0;
+            const elapsed = formatElapsed(log.createdAt - session.started_at);
             return (
               <View
-                key={`${log.gradeLabel}-${log.createdAt}-${index}`}
+                key={log.eventId}
+                accessible
+                accessibilityLabel={[
+                  log.gradeLabel,
+                  log.result === 'FLASH' ? 'flash' : 'send',
+                  isSessionHigh ? '30-day high' : null,
+                  elapsed,
+                  log.climbName,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
                 style={[styles.logRow, index % 2 === 1 ? styles.logRowAlt : null]}
               >
                 <View style={[styles.gradeChip, { backgroundColor: chipColor }]}>
@@ -495,18 +528,23 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                     {log.gradeLabel}
                   </Text>
                 </View>
-                {isPB ? (
-                  <View style={styles.pbBadge}>
-                    <Text style={styles.pbBadgeText}>PB</Text>
+                {log.result === 'FLASH' ? (
+                  <View style={styles.flashMark}>
+                    <BoltIcon size={14} color={colors.accent} filled />
+                  </View>
+                ) : null}
+                {isSessionHigh ? (
+                  <View style={styles.highBadge}>
+                    <StarIcon size={11} color={colors.accent} strokeWidth={2.2} filled />
+                    <Text style={styles.highBadgeText}>30-day high</Text>
                   </View>
                 ) : null}
                 <Text
                   style={[styles.logTime, isLatest ? styles.logTimeLatest : null]}
                   numberOfLines={1}
                 >
-                  {formatElapsed(log.createdAt - session.started_at)}
+                  {elapsed}
                   {isLatest ? ' · just now' : ''}
-                  {log.result === 'FLASH' ? ' · Flash' : ''}
                   {log.climbName ? ` · ${log.climbName}` : ''}
                 </Text>
               </View>
@@ -794,6 +832,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     backgroundColor: colors.surfaceAlt,
   },
   gradeChip: {
+    flexShrink: 0,
     minWidth: 38,
     height: 28,
     maxWidth: 64,
@@ -806,20 +845,31 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     ...typography.numeric,
     fontSize: 15,
   },
-  pbBadge: {
-    backgroundColor: colors.danger,
+  flashMark: {
+    flexShrink: 0,
+    marginLeft: -2,
+  },
+  highBadge: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.accentMuted,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
   },
-  pbBadgeText: {
+  highBadgeText: {
     ...font('semibold'),
     fontSize: 11,
-    color: '#ffffff',
+    // Label in body text, not the accent: light-theme accents on the tinted pill fall
+    // under 3:1. The star carries the accent colour.
+    color: colors.textPrimary,
     letterSpacing: -0.05,
   },
   logTime: {
     ...typography.bodyMuted,
+    flexShrink: 1,
     fontSize: 13,
     marginLeft: 'auto',
     textAlign: 'right',

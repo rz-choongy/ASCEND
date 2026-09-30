@@ -1,24 +1,12 @@
 /**
- * Two separate questions, deliberately kept apart:
+ * One rule for "is this a range?", used both when logging (open the pick-the-exact-grade
+ * popup) and by the Settings refine pass. They used to disagree -- logging only asked on
+ * V4-V6 and wider while refine flagged every V3-V4 -- so two-grade hold colours were logged
+ * silently as ranges and then nagged about later. A "V3-4" bucket pools with neither V3 nor
+ * V4, so any band wider than one grade is worth the extra tap.
  *
- * 1. `spansMultipleGrades` -- is this band coarse enough to interrupt logging for?
- *    Only V4-V6 and wider. A V3-V4 hold colour is by far the most common case, and
- *    stopping to ask on every one of those would cost a tap on the hot path.
- * 2. `isGradeBand` -- is this a range at all, rather than one exact grade?
- *    Anything wider than a single grade. This is what analytics and the refine pass
- *    care about, because a "V3-4" bucket pools with neither V3 nor V4 and so can't
- *    be compared against anything.
- *
- * Conflating the two is what left range-logged climbs stranded in their own
- * pyramid rows while Settings reported nothing left to refine.
+ * A range rather than one exact grade -- V3-V4 counts, V3 alone does not.
  */
-export const WIDE_BAND_MIN_SPAN = 2;
-
-/** Coarse enough that logging stops to ask which grade it actually was. */
-export const spansMultipleGrades = (gradeMin: number, gradeMax: number): boolean =>
-  gradeMax - gradeMin >= WIDE_BAND_MIN_SPAN;
-
-/** A range rather than one exact grade -- V3-V4 counts, V3 alone does not. */
 export const isGradeBand = (gradeMin: number, gradeMax: number): boolean =>
   gradeMax > gradeMin;
 
@@ -219,4 +207,21 @@ export const applyClimbEvents = (events: EventLike[]): ClimbLog[] => {
   });
 
   return logs;
+};
+
+/**
+ * Index of the log in this session that earns the "30-day high" badge: the first log at the
+ * session's top grade, provided that grade beats `priorBest` (the best from other sessions in
+ * the window). Only one row, so a run of V6s doesn't badge every one, and it tracks the
+ * session's actual high -- a V5 then V7 badges the V7. Null when there's no prior history to
+ * beat (`priorBest` null): on a first session back every send would trivially qualify.
+ */
+export const findSessionHighIndex = (
+  logs: Pick<ClimbLog, 'gradeMax'>[],
+  priorBest: number | null
+): number | null => {
+  if (priorBest == null || logs.length === 0) return null;
+  const sessionMax = Math.max(...logs.map((log) => log.gradeMax));
+  if (sessionMax <= priorBest) return null;
+  return logs.findIndex((log) => log.gradeMax === sessionMax);
 };

@@ -20,6 +20,7 @@ export { Divider } from './components/Divider';
 export { DialogHost, showDialog, type DialogButton } from './components/Dialog';
 export {
   ArrowRightIcon,
+  BoltIcon,
   CalendarTabIcon,
   ChevronLeftIcon,
   ChevronRightIcon,

@@ -17,6 +17,15 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.5',
+    date: '2026-10-01',
+    changes: [
+      { kind: 'fixed', text: 'Logging a climb on any colour that covers more than one grade now asks which grade it was, so you no longer have to refine those climbs in Settings afterwards.' },
+      { kind: 'improved', text: 'Flashes in the session log show a lightning bolt instead of the word "Flash".' },
+      { kind: 'improved', text: 'The red PB tag is gone. A "30-day high" badge now marks the first climb that beats your best from the past 30 days.' },
+    ],
+  },
+  {
     version: '2.2.4',
     date: '2026-09-29',
     changes: [

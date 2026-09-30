@@ -129,8 +129,8 @@ describe('countWideGradeBandClimbs / narrowWideGradeBands', () => {
     expect(countWideGradeBandClimbs()).toEqual({ sessions: 0, climbs: 0 });
   });
 
-  // Logging waves a two-grade band through without asking (see spansMultipleGrades),
-  // but it is still a range: it pools with neither V3 nor V4 in the pyramid, so the
+  // Older builds logged a two-grade band without asking for the exact grade. It is
+  // still a range: it pools with neither V3 nor V4 in the pyramid, so the
   // refine pass has to offer to resolve it. Reporting "nothing to refine" while such
   // climbs sat in the history was the bug.
   it('flags a two-grade band that logging accepted silently', () => {
