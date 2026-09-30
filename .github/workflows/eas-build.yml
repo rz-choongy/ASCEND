@@ -1,0 +1,85 @@
+name: EAS Build
+
+# Queues a native build on EAS. Manual only: Actions -> EAS Build -> Run workflow.
+#
+# Use this when something native changed (a new native module, app.json plugins,
+# the `version` field) -- eas-update.yml can't ship those over the air.
+#
+# - The build runs on EAS, not here: this job only queues it (`--no-wait`) and
+#   exits. Follow progress at expo.dev or with `eas build:list`.
+# - `production` is pinned to the `production` GitHub Environment, like the
+#   update workflow, so required reviewers there gate it too.
+# - Runs non-interactively, so signing credentials (Android keystore, Apple
+#   certificates and profiles) must already be stored on Expo. If they aren't,
+#   run `eas build` once from a terminal to set them up.
+#
+# Requires the same repository secret as eas-update.yml: EXPO_TOKEN.
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which platform to build
+        type: choice
+        required: true
+        default: android
+        options: [android, ios, all]
+      profile:
+        description: Which eas.json build profile
+        type: choice
+        required: true
+        default: production
+        options: [production, preview]
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview:
+    name: Queue preview build
+    if: inputs.profile == 'preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: eas build --profile preview
+        env:
+          PLATFORM: ${{ inputs.platform }}
+        run: npx eas-cli build --platform "$PLATFORM" --profile preview --non-interactive --no-wait
+
+  build-production:
+    name: Queue production build
+    if: inputs.profile == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: eas build --profile production
+        env:
+          PLATFORM: ${{ inputs.platform }}
+        run: npx eas-cli build --platform "$PLATFORM" --profile production --non-interactive --no-wait
