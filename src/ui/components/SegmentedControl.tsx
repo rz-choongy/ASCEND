@@ -17,17 +17,20 @@ type SegmentedControlProps<T extends string> = {
   options: SegmentedControlOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  /** Smaller, intrinsic-width, unlifted variant for a secondary/sub-filter control. */
+  compact?: boolean;
 };
 
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
+  compact = false,
 }: SegmentedControlProps<T>) {
   const { colors, shadows } = useTheme();
   const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
   return (
-    <View style={styles.segmented}>
+    <View style={[styles.segmented, compact ? styles.segmentedCompact : null]}>
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -35,9 +38,18 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             onPress={() => onChange(option.value)}
             scaleTo={0.97}
-            style={[styles.segment, active ? styles.segmentActive : null]}
+            style={[
+              styles.segment,
+              compact ? styles.segmentCompact : null,
+              active ? (compact ? styles.segmentActiveCompact : styles.segmentActive) : null,
+            ]}
           >
-            <Text style={active ? styles.segmentTextActive : styles.segmentText}>
+            <Text
+              style={[
+                active ? styles.segmentTextActive : styles.segmentText,
+                compact ? styles.segmentTextCompact : null,
+              ]}
+            >
               {option.label}
             </Text>
           </PressableScale>
@@ -58,6 +70,9 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       padding: 3,
       gap: 2,
     },
+    // Intrinsic width instead of stretching full-bleed, so a secondary control
+    // reads as a sub-filter rather than a peer of the primary tab row above it.
+    segmentedCompact: { alignSelf: 'center' },
     segment: {
       flex: 1,
       minHeight: 36,
@@ -65,11 +80,23 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       paddingVertical: 8,
       borderRadius: radius.pill,
     },
+    segmentCompact: {
+      flex: 0,
+      minHeight: 30,
+      paddingHorizontal: spacing.s,
+      paddingVertical: 5,
+    },
     segmentActive: {
       backgroundColor: colors.surfaceRaised,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       ...shadows.sm,
+    },
+    // No shadow lift -- keeps it visually quieter than the primary control.
+    segmentActiveCompact: {
+      backgroundColor: colors.surfaceRaised,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
     },
     segmentText: {
       ...font('medium'),
@@ -85,4 +112,5 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       color: colors.textPrimary,
       textAlign: 'center',
     },
+    segmentTextCompact: { fontSize: 13 },
   });
