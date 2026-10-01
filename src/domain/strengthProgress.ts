@@ -267,6 +267,32 @@ export const isNewRecord = (
   return estimateOneRepMax(weight, reps) > Math.max(historyBest, sessionBest ?? 0) + 1e-9;
 };
 
+/**
+ * Which logged sets get the PR tag in the session log: per exercise, only the set with this
+ * session's best estimated 1RM (the first, on a tie), and only if it beats `historyBest` for
+ * that exercise. Badging every set that beat the running best tagged a 25 kg, 35 kg and 40 kg
+ * pull-up set as three PRs on the way up; only the 40 kg one is the record. No history
+ * (`historyBest` null) means no tag, same as `isNewRecord`.
+ */
+export const findRecordSetIds = <T extends { eventId: string; weight: number; reps: number }>(
+  sets: T[],
+  keyFor: (set: T) => string,
+  historyBestFor: (set: T) => number | null
+): Set<string> => {
+  const top = new Map<string, { set: T; e1rm: number }>();
+  sets.forEach((set) => {
+    const key = keyFor(set);
+    const e1rm = estimateOneRepMax(set.weight, set.reps);
+    const current = top.get(key);
+    if (!current || e1rm > current.e1rm + 1e-9) top.set(key, { set, e1rm });
+  });
+  const ids = new Set<string>();
+  top.forEach(({ set }) => {
+    if (isNewRecord(historyBestFor(set), null, set.weight, set.reps)) ids.add(set.eventId);
+  });
+  return ids;
+};
+
 /** Weights are kept to one decimal, matching how `formatWeight` shows them. */
 export const roundWeight = (kg: number): number => Math.round(kg * 10) / 10;
 

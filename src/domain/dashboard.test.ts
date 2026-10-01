@@ -112,6 +112,16 @@ describe('lastStrengthSessions', () => {
     ]);
     expect(result?.previous?.records).toBe(0);
   });
+
+  it('counts one PR per exercise when a session builds past the record in steps', () => {
+    eventsBySession({
+      s1: [set('a', 'Pull-ups', 20, 5)],
+      s2: [set('b', 'Pull-ups', 25, 5), set('c', 'Pull-ups', 35, 3), set('d', 'Pull-ups', 40, 3), set('e', 'Pull-ups', 40, 3)],
+    });
+    const result = lastStrengthSessions([session('s1', 'strength', 1), session('s2', 'strength', 2)]);
+    expect(result?.latest.records).toBe(1);
+    expect(result?.latest.exercises[0]).toMatchObject({ weight: 40, reps: 3, isRecord: true });
+  });
 });
 
 describe('buildWeekActivity', () => {

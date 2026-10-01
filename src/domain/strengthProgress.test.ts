@@ -15,6 +15,7 @@ import {
   formatVolume,
   formatWeight,
   initialInputFor,
+  findRecordSetIds,
   isNewRecord,
   parseRepsInput,
   parseWeightInput,
@@ -231,5 +232,37 @@ describe('typed input parsing', () => {
     expect(parseRepsInput('0')).toBeNull();
     expect(parseRepsInput('')).toBeNull();
     expect(parseRepsInput('x')).toBeNull();
+  });
+
+  describe('findRecordSetIds', () => {
+    const set = (eventId: string, weight: number, reps: number, name = 'Pull-ups') => ({
+      eventId,
+      weight,
+      reps,
+      name,
+    });
+    const key = (s: { name: string }) => s.name;
+
+    it('tags only the top set when a session climbs past the record in steps', () => {
+      const sets = [set('a', 25, 5), set('b', 35, 3), set('c', 40, 3), set('d', 40, 3)];
+      expect([...findRecordSetIds(sets, key, () => 20)]).toEqual(['c']);
+    });
+
+    it('tags nothing when the top set does not beat history', () => {
+      expect(findRecordSetIds([set('a', 40, 3)], key, () => 1000).size).toBe(0);
+    });
+
+    it('tags nothing without history', () => {
+      expect(findRecordSetIds([set('a', 40, 3)], key, () => null).size).toBe(0);
+    });
+
+    it('tags the first of tied top sets', () => {
+      expect([...findRecordSetIds([set('a', 40, 3), set('b', 40, 3)], key, () => 20)]).toEqual(['a']);
+    });
+
+    it('tracks each exercise separately', () => {
+      const sets = [set('a', 40, 3), set('b', 30, 5, 'Dips'), set('c', 20, 5, 'Dips')];
+      expect([...findRecordSetIds(sets, key, () => 10)].sort()).toEqual(['a', 'b']);
+    });
   });
 });
