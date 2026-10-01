@@ -246,10 +246,18 @@ export const buildLoggerReference = (detail: ExerciseDetail | null): LoggerRefer
 
 export type SetInput = { reps: number; weight: number };
 
-/** Start where you left off: the last set of the last session, else the given defaults. */
-export const initialInputFor = (reference: LoggerReference | null, fallback: SetInput): SetInput => {
+/**
+ * Start where you left off: the last set of the last session, else the given defaults. A routine's
+ * target reps win over last time's reps; the weight still comes from last time, so it progresses.
+ */
+export const initialInputFor = (
+  reference: LoggerReference | null,
+  fallback: SetInput,
+  targetReps?: number | null
+): SetInput => {
   const lastSet = reference?.lastSets[reference.lastSets.length - 1];
-  return lastSet ? { reps: lastSet.reps, weight: lastSet.weight } : fallback;
+  const input = lastSet ? { reps: lastSet.reps, weight: lastSet.weight } : fallback;
+  return targetReps ? { ...input, reps: targetReps } : input;
 };
 
 /**

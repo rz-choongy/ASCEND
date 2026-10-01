@@ -1,4 +1,4 @@
-import { applySetEvents } from './strengthLogUtils';
+import { applySetEvents, routineFromSets, type LoggedSet } from './strengthLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
   id,
@@ -117,5 +117,32 @@ describe('SET_EDITED exercise reassignment', () => {
     ]);
     expect(set.exerciseId).toBeUndefined();
     expect(set.exerciseName).toBe('Ring rows');
+  });
+});
+
+describe('routineFromSets', () => {
+  const set = (exerciseId: string | undefined, reps: number): LoggedSet => ({
+    eventId: `${exerciseId}-${reps}-${Math.random()}`,
+    exerciseId,
+    exerciseName: exerciseId ?? 'Old',
+    reps,
+    weight: 20,
+    unit: 'kg',
+    createdAt: 1,
+  });
+
+  it('keeps first-use order, counts sets and takes the most common reps', () => {
+    expect(
+      routineFromSets([set('bench', 8), set('row', 10), set('bench', 6), set('bench', 6), set('row', 10)])
+    ).toEqual([
+      { exerciseId: 'bench', targetSets: 3, targetReps: 6 },
+      { exerciseId: 'row', targetSets: 2, targetReps: 10 },
+    ]);
+  });
+
+  it('takes the first reps on a tie and skips sets with no exercise id', () => {
+    expect(routineFromSets([set(undefined, 5), set('squat', 5), set('squat', 3)])).toEqual([
+      { exerciseId: 'squat', targetSets: 2, targetReps: 5 },
+    ]);
   });
 });

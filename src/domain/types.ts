@@ -13,6 +13,8 @@ export type SessionRow = {
   title: string | null;
   gym_id: string | null;
   notes: string | null;
+  /** The routine a strength session was started from, if any. */
+  routine_id?: string | null;
 };
 
 export type EventRow = {
@@ -57,6 +59,24 @@ export type ExerciseRow = {
   favorite: number;
   created_at: number;
   updated_at: number;
+};
+
+export type RoutineRow = {
+  id: string;
+  name: string;
+  sort_order: number;
+  active: number;
+  created_at: number;
+  updated_at: number;
+};
+
+export type RoutineExerciseRow = {
+  id: string;
+  routine_id: string;
+  exercise_id: string;
+  sort_order: number;
+  target_sets: number;
+  target_reps: number;
 };
 
 export type ExerciseCategoryRow = {

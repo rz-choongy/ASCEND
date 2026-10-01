@@ -9,6 +9,7 @@ const ACCENT_COLOR_KEY = 'accent_color';
 const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 const KILTER_USERNAME_KEY = 'kilter_username';
 const KILTER_SESSION_KEY = 'kilter_session';
+const LAST_ROUTINE_ID_KEY = 'last_routine_id';
 
 // Derived from the palette so a new accent can't be silently rejected on the next launch.
 const VALID_ACCENT_IDS = Object.keys(ACCENT_PALETTE) as AccentColorId[];
@@ -140,4 +141,17 @@ export const setKilterSession = (json: string): void => {
 
 export const clearKilterSession = (): void => {
   run('DELETE FROM app_settings WHERE key = ?;', [KILTER_SESSION_KEY]);
+};
+
+/** The routine last picked on the Start card, so starting from it again stays one tap. null = none. */
+export const getLastRoutineId = (): string | null => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    LAST_ROUTINE_ID_KEY,
+  ]);
+  return setting?.value ?? null;
+};
+
+export const setLastRoutineId = (routineId: string | null): void => {
+  if (routineId) setSetting(LAST_ROUTINE_ID_KEY, routineId);
+  else run('DELETE FROM app_settings WHERE key = ?;', [LAST_ROUTINE_ID_KEY]);
 };

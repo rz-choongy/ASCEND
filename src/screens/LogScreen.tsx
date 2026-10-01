@@ -30,7 +30,8 @@ import {
   getSessionsForDateRange,
   setSessionStatus,
 } from '../domain/sessionStore';
-import { getShowSessionTimer } from '../domain/settingsStore';
+import { getRoutines, type RoutineSummary } from '../domain/routineStore';
+import { getLastRoutineId, getShowSessionTimer, setLastRoutineId } from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
 import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
@@ -75,6 +76,9 @@ type Dashboard = {
   lastWeek: WeekActivity;
   recent: RecentSession[];
   bodyweight: BodyweightLogRow | null;
+  routines: RoutineSummary[];
+  /** The Start card's routine: the last one picked, if it still exists. */
+  routine: RoutineSummary | null;
 };
 
 const loadDashboard = (): Dashboard => {
@@ -84,6 +88,8 @@ const loadDashboard = (): Dashboard => {
   // Two weeks in one query: this week for the card, last week for its comparisons.
   const twoWeeks = getSessionsForDateRange(addDays(weekStart, -7).getTime(), addDays(weekStart, 7).getTime());
   const strengthHistory = completed.filter((session) => session.type === 'strength');
+  const routines = getRoutines();
+  const lastRoutineId = getLastRoutineId();
   return {
     activeSession: getActiveSession(),
     gymName: (getSelectedClimbGym() ?? ensureSelectedClimbGym()).name,
@@ -96,6 +102,8 @@ const loadDashboard = (): Dashboard => {
     lastWeek: buildWeekActivity(twoWeeks, addDays(now, -7)),
     recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),
     bodyweight: getLatestBodyweight(),
+    routines,
+    routine: routines.find((r) => r.id === lastRoutineId) ?? null,
   };
 };
 
@@ -150,8 +158,28 @@ export function LogScreen() {
       return;
     }
     const gym = mode === 'climb' ? ensureSelectedClimbGym() : null;
-    const sessionId = createSession(mode, gym ? { gymId: gym.id } : undefined);
+    const routineId = mode === 'strength' ? data?.routine?.id : undefined;
+    const sessionId = createSession(mode, gym ? { gymId: gym.id } : routineId ? { routineId } : undefined);
     navigateToSession(mode, sessionId);
+  }
+
+  function pickRoutine(routineId: string | null) {
+    setLastRoutineId(routineId);
+    setData(loadDashboard());
+  }
+
+  // Few enough routines to list as dialog buttons; with none yet, go straight to making one.
+  function handleChangeRoutine() {
+    if (!data || data.routines.length === 0) {
+      navigation.navigate('Routines');
+      return;
+    }
+    showDialog('Routine', 'Lines up its exercises with your target sets and reps.', [
+      ...data.routines.map((routine) => ({ text: routine.name, onPress: () => pickRoutine(routine.id) })),
+      ...(data.routine ? [{ text: 'No routine', onPress: () => pickRoutine(null) }] : []),
+      { text: 'Manage routines…', onPress: () => navigation.navigate('Routines') },
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
   }
 
   // Same rule as the loggers' exit guard: a session with nothing in it is
@@ -216,6 +244,8 @@ export function LogScreen() {
             strengthHint={strengthHint}
             strengthStartsFrom={strengthStartsFrom}
             onChangeGym={() => navigation.navigate('GymSelect')}
+            routineName={data.routine?.name ?? null}
+            onChangeRoutine={handleChangeRoutine}
             onStart={handleStart}
           />
         )}

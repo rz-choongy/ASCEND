@@ -21,6 +21,8 @@ import { GymSelectScreen } from './src/screens/GymSelectScreen';
 import { KilterConnectScreen } from './src/screens/KilterConnectScreen';
 import { LogScreen } from './src/screens/LogScreen';
 import { ProgressScreen } from './src/screens/ProgressScreen';
+import { RoutineEditScreen } from './src/screens/RoutineEditScreen';
+import { RoutinesScreen } from './src/screens/RoutinesScreen';
 import { SessionHistoryScreen } from './src/screens/SessionHistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StrengthSessionScreen } from './src/screens/StrengthSessionScreen';
@@ -113,6 +115,16 @@ function AppContent() {
           <Stack.Screen
             name="Categories"
             component={CategoriesScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="Routines"
+            component={RoutinesScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="RoutineEdit"
+            component={RoutineEditScreen}
             options={{ presentation: 'modal' }}
           />
           <Stack.Screen name="SessionDetail" component={SessionHistoryScreen} />

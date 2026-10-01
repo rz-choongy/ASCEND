@@ -13,6 +13,9 @@ export type RootStackParamList = {
   KilterConnect: undefined;
   Changelog: undefined;
   Categories: undefined;
+  Routines: undefined;
+  /** fromSessionId prefills the editor from a finished session ("Save as routine"). */
+  RoutineEdit: { routineId?: string; fromSessionId?: string } | undefined;
   BugReport: undefined;
 };
 

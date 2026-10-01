@@ -194,6 +194,14 @@ describe('logger helpers', () => {
     expect(initialInputFor(null, { reps: 8, weight: 20 })).toEqual({ reps: 8, weight: 20 });
   });
 
+  it("takes a routine's target reps but keeps last time's weight", () => {
+    expect(initialInputFor(buildLoggerReference(detail()), { reps: 8, weight: 20 }, 10)).toEqual({
+      reps: 10,
+      weight: 27.5,
+    });
+    expect(initialInputFor(null, { reps: 8, weight: 20 }, 5)).toEqual({ reps: 5, weight: 20 });
+  });
+
   describe('isNewRecord', () => {
     it('never flags an exercise with no history', () => {
       expect(isNewRecord(null, null, 100, 5)).toBe(false);

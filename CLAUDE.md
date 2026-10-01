@@ -38,6 +38,8 @@ RootStack (NativeStackNavigator)
 ├── StrengthLogger→ StrengthSessionScreen (fullScreenModal)
 ├── GymSelect     → GymSelectScreen    (modal)
 ├── GymEdit       → GymEditScreen      (modal)
+├── Routines      → RoutinesScreen     (modal)
+├── RoutineEdit   → RoutineEditScreen  (modal)
 └── SessionDetail → SessionHistoryScreen
 ```
 
@@ -54,6 +56,7 @@ Sessions are stored in two tables: `sessions` (header row) and `events` (append-
 Synchronous functions over SQLite — no async, no React state at this layer. Call them directly from screens/hooks:
 - `sessionStore.ts` — session lifecycle, event append, gym assignment
 - `gymStore.ts` — gym CRUD and grade options
+- `routineStore.ts` — gym routines (ordered exercises with target sets × reps); a session links to one via `sessions.routine_id`
 - `exerciseStore.ts` — exercise list for strength sessions
 
 ## UI Layer (`src/ui/`)
@@ -64,7 +67,7 @@ import { colors, spacing, Button, Card, Chip } from '../ui';
 Tokens: `colors`, `spacing`, `radius`, `typography`. Components: `Button`, `Card`, `Chip`, `Divider`, `ListRow`.
 
 ## Database Migrations
-`src/db/migrate.ts` runs at app start (called once in `App.tsx`). Add new schema changes as a new `Migration` entry in the `migrations` array. Current schema version: `APP_SCHEMA_VERSION = 8`.
+`src/db/migrate.ts` runs at app start (called once in `App.tsx`). Add new schema changes as a new `Migration` entry in the `migrations` array. Current schema version: `APP_SCHEMA_VERSION = 9`.
 
 ## Tests
 Domain logic tests live alongside source (`*.test.ts`). Jest preset is `jest-expo`. Run a single file with `npx jest <path>`. No screen-level tests exist.
@@ -81,7 +84,7 @@ Domain logic tests live alongside source (`*.test.ts`). Jest preset is `jest-exp
 <!-- Add a line every time Claude makes a mistake -->
 - Do not add rest/interval timers between climbs — out of scope for Mode 1. A passive, read-only session-length display (no pause/resume) is in scope — see `ClimbSessionScreen`, gated behind the `show_session_timer` setting.
 - Do not add summary/confirmation screens after finishing a session — extra taps, bad UX
-- Do not add planner or routine-library screens — deferred to Mode 4
+- Gym routines (saved exercise list + target sets × reps, `routineStore.ts`) are in scope. Do not add weekly planners or climbing routines — still deferred to Mode 4
 - Basic progress/analytics screens (Mode 3) are now in scope — charts and trends derived from existing event-sourced data, read-only, no new write paths
 
 # UX Rules

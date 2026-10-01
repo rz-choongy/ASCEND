@@ -21,6 +21,7 @@ import {
   setExerciseCategory,
   setExerciseFavorite,
 } from '../domain/exerciseStore';
+import { getRoutine, type RoutineItem } from '../domain/routineStore';
 import {
   appendEvent,
   getAbandonedSessions,
@@ -247,9 +248,26 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return references.get(exercise.id) ?? null;
   };
 
-  const [exerciseState, setExerciseState] = useState<ExerciseState>(() =>
-    loadExerciseState(lastLoggedExerciseId(sessionId))
-  );
+  // A session started from a routine lines its exercises up in order with their targets. Read
+  // once: editing the routine mid-session shouldn't reshuffle the chips under you.
+  const [routine] = useState(() => (session?.routine_id ? getRoutine(session.routine_id) : null));
+  const targetFor = (exerciseId: string | null): RoutineItem | null =>
+    routine?.items.find((item) => item.exerciseId === exerciseId) ?? null;
+
+  // Reopening carries on with the last exercise logged -- unless it's a routine exercise that's
+  // already hit its target, in which case it picks up at the first one still to do.
+  const [exerciseState, setExerciseState] = useState<ExerciseState>(() => {
+    const last = lastLoggedExerciseId(sessionId);
+    if (!routine) return loadExerciseState(last);
+    const counts = new Map<string, number>();
+    applySetEvents(getSessionEvents(sessionId)).forEach((set) => {
+      if (set.exerciseId) counts.set(set.exerciseId, (counts.get(set.exerciseId) ?? 0) + 1);
+    });
+    const lastTarget = targetFor(last);
+    if (last && (!lastTarget || (counts.get(last) ?? 0) < lastTarget.targetSets)) return loadExerciseState(last);
+    const next = routine.items.find((item) => (counts.get(item.exerciseId) ?? 0) < item.targetSets);
+    return loadExerciseState(next?.exerciseId ?? last ?? routine.items[0]?.exerciseId ?? null);
+  });
   const [categories, setCategories] = useState<ExerciseCategoryRow[]>(() => getCategories());
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   // A typed field that's empty or not a number: Log waits rather than logging the old value.
@@ -257,14 +275,14 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const setFieldValid = (field: 'reps' | 'weight') => (valid: boolean) =>
     setInvalidFields((current) => (current[field] === !valid ? current : { ...current, [field]: !valid }));
   // Picked this session but not logged yet, so they still show in the session row.
-  const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const [pickedIds, setPickedIds] = useState<string[]>(() => routine?.items.map((item) => item.exerciseId) ?? []);
   const [title, setTitle] = useState(session?.title ?? '');
   const [showTimer, setShowTimer] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   // Start each exercise where you left off last time, not at a fixed 8 x 20.
   const startInput = (): SetInput => {
     const first = exerciseState.exercises.find((e) => e.id === exerciseState.selectedExerciseId);
-    return initialInputFor(first ? getReference(first) : null, DEFAULT_INPUT);
+    return initialInputFor(first ? getReference(first) : null, DEFAULT_INPUT, targetFor(first?.id ?? null)?.targetReps);
   };
   const [reps, setReps] = useState(() => startInput().reps);
   const [weight, setWeight] = useState(() => startInput().weight);
@@ -370,10 +388,10 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return counts;
   }, [loggedSets]);
 
-  // This session's exercises in the order they were first used: logged ones, then any
-  // picked but not logged yet.
+  // This session's exercises: the routine's in its order, then the rest in the order they were
+  // first used -- logged ones, then any picked but not logged yet.
   const sessionExercises = useMemo(() => {
-    const ids: string[] = [];
+    const ids: string[] = routine?.items.map((item) => item.exerciseId) ?? [];
     loggedSets.forEach((set) => {
       if (set.exerciseId && !ids.includes(set.exerciseId)) ids.push(set.exerciseId);
     });
@@ -383,7 +401,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return ids
       .map((id) => exerciseState.exercises.find((e) => e.id === id))
       .filter((e): e is ExerciseRow => e !== undefined);
-  }, [loggedSets, pickedIds, exerciseState]);
+  }, [loggedSets, pickedIds, exerciseState, routine]);
 
   // First pick of a session: favourites first, then whatever was done most recently.
   const quickStarts = useMemo(() => {
@@ -430,7 +448,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     const exercise = exerciseState.exercises.find((e) => e.id === exerciseId);
     const next =
       exerciseInputMemory[exerciseId] ??
-      initialInputFor(exercise ? getReference(exercise) : null, DEFAULT_INPUT);
+      initialInputFor(exercise ? getReference(exercise) : null, DEFAULT_INPUT, targetFor(exerciseId)?.targetReps);
     setReps(next.reps);
     setWeight(next.weight);
     setRecordChip(null);
@@ -573,6 +591,18 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       [selectedExercise.id]: { reps, weight },
     }));
     bump();
+    // That set hit the routine's target: move on to the next exercise not done yet, saving a tap.
+    // Tapping the chip goes back for an extra set.
+    const target = targetFor(selectedExercise.id);
+    if (routine && target && (sessionSets.get(selectedExercise.id) ?? 0) + 1 === target.targetSets) {
+      const start = routine.items.indexOf(target);
+      const next = [...routine.items.slice(start + 1), ...routine.items.slice(0, start)].find(
+        (item) =>
+          (sessionSets.get(item.exerciseId) ?? 0) < item.targetSets &&
+          exerciseState.exercises.some((e) => e.id === item.exerciseId)
+      );
+      if (next) handleSelectExercise(next.exerciseId);
+    }
   };
 
   const handleUndo = () => {
@@ -641,20 +671,37 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         {sessionExercises.map((exercise) => {
           const selected = exercise.id === exerciseState.selectedExerciseId;
           const sets = sessionSets.get(exercise.id) ?? 0;
+          const target = targetFor(exercise.id);
+          const done = target !== null && sets >= target.targetSets;
           return (
             <PressableScale
               key={exercise.id}
               onPress={() => handlePickExercise(exercise.id)}
               scaleTo={0.95}
-              accessibilityLabel={`${exercise.name}, ${sets} ${sets === 1 ? 'set' : 'sets'}${selected ? ', selected' : ''}`}
+              accessibilityLabel={`${exercise.name}, ${sets}${target ? ` of ${target.targetSets}` : ''} ${
+                (target?.targetSets ?? sets) === 1 ? 'set' : 'sets'
+              }${done ? ', done' : ''}${selected ? ', selected' : ''}`}
               style={[styles.sessionChip, selected ? styles.sessionChipSelected : null]}
             >
               <Text style={[styles.sessionChipText, selected ? styles.sessionChipTextSelected : null]} numberOfLines={1}>
                 {exercise.name}
               </Text>
-              <View style={[styles.sessionChipCount, selected ? styles.sessionChipCountSelected : null]}>
-                <Text style={[styles.sessionChipCountText, selected ? styles.sessionChipTextSelected : null]}>
-                  {sets}
+              <View
+                style={[
+                  styles.sessionChipCount,
+                  done ? styles.sessionChipCountDone : null,
+                  selected ? styles.sessionChipCountSelected : null,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.sessionChipCountText,
+                    done ? styles.sessionChipCountTextDone : null,
+                    selected ? styles.sessionChipTextSelected : null,
+                  ]}
+                >
+                  {done ? '✓ ' : ''}
+                  {target ? `${sets}/${target.targetSets}` : sets}
                 </Text>
               </View>
             </PressableScale>
@@ -943,6 +990,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.fill,
+  },
+  sessionChipCountDone: {
+    backgroundColor: colors.accent,
+  },
+  sessionChipCountTextDone: {
+    color: colors.onAction,
   },
   sessionChipCountSelected: {
     backgroundColor: 'rgba(255, 255, 255, 0.22)',

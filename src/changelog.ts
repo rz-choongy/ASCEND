@@ -17,6 +17,16 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.3.0',
+    date: '2026-10-01',
+    changes: [
+      { kind: 'new', text: 'Routines: save the exercises you always do, with target sets and reps, under Settings → Routines.' },
+      { kind: 'new', text: 'Pick a routine on the Start card and its exercises are lined up when you start. Reps start at the target and weight at last time.' },
+      { kind: 'new', text: 'Each routine exercise shows sets done against the target, like 2/3. Hitting the target moves you on to the next one.' },
+      { kind: 'new', text: 'Turn a finished gym session into a routine with "Save as routine" on its history page.' },
+    ],
+  },
+  {
     version: '2.2.6',
     date: '2026-10-01',
     changes: [

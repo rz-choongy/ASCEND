@@ -48,8 +48,11 @@ type Props = {
   onSetCategory: (exerciseId: string, categoryId: string | null) => void;
   /** Returns an error to show under the name field, or null when saved. */
   onRename: (exerciseId: string, name: string) => string | null;
-  /** The parent confirms first -- deleting takes the exercise's logged sets with it. */
-  onDelete: (exerciseId: string) => void;
+  /**
+   * The parent confirms first -- deleting takes the exercise's logged sets with it. Left out where
+   * deleting doesn't belong (the routine editor), which hides the button.
+   */
+  onDelete?: (exerciseId: string) => void;
   onManageCategories: () => void;
   onClose: () => void;
 };
@@ -289,14 +292,16 @@ export const ExercisePickerSheet = ({
                 />
               </View>
 
-              <Pressable
-                onPress={() => onDelete(editing.id)}
-                style={({ pressed }) => [styles.deleteButton, pressed ? styles.rowPressed : null]}
-                accessibilityRole="button"
-              >
-                <Text style={styles.deleteText}>Delete exercise</Text>
-                <Text style={styles.deleteHint}>Also deletes every set logged for it</Text>
-              </Pressable>
+              {onDelete ? (
+                <Pressable
+                  onPress={() => onDelete(editing.id)}
+                  style={({ pressed }) => [styles.deleteButton, pressed ? styles.rowPressed : null]}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.deleteText}>Delete exercise</Text>
+                  <Text style={styles.deleteHint}>Also deletes every set logged for it</Text>
+                </Pressable>
+              ) : null}
             </>
           ) : (
             <>

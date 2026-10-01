@@ -25,12 +25,15 @@ type Props = {
   /** What the strength context row says the first exercise starts from. */
   strengthStartsFrom: string;
   onChangeGym: () => void;
+  /** The routine the next strength session starts from, or null to start from last time. */
+  routineName: string | null;
+  onChangeRoutine: () => void;
   onStart: () => void;
 };
 
 /**
  * The two session types as big tiles that double as the switch, a context
- * row for the chosen one (gym for climbing), and a single Start button.
+ * row for the chosen one (gym for climbing, routine for strength), and a single Start button.
  */
 export const StartCard = ({
   mode,
@@ -39,6 +42,8 @@ export const StartCard = ({
   strengthHint,
   strengthStartsFrom,
   onChangeGym,
+  routineName,
+  onChangeRoutine,
   onStart,
 }: Props) => {
   const { colors, typography } = useTheme();
@@ -84,14 +89,20 @@ export const StartCard = ({
           <ChevronRightIcon size={16} color={colors.textMuted} />
         </PressableScale>
       ) : (
-        <View style={styles.context}>
+        <PressableScale
+          onPress={onChangeRoutine}
+          scaleTo={0.98}
+          style={styles.context}
+          accessibilityLabel={`Routine: ${routineName ?? 'none'}. Change`}
+        >
           <View style={styles.contextText}>
-            <Text style={styles.contextLabel}>Starts from last time</Text>
+            <Text style={styles.contextLabel}>{routineName ? 'Routine' : 'No routine · starts from last time'}</Text>
             <Text style={styles.contextValue} numberOfLines={1}>
-              {strengthStartsFrom}
+              {routineName ?? strengthStartsFrom}
             </Text>
           </View>
-        </View>
+          <ChevronRightIcon size={16} color={colors.textMuted} />
+        </PressableScale>
       )}
 
       <Button label={climb ? 'Start climbing' : 'Start strength'} onPress={onStart} />

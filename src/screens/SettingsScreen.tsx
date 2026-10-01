@@ -289,6 +289,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             onPress={() => navigation.navigate('GymSelect')}
           />
           <ListRow
+            title="Routines"
+            subtitle="Saved gym workouts with target sets and reps"
+            onPress={() => navigation.navigate('Routines')}
+          />
+          <ListRow
             title="Exercise categories"
             subtitle="Group strength exercises for the picker"
             onPress={() => navigation.navigate('Categories')}

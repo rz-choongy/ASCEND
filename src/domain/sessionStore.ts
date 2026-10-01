@@ -22,6 +22,7 @@ import type {
 type SessionCreateOptions = {
   title?: string;
   gymId?: string;
+  routineId?: string;
 };
 
 const EVENT_SCHEMA_VERSION = 1;
@@ -62,8 +63,9 @@ export const createSession = (
       completed_at,
       title,
       gym_id,
-      notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      notes,
+      routine_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       sessionId,
       type,
@@ -73,6 +75,7 @@ export const createSession = (
       opts.title ?? null,
       opts.gymId ?? null,
       null,
+      opts.routineId ?? null,
     ]
   );
   return sessionId;

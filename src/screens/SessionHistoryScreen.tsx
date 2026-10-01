@@ -472,6 +472,19 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           </ListGroup>
         )}
 
+        {session.type === 'strength' && session.status === 'completed' && sets.some((set) => set.exerciseId) ? (
+          <Button
+            label="Save as routine"
+            variant="secondary"
+            onPress={() => {
+              // The editor names the routine after the title, so save any edit to it first.
+              setSessionTitle(sessionId, title);
+              navigation.navigate('RoutineEdit', { fromSessionId: sessionId });
+            }}
+            style={styles.saveRoutineButton}
+          />
+        ) : null}
+
         {/* Notes */}
         <Text style={[styles.sectionLabel, styles.notesSectionLabel]}>Notes</Text>
         <TextInput
@@ -789,6 +802,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   restoreButton: {
     marginTop: 4,
+  },
+  saveRoutineButton: {
+    marginTop: 12,
   },
   removeButton: {
     marginTop: 8,

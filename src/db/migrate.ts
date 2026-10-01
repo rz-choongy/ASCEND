@@ -52,7 +52,7 @@ const defaultExerciseCategories: Record<string, string> = {
   'exercise-hangboard': 'cat-fingers',
 };
 
-const APP_SCHEMA_VERSION = 8;
+const APP_SCHEMA_VERSION = 9;
 
 type Migration = {
   version: number;
@@ -187,6 +187,7 @@ const ensureSchema = (): void => {
   `);
 
   createExerciseCategoriesSchema();
+  createRoutinesTables();
 };
 
 /**
@@ -361,6 +362,33 @@ const createExerciseCategoriesSchema = (): void => {
   ]);
 };
 
+/** Saved gym routines: an ordered exercise list with target sets x reps. Sessions remember which one they started from. */
+const createRoutinesTables = (): void => {
+  run(`
+    CREATE TABLE IF NOT EXISTS routines (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+  run(`
+    CREATE TABLE IF NOT EXISTS routine_exercises (
+      id TEXT PRIMARY KEY NOT NULL,
+      routine_id TEXT NOT NULL,
+      exercise_id TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      target_sets INTEGER NOT NULL,
+      target_reps INTEGER NOT NULL,
+      FOREIGN KEY (routine_id) REFERENCES routines(id)
+    );
+  `);
+  run('CREATE INDEX IF NOT EXISTS idx_routine_exercises_routine_sort ON routine_exercises(routine_id, sort_order);');
+  ensureColumns('sessions', [{ name: 'routine_id', ddl: 'routine_id TEXT' }]);
+};
+
 const addExerciseCategories = (): void => {
   createExerciseCategoriesSchema();
   const seededAt = now();
@@ -386,6 +414,7 @@ const migrations: Migration[] = [
   { version: 6, up: createExternalLogsTable },
   { version: 7, up: createBodyweightLogsTable },
   { version: 8, up: addExerciseCategories },
+  { version: 9, up: createRoutinesTables },
 ];
 
 export const migrate = (): void => {
