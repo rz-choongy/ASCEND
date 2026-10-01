@@ -3,7 +3,7 @@ import { addDays, startOfWeek } from './dateUtils';
 import { getGymById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
-import { estimateOneRepMax, exerciseKeyFor, isNewRecord, type ExerciseNames } from './strengthProgress';
+import { estimateOneRepMax, exerciseKeyFor, findRecordSetIds, type ExerciseNames } from './strengthProgress';
 import type { SessionRow } from './types';
 
 // Read-only summaries for the Today dashboard. Everything is derived by
@@ -113,17 +113,17 @@ export const summarizeStrengthSessions = (sessions: SessionRow[], names?: Exerci
 
   return sessions.map((session) => {
     const sets = applySetEvents(getSessionEvents(session.id));
+    // At most one PR per exercise per session, same rule as the session log's PR tags.
+    const recordIds = findRecordSetIds(sets, exerciseKeyFor, (set) => historyBest.get(exerciseKeyFor(set)) ?? null);
     const sessionBest = new Map<string, number>();
     const exercises = new Map<string, ExerciseTopSet & { e1rm: number }>();
     let volume = 0;
     let reps = 0;
-    let records = 0;
 
     sets.forEach((set) => {
       const key = exerciseKeyFor(set);
       const e1rm = estimateOneRepMax(set.weight, set.reps);
-      const isRecord = isNewRecord(historyBest.get(key) ?? null, sessionBest.get(key) ?? null, set.weight, set.reps);
-      if (isRecord) records += 1;
+      const isRecord = recordIds.has(set.eventId);
       sessionBest.set(key, Math.max(sessionBest.get(key) ?? 0, e1rm));
       volume += set.weight * set.reps;
       reps += set.reps;
@@ -148,7 +148,7 @@ export const summarizeStrengthSessions = (sessions: SessionRow[], names?: Exerci
       sets: sets.length,
       volume,
       reps,
-      records,
+      records: recordIds.size,
       exercises: [...exercises.values()].map(({ e1rm: _e1rm, ...rest }) => rest),
     };
   });

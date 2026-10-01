@@ -109,3 +109,6 @@ Rules:
 1. ALWAYS query the knowledge graph first
 2. Only read raw files if explicitly asked
 3. Use graphify-out/wiki/index.md if it exists
+
+## Choongy OS context
+Ryan's wider context (active work, job applications, preferences) lives in `~/code/choongy-os`. Read its `MEMORY.md` and the Code Projects table in its `CLAUDE.md` when a task depends on that context. When this repo's status changes, update that table.

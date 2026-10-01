@@ -42,6 +42,7 @@ import {
   formatMonthDay,
   formatWeight,
   initialInputFor,
+  findRecordSetIds,
   isNewRecord,
   parseRepsInput,
   parseWeightInput,
@@ -395,20 +396,20 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   const hasLogs = loggedSets.length > 0;
   const reference = selectedExercise ? getReference(selectedExercise) : null;
 
-  // Which logged sets were records, replayed in order so it stays right after an undo.
-  const recordEventIds = useMemo(() => {
-    const ids = new Set<string>();
-    const sessionBest = new Map<string, number>();
-    loggedSets.forEach((set) => {
-      const key = set.exerciseId ?? exerciseKeyFor(set);
-      const exercise = exerciseState.exercises.find((e) => e.id === set.exerciseId);
-      const historyBest = exercise ? (getReference(exercise)?.bestE1rm ?? null) : null;
-      if (isNewRecord(historyBest, sessionBest.get(key) ?? null, set.weight, set.reps)) ids.add(set.eventId);
-      sessionBest.set(key, Math.max(sessionBest.get(key) ?? 0, estimateOneRepMax(set.weight, set.reps)));
-    });
-    return ids;
+  // Which logged sets get the PR tag: each exercise's best set this session, if it beats history.
+  const recordEventIds = useMemo(
+    () =>
+      findRecordSetIds(
+        loggedSets,
+        (set) => set.exerciseId ?? exerciseKeyFor(set),
+        (set) => {
+          const exercise = exerciseState.exercises.find((e) => e.id === set.exerciseId);
+          return exercise ? (getReference(exercise)?.bestE1rm ?? null) : null;
+        }
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedSets, exerciseState.exercises]);
+    [loggedSets, exerciseState.exercises]
+  );
 
   const handleSaveTitle = () => {
     if (!session) return;
@@ -828,6 +829,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             </Text>
             {recordEventIds.has(set.eventId) ? (
               <View style={styles.recordBadge}>
+                <StarIcon size={10} color={colors.accent} strokeWidth={2.2} filled />
                 <Text style={styles.recordBadgeText}>PR</Text>
               </View>
             ) : null}
@@ -1135,16 +1137,19 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 13,
     fontVariant: ['tabular-nums'],
   },
+  // Same look as the climbing log's "30-day high" badge.
   recordBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: colors.accentMuted,
-    borderRadius: radius.sm,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    marginTop: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
   recordBadgeText: {
-    ...font('bold'),
-    color: colors.accent,
+    ...font('semibold'),
+    color: colors.textPrimary,
     fontSize: 11,
   },
   emptyText: {

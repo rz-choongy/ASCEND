@@ -17,6 +17,14 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.6',
+    date: '2026-10-01',
+    changes: [
+      { kind: 'fixed', text: 'Working up to a heavier set no longer tags every step as a PR. Only your best set for each exercise gets the PR tag, and the Today card counts one PR per exercise.' },
+      { kind: 'improved', text: 'The gym session PR tag now matches the climbing "30-day high" badge.' },
+    ],
+  },
+  {
     version: '2.2.5',
     date: '2026-10-01',
     changes: [
