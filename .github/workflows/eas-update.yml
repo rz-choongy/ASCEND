@@ -2,11 +2,11 @@ name: EAS Update
 
 # Publishes an over-the-air update to an EAS channel.
 #
-# - Pushing to master publishes to `preview` automatically.
-# - Publishing to `production` is deliberate: run this workflow manually
-#   (Actions -> EAS Update -> Run workflow) and pick the channel. The
-#   production job is pinned to the `production` GitHub Environment, so
-#   adding required reviewers there gates it behind an approval.
+# - Pushing to master publishes to both `preview` and `production`.
+# - Running it manually (Actions -> EAS Update -> Run workflow) publishes to
+#   the chosen channel only. The production job is pinned to the
+#   `production` GitHub Environment, so adding required reviewers there
+#   gates it behind an approval.
 #
 # Requires one repository secret: EXPO_TOKEN (expo.dev -> Access Tokens).
 #
@@ -118,7 +118,8 @@ jobs:
     needs: verify
     if: >-
       needs.verify.outputs.has_token == 'true' &&
-      contains(fromJSON('["production", "both"]'), inputs.channel)
+      (github.event_name == 'push' ||
+       contains(fromJSON('["production", "both"]'), inputs.channel))
     runs-on: ubuntu-latest
     environment: production
     steps:
