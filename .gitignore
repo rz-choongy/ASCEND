@@ -47,3 +47,7 @@ graphify-out/manifest.json
 # generated native folders
 /ios
 /android
+
+# graphify local state
+graphify-out/.graphify_*
+graphify-out/cache/
