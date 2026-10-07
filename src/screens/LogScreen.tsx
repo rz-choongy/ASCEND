@@ -31,6 +31,7 @@ import {
   setSessionStatus,
 } from '../domain/sessionStore';
 import { getRoutines, type RoutineSummary } from '../domain/routineStore';
+import { syncActiveSessionNotification } from '../domain/sessionNotification';
 import { getLastRoutineId, getShowSessionTimer, setLastRoutineId } from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
 import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
@@ -160,6 +161,9 @@ export function LogScreen() {
     const gym = mode === 'climb' ? ensureSelectedClimbGym() : null;
     const routineId = mode === 'strength' ? data?.routine?.id : undefined;
     const sessionId = createSession(mode, gym ? { gymId: gym.id } : routineId ? { routineId } : undefined);
+    // Post the ongoing shade notification the moment the session starts, so it's already there
+    // when the phone is locked or the app is swiped away (not only after the next AppState change).
+    void syncActiveSessionNotification();
     navigateToSession(mode, sessionId);
   }
 
@@ -191,6 +195,7 @@ export function LogScreen() {
     const logged = session.type === 'climb' ? applyClimbEvents(events).length : applySetEvents(events).length;
     const finish = () => {
       setSessionStatus(session.id, logged > 0 ? 'completed' : 'abandoned');
+      void syncActiveSessionNotification();
       setData(loadDashboard());
     };
     // Finish sits right beside Resume, so a slip shouldn't end a workout.

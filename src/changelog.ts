@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.0',
+    date: '2026-10-07',
+    changes: [
+      { kind: 'new', text: 'A live session now shows as an ongoing notification in your shade and lock screen while you log, so you can leave the app and still see it running. Turn it off under Settings → Live session notification.' },
+    ],
+  },
+  {
     version: '2.3.0',
     date: '2026-10-01',
     changes: [

@@ -3,6 +3,7 @@ import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode }
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
+const SHOW_SESSION_NOTIFICATION_KEY = 'show_session_notification';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 const PROGRESS_FAVORITE_GYMS_KEY = 'progress_favorite_gym_ids';
 const ACCENT_COLOR_KEY = 'accent_color';
@@ -47,6 +48,22 @@ export const getShowSessionTimer = (): boolean => {
 
 export const setShowSessionTimer = (value: boolean): void => {
   setSetting(SHOW_SESSION_TIMER_KEY, value ? '1' : '0');
+};
+
+/**
+ * Whether an ongoing system notification mirrors a live session in the shade / on the
+ * lock screen while the app is backgrounded. Defaults on; the notification is only
+ * ever posted once the OS notification permission has also been granted.
+ */
+export const getShowSessionNotification = (): boolean => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    SHOW_SESSION_NOTIFICATION_KEY,
+  ]);
+  return setting ? setting.value === '1' : true;
+};
+
+export const setShowSessionNotification = (value: boolean): void => {
+  setSetting(SHOW_SESSION_NOTIFICATION_KEY, value ? '1' : '0');
 };
 
 /** Which gym's grade distribution to show on the Progress screen, remembered across sessions. */

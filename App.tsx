@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
+import { AppState, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
+import { syncActiveSessionNotification } from './src/domain/sessionNotification';
 import { Dock } from './src/navigation/Dock';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { BugReportScreen } from './src/screens/BugReportScreen';
@@ -168,6 +169,21 @@ export default function App() {
       setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');
     }
   }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+    // Keep the ongoing "session live" notification in step with the database. Syncing as the
+    // app leaves to the background is what puts the bar in the shade/lock screen right when it's
+    // needed; syncing on return (and on launch) refreshes or clears it. The reconciler reads the
+    // DB each time, so these few calls cover start, finish and restart without per-screen wiring.
+    void syncActiveSessionNotification();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' || state === 'background') {
+        void syncActiveSessionNotification();
+      }
+    });
+    return () => sub.remove();
+  }, [isReady]);
 
   useEffect(() => {
     // Fetch and apply an OTA update immediately on launch, instead of

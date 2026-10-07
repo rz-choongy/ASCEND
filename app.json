@@ -36,6 +36,12 @@
         {
           "photosPermission": "ASCEND uses your photo library to attach a screenshot to a bug report."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#141a24"
+        }
       ]
     ],
     "extra": {

@@ -15,10 +15,16 @@ import {
 import {
   getKilterLastSyncedAt,
   getKilterUsername,
+  getShowSessionNotification,
   getShowSessionTimer,
   setKilterUsername,
+  setShowSessionNotification,
   setShowSessionTimer,
 } from '../domain/settingsStore';
+import {
+  requestSessionNotificationPermission,
+  syncActiveSessionNotification,
+} from '../domain/sessionNotification';
 import { formatDaysAgo } from '../domain/strengthProgress';
 import { APP_VERSION } from '../changelog';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -62,6 +68,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [kilterUser, setKilterUser] = useState<string | null>(null);
   const [kilterSyncedAt, setKilterSyncedAt] = useState<number | null>(null);
@@ -73,6 +80,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
+      setNotificationEnabled(getShowSessionNotification());
       setKilterSyncedAt(getKilterLastSyncedAt());
       setKilterUser(getKilterUsername());
       // Surfaced rather than left to crash silently -- an uncaught throw here would
@@ -91,6 +99,29 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const handleToggleTimer = (value: boolean) => {
     setTimerEnabled(value);
     setShowSessionTimer(value);
+  };
+
+  const handleToggleNotification = (value: boolean) => {
+    setNotificationEnabled(value);
+    setShowSessionNotification(value);
+    if (value) {
+      // Turning it on is the moment to ask for the OS permission; the helper prompts
+      // (Android 13+) and then posts the bar if a session is already live.
+      void (async () => {
+        const granted = await requestSessionNotificationPermission();
+        if (!granted) {
+          setNotificationEnabled(false);
+          setShowSessionNotification(false);
+          showDialog(
+            'Notifications are off',
+            'Allow notifications for ASCEND in your phone settings to show a live session in the shade.'
+          );
+        }
+      })();
+    } else {
+      // Clear any ongoing bar straight away rather than waiting for the next app switch.
+      void syncActiveSessionNotification();
+    }
   };
 
   // Publishing an OTA update only makes it available for download - by default the app
@@ -305,6 +336,18 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               <Switch
                 value={timerEnabled}
                 onValueChange={handleToggleTimer}
+                trackColor={{ false: colors.fill, true: colors.accent }}
+                thumbColor="#ffffff"
+              />
+            }
+          />
+          <ListRow
+            title="Live session notification"
+            subtitle="Show an ongoing notification while a session is open"
+            right={
+              <Switch
+                value={notificationEnabled}
+                onValueChange={handleToggleNotification}
                 trackColor={{ false: colors.fill, true: colors.accent }}
                 thumbColor="#ffffff"
               />
