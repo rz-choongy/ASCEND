@@ -20,7 +20,10 @@ import {
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
-const REPORT_EMAIL = 'choongzhuocen@gmail.com';
+// Sourced from the environment rather than hardcoded, so a personal address never sits in
+// this public repo. Set EXPO_PUBLIC_REPORT_EMAIL in .env.local for dev and as an EAS
+// environment variable for builds; when it's unset, reports fall back to the share sheet.
+const REPORT_EMAIL = process.env.EXPO_PUBLIC_REPORT_EMAIL ?? '';
 
 /**
  * Whether this install has a native module compiled in. Both packages below resolve their native
@@ -94,7 +97,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
       // account" so the report still goes out via the share sheet. Probe first -- see
       // hasNativeModule for why a try/catch around the import isn't enough.
       const MailComposer = hasNativeModule('ExpoMailComposer') ? await import('expo-mail-composer') : null;
-      if (MailComposer && (await MailComposer.isAvailableAsync().catch(() => false))) {
+      if (REPORT_EMAIL && MailComposer && (await MailComposer.isAvailableAsync().catch(() => false))) {
         const result = await MailComposer.composeAsync({
           recipients: [REPORT_EMAIL],
           subject,

@@ -51,3 +51,6 @@ graphify-out/manifest.json
 # graphify local state
 graphify-out/.graphify_*
 graphify-out/cache/
+
+# Codex CLI local state
+.codex/
