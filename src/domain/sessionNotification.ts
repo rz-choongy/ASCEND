@@ -26,6 +26,7 @@ type NotificationsModule = typeof import('expo-notifications');
 
 let modulePromise: Promise<NotificationsModule | null> | null = null;
 let channelReady = false;
+let handlerReady = false;
 
 const loadModule = async (): Promise<NotificationsModule | null> => {
   if (!modulePromise) {
@@ -35,6 +36,22 @@ const loadModule = async (): Promise<NotificationsModule | null> => {
 };
 
 const ensureChannel = async (Notifications: NotificationsModule): Promise<void> => {
+  // Without a handler, expo-notifications hides any notification posted while the app is in
+  // the foreground — which would drop the "Climbing now" bar whenever a session is started
+  // from inside the app. Tell it to list our status row in the shade (but never as a heads-up
+  // banner or sound; the in-app card already covers the foreground view).
+  if (!handlerReady) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: false,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+    handlerReady = true;
+  }
+
   if (channelReady) return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Active session',
