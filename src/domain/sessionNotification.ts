@@ -27,6 +27,7 @@ type NotificationsModule = typeof import('expo-notifications');
 let modulePromise: Promise<NotificationsModule | null> | null = null;
 let channelReady = false;
 let handlerReady = false;
+let lastPosted: { sessionId: string; body: string } | null = null;
 
 const loadModule = async (): Promise<NotificationsModule | null> => {
   if (!modulePromise) {
@@ -98,6 +99,7 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
 
     if (!session || !getShowSessionNotification()) {
       await dismiss(Notifications);
+      lastPosted = null;
       return;
     }
 
@@ -106,6 +108,7 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
     const permission = await Notifications.getPermissionsAsync();
     if (!permission.granted) {
       await dismiss(Notifications);
+      lastPosted = null;
       return;
     }
 
@@ -116,6 +119,13 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
     const title = session.type === 'climb' ? 'Climbing now' : 'Strength session';
     const started = `Started ${formatClock(session.started_at)}`;
     const body = where ? `${where} · ${started}` : started;
+
+    // Already showing this exact content for this session — skip the dismiss+repost. Android
+    // treats a freshly-posted notification as "new" and re-peeks it, so reposting on every
+    // foreground/sync call (even with identical content) caused the shade to pop every time.
+    if (lastPosted?.sessionId === session.id && lastPosted?.body === body) {
+      return;
+    }
 
     // Replace rather than mutate: clear the old one, then post current content. One session
     // is ever live at a time, and this notification is the only thing the app posts.
@@ -133,6 +143,7 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
       },
       trigger: null, // show immediately
     });
+    lastPosted = { sessionId: session.id, body };
   } catch {
     // Best-effort: a notification failure must never disrupt logging.
   }

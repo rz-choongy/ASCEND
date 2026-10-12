@@ -9,7 +9,12 @@ jest.mock('../db/db', () => ({
 }));
 
 import { getAll, getFirst, run } from '../db/db';
-import { countWideGradeBandClimbs, narrowWideGradeBands, setSessionStatus } from './sessionStore';
+import {
+  countWideGradeBandClimbs,
+  deleteEmptySession,
+  narrowWideGradeBands,
+  setSessionStatus,
+} from './sessionStore';
 import type { SessionRow } from './types';
 
 const mockGetAll = getAll as jest.Mock;
@@ -92,6 +97,33 @@ describe('setSessionStatus', () => {
       expect.stringContaining('completed_at = NULL'),
       ['active', 's1']
     );
+  });
+});
+
+describe('deleteEmptySession', () => {
+  it('hard-deletes an active session and its events', () => {
+    mockGetFirst.mockReturnValue(session('s1', 'active'));
+
+    deleteEmptySession('s1');
+
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM events WHERE session_id = ?;', ['s1']);
+    expect(mockRun).toHaveBeenCalledWith('DELETE FROM sessions WHERE id = ?;', ['s1']);
+  });
+
+  it('is a no-op for a session that is not active, so real history is never touched', () => {
+    mockGetFirst.mockReturnValue(session('s1', 'completed'));
+
+    deleteEmptySession('s1');
+
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when the session no longer exists', () => {
+    mockGetFirst.mockReturnValue(null);
+
+    deleteEmptySession('missing');
+
+    expect(mockRun).not.toHaveBeenCalled();
   });
 });
 

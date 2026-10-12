@@ -24,6 +24,7 @@ import {
 import { getRoutine, type RoutineItem } from '../domain/routineStore';
 import {
   appendEvent,
+  deleteEmptySession,
   getAbandonedSessions,
   getCompletedSessions,
   getSessionById,
@@ -316,9 +317,10 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
   // See ClimbSessionScreen for why this listener exists: any exit path (header back,
   // hardware back, swipe, or Done) must never leave a session stuck 'active' forever.
-  // An empty session (nothing logged) abandons silently; one with real sets asks
-  // first, since 'abandoned' sessions are excluded from every stats query and a
-  // mis-tap would otherwise erase logged sets with no way back.
+  // Both cases now ask first: an empty session (nothing logged) offers Delete/Keep going,
+  // while one with real sets offers Keep logging/Finish session/Discard, since 'abandoned'
+  // sessions are excluded from every stats query and a mis-tap would otherwise erase
+  // logged sets with no way back.
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
       const current = getSessionById(sessionId);
@@ -326,7 +328,18 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
 
       const hasUnsavedLogs = applySetEvents(getSessionEvents(sessionId)).length > 0;
       if (!hasUnsavedLogs) {
-        setSessionStatus(sessionId, 'abandoned');
+        e.preventDefault();
+        showDialog('Discard this session?', "You haven't logged anything yet.", [
+          { text: 'Keep going', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              deleteEmptySession(sessionId);
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ]);
         return;
       }
 

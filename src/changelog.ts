@@ -17,6 +17,14 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.1',
+    date: '2026-10-12',
+    changes: [
+      { kind: 'fixed', text: 'The live session notification no longer pops up again every time you reopen the app — it alerts once, then stays put while the session runs.' },
+      { kind: 'improved', text: "Leaving a session before logging anything now asks whether to delete it or keep going, instead of quietly sitting there as an empty entry." },
+    ],
+  },
+  {
     version: '2.4.0',
     date: '2026-10-07',
     changes: [

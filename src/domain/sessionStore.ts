@@ -207,6 +207,16 @@ export const removeSessionFromHistory = (sessionId: string): void => {
   ]);
 };
 
+// Hard-deletes a session that was abandoned before anything was logged, rather than leaving
+// a forever-empty 'abandoned' row around; only ever applies to a still-'active' session, so
+// there's no risk of this touching real history.
+export const deleteEmptySession = (sessionId: string): void => {
+  const session = getSessionById(sessionId);
+  if (!session || session.status !== 'active') return;
+  run('DELETE FROM events WHERE session_id = ?;', [sessionId]);
+  run('DELETE FROM sessions WHERE id = ?;', [sessionId]);
+};
+
 export const setSessionNotes = (sessionId: string, notes: string): void => {
   run('UPDATE sessions SET notes = ? WHERE id = ?;', [notes, sessionId]);
 };
