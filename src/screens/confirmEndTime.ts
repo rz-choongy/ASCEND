@@ -1,5 +1,5 @@
 import { formatClockTime, formatDuration } from '../domain/dateUtils';
-import { getLastLogAt, getSessionById, setSessionEndedAt, setSessionStatus } from '../domain/sessionStore';
+import { getEarliestEndAt, getLastLogAt, getSessionById, setSessionEndedAt, setSessionStatus } from '../domain/sessionStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
 import { showDialog } from '../ui';
 
@@ -47,6 +47,7 @@ export const editEndTime = (sessionId: string, onChange: () => void): void => {
   if (!session || session.completed_at == null) return;
   const endAt = session.completed_at;
   const lastLogAt = getLastLogAt(sessionId);
+  const earliest = getEarliestEndAt(sessionId) ?? session.started_at;
   const apply = (next: number) => {
     setSessionEndedAt(sessionId, next);
     onChange();
@@ -62,7 +63,11 @@ export const editEndTime = (sessionId: string, onChange: () => void): void => {
       ...(lastLogAt != null && lastLogAt !== endAt
         ? [{ text: `End at last log (${formatClockTime(lastLogAt)})`, onPress: () => apply(lastLogAt) }]
         : []),
-      ...STEPS_MIN.map((min) => ({
+      // Only steps that actually move it: not before the last log, not past now.
+      ...STEPS_MIN.filter((min) => {
+        const next = endAt + min * 60_000;
+        return next >= earliest && next <= Date.now();
+      }).map((min) => ({
         text: `${min > 0 ? '+' : '−'}${Math.abs(min)} min`,
         onPress: () => apply(endAt + min * 60_000),
       })),
