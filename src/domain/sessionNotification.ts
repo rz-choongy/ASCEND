@@ -127,6 +127,21 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
       return;
     }
 
+    // lastPosted lives in memory, so a cold start (Android killed the app in the background)
+    // forgets it and would repost — the same re-peek, just on every fresh launch. Check what's
+    // actually in the shade first and adopt our own notification if it already matches.
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    const ours = presented.find((n) => n.request.content.data?.tag === SESSION_TAG);
+    if (
+      presented.length === 1 &&
+      ours?.request.content.data?.sessionId === session.id &&
+      ours.request.content.body === body &&
+      ours.request.content.title === title
+    ) {
+      lastPosted = { sessionId: session.id, body };
+      return;
+    }
+
     // Replace rather than mutate: clear the old one, then post current content. One session
     // is ever live at a time, and this notification is the only thing the app posts.
     await dismiss(Notifications);

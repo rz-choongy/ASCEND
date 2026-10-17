@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.2',
+    date: '2026-10-17',
+    changes: [
+      { kind: 'fixed', text: 'The live session notification also stays put when the app was closed in the background and you open it fresh.' },
+    ],
+  },
+  {
     version: '2.4.1',
     date: '2026-10-12',
     changes: [
