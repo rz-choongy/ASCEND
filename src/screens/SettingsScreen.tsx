@@ -16,9 +16,11 @@ import {
   getKilterLastSyncedAt,
   getKilterUsername,
   getShowSessionNotification,
+  getSessionReminder,
   getShowSessionTimer,
   setKilterUsername,
   setShowSessionNotification,
+  setSessionReminder,
   setShowSessionTimer,
 } from '../domain/settingsStore';
 import {
@@ -69,6 +71,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
+  const [reminderEnabled, setReminderEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [kilterUser, setKilterUser] = useState<string | null>(null);
   const [kilterSyncedAt, setKilterSyncedAt] = useState<number | null>(null);
@@ -81,6 +84,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
       setNotificationEnabled(getShowSessionNotification());
+      setReminderEnabled(getSessionReminder());
       setKilterSyncedAt(getKilterLastSyncedAt());
       setKilterUser(getKilterUsername());
       // Surfaced rather than left to crash silently -- an uncaught throw here would
@@ -120,6 +124,26 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       })();
     } else {
       // Clear any ongoing bar straight away rather than waiting for the next app switch.
+      void syncActiveSessionNotification();
+    }
+  };
+
+  const handleToggleReminder = (value: boolean) => {
+    setReminderEnabled(value);
+    setSessionReminder(value);
+    if (value) {
+      void (async () => {
+        const granted = await requestSessionNotificationPermission();
+        if (!granted) {
+          setReminderEnabled(false);
+          setSessionReminder(false);
+          showDialog(
+            'Notifications are off',
+            'Allow notifications for ASCEND in your phone settings to get the hourly check-in.'
+          );
+        }
+      })();
+    } else {
       void syncActiveSessionNotification();
     }
   };
@@ -348,6 +372,18 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               <Switch
                 value={notificationEnabled}
                 onValueChange={handleToggleNotification}
+                trackColor={{ false: colors.fill, true: colors.accent }}
+                thumbColor="#ffffff"
+              />
+            }
+          />
+          <ListRow
+            title="Still climbing? reminder"
+            subtitle="Check in every hour you're away from the app during a session"
+            right={
+              <Switch
+                value={reminderEnabled}
+                onValueChange={handleToggleReminder}
                 trackColor={{ false: colors.fill, true: colors.accent }}
                 thumbColor="#ffffff"
               />

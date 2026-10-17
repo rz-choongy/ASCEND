@@ -12,7 +12,9 @@ import { getAll, getFirst, run } from '../db/db';
 import {
   countWideGradeBandClimbs,
   deleteEmptySession,
+  getLastLogAt,
   narrowWideGradeBands,
+  setSessionEndedAt,
   setSessionStatus,
 } from './sessionStore';
 import type { SessionRow } from './types';
@@ -216,5 +218,41 @@ describe('countWideGradeBandClimbs / narrowWideGradeBands', () => {
     expect(countWideGradeBandClimbs()).toEqual({ sessions: 0, climbs: 0 });
     expect(() => narrowWideGradeBands()).not.toThrow();
     expect(mockRun).not.toHaveBeenCalled();
+  });
+});
+
+describe('session end time', () => {
+  const MIN = 60_000;
+  const climb = (id: string, at: number) =>
+    eventRow(id, 'CLIMB_LOGGED', { gradeLabel: 'V3', gradeMin: 3, gradeMax: 3, result: 'SEND' }, at);
+
+  const wire = (row: SessionRow, events: ReturnType<typeof eventRow>[]) => {
+    mockGetFirst.mockReturnValue(row);
+    mockGetAll.mockImplementation((sql: string) => (sql.includes('FROM events') ? events : []));
+  };
+
+  const ended = () =>
+    mockRun.mock.calls.find(([sql]) => (sql as string).startsWith('UPDATE sessions SET completed_at'))?.[1];
+
+  it('finds the last climb still standing, ignoring an undone one', () => {
+    wire(session('s1'), [climb('e1', 10 * MIN), climb('e2', 30 * MIN), eventRow('e3', 'CLIMB_UNDONE', { at: 31 * MIN }, 31 * MIN)]);
+    expect(getLastLogAt('s1')).toBe(10 * MIN);
+  });
+
+  it('moves the end back to the requested time', () => {
+    wire({ ...session('s1'), started_at: 0, completed_at: 220 * MIN }, [climb('e1', 90 * MIN)]);
+    expect(setSessionEndedAt('s1', 95 * MIN)).toBe(95 * MIN);
+    expect(ended()).toEqual([95 * MIN, 's1']);
+  });
+
+  it('never ends before the last logged climb', () => {
+    wire({ ...session('s1'), started_at: 0, completed_at: 220 * MIN }, [climb('e1', 90 * MIN)]);
+    expect(setSessionEndedAt('s1', 60 * MIN)).toBe(90 * MIN);
+  });
+
+  it('leaves a session that is not completed alone', () => {
+    wire(session('s1', 'active'), [climb('e1', 90 * MIN)]);
+    expect(setSessionEndedAt('s1', 95 * MIN)).toBeNull();
+    expect(ended()).toBeUndefined();
   });
 });

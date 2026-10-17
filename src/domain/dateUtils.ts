@@ -40,3 +40,11 @@ export const formatDuration = (startMs: number, endMs: number): string => {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 
+
+/** "6:12 pm" -- a wall-clock time for prompts like "End at 6:12 pm". */
+export const formatClockTime = (ms: number): string => {
+  const d = new Date(ms);
+  const h = d.getHours();
+  const m = `${d.getMinutes()}`.padStart(2, '0');
+  return `${h % 12 === 0 ? 12 : h % 12}:${m} ${h < 12 ? 'am' : 'pm'}`;
+};

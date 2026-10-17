@@ -1,6 +1,7 @@
 import { getGymById, getSelectedClimbGym } from './gymStore';
-import { getActiveSession } from './sessionStore';
-import { getAccentColorId, getShowSessionNotification } from './settingsStore';
+import { formatClockTime } from './dateUtils';
+import { getActiveSession, getLastLogAt } from './sessionStore';
+import { getAccentColorId, getSessionReminder, getShowSessionNotification } from './settingsStore';
 import { ACCENT_PALETTE } from '../ui/tokens/colors';
 import type { SessionRow } from './types';
 
@@ -21,11 +22,18 @@ import type { SessionRow } from './types';
 
 const CHANNEL_ID = 'active-session';
 const SESSION_TAG = 'active-session'; // data marker so we only ever dismiss our own notification
+// The hourly "Still climbing?" nudge. Its own channel at default importance: unlike the quiet
+// status row, it's meant to actually get your attention. A fixed identifier means rescheduling
+// replaces it rather than stacking a second timer.
+const REMINDER_CHANNEL_ID = 'session-reminder';
+const REMINDER_ID = 'session-reminder';
+const REMINDER_INTERVAL_S = 60 * 60;
 
 type NotificationsModule = typeof import('expo-notifications');
 
 let modulePromise: Promise<NotificationsModule | null> | null = null;
 let channelReady = false;
+let reminderChannelReady = false;
 let handlerReady = false;
 let lastPosted: { sessionId: string; body: string } | null = null;
 
@@ -85,6 +93,50 @@ const dismiss = async (Notifications: NotificationsModule): Promise<void> => {
 };
 
 /**
+ * Re-arms the "Still climbing?" reminder for an hour from now, repeating hourly until the
+ * session ends. Called on every sync -- app open, app close, start, finish -- so the hour
+ * always counts from the last time you had the app in hand. Clears it when nothing is live,
+ * the setting is off, or permission isn't granted.
+ */
+const syncReminder = async (
+  Notifications: NotificationsModule,
+  session: SessionRow | null,
+  granted: boolean
+): Promise<void> => {
+  await Notifications.cancelScheduledNotificationAsync(REMINDER_ID);
+  // A reminder already in the shade is stale once you've opened the app or ended the session.
+  await Notifications.dismissNotificationAsync(REMINDER_ID);
+  if (!session || !granted || !getSessionReminder()) return;
+
+  if (!reminderChannelReady) {
+    await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
+      name: 'Still climbing? reminder',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      showBadge: false,
+    });
+    reminderChannelReady = true;
+  }
+
+  const lastLogAt = getLastLogAt(session.id);
+  const what = session.type === 'climb' ? 'climb' : 'set';
+  const since = lastLogAt != null ? `Last ${what} logged ${formatClockTime(lastLogAt)}.` : `Started ${formatClockTime(session.started_at)}.`;
+  await Notifications.scheduleNotificationAsync({
+    identifier: REMINDER_ID,
+    content: {
+      title: session.type === 'climb' ? 'Still climbing?' : 'Still training?',
+      body: `${since} Tap to finish it at the right time.`,
+      data: { tag: REMINDER_ID, sessionId: session.id },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: REMINDER_INTERVAL_S,
+      repeats: true,
+      channelId: REMINDER_CHANNEL_ID,
+    },
+  });
+};
+
+/**
  * Reconciles the system notification to the current active session. Idempotent and safe to
  * call as often as you like — it reads the database each time and makes the shade match.
  * Posts a fresh sticky notification (clearing the previous one so the content stays current),
@@ -96,17 +148,18 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
 
   try {
     const session = getActiveSession();
-
-    if (!session || !getShowSessionNotification()) {
-      await dismiss(Notifications);
-      lastPosted = null;
-      return;
-    }
-
     // Don't prompt here — only reflect a permission the user already granted. The ask is
     // made intentionally from Settings so starting a session never throws up a dialog.
     const permission = await Notifications.getPermissionsAsync();
-    if (!permission.granted) {
+
+    // Separate try: a reminder failure must not stop the live notification from syncing.
+    try {
+      await syncReminder(Notifications, session, permission.granted);
+    } catch {
+      // best-effort
+    }
+
+    if (!session || !getShowSessionNotification() || !permission.granted) {
       await dismiss(Notifications);
       lastPosted = null;
       return;
@@ -133,7 +186,6 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
     const presented = await Notifications.getPresentedNotificationsAsync();
     const ours = presented.find((n) => n.request.content.data?.tag === SESSION_TAG);
     if (
-      presented.length === 1 &&
       ours?.request.content.data?.sessionId === session.id &&
       ours.request.content.body === body &&
       ours.request.content.title === title
@@ -143,7 +195,7 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
     }
 
     // Replace rather than mutate: clear the old one, then post current content. One session
-    // is ever live at a time, and this notification is the only thing the app posts.
+    // is ever live at a time; clearing all also drops a shown reminder, which is stale by now.
     await dismiss(Notifications);
     await Notifications.scheduleNotificationAsync({
       content: {

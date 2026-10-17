@@ -17,6 +17,15 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.0',
+    date: '2026-10-17',
+    changes: [
+      { kind: 'new', text: 'Forgot to stop a session? Tapping Done long after your last climb asks whether to end it at that climb instead of now.' },
+      { kind: 'new', text: 'Edit the end time of any finished session from its detail screen: jump to the last log or nudge it by 5 or 15 minutes.' },
+      { kind: 'new', text: 'A "Still climbing?" notification checks in every hour you are away from the app during a session. Turn it off in Settings.' },
+    ],
+  },
+  {
     version: '2.4.2',
     date: '2026-10-17',
     changes: [

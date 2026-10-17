@@ -32,6 +32,7 @@ import {
   setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
+import { finishSession } from './confirmEndTime';
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
 import {
@@ -350,8 +351,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
           text: 'Finish session',
           onPress: () => {
             setSessionTitle(sessionId, title.trim());
-            setSessionStatus(sessionId, 'completed');
-            navigation.dispatch(e.data.action);
+            finishSession(sessionId, () => navigation.dispatch(e.data.action));
           },
         },
         {
@@ -632,8 +632,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSessionTitle(sessionId, title.trim());
-    setSessionStatus(sessionId, 'completed');
-    navigation.navigate('Tabs');
+    finishSession(sessionId, () => navigation.navigate('Tabs'));
   };
 
   if (!session) {

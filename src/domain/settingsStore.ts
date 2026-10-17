@@ -4,6 +4,7 @@ import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode }
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
 const SHOW_SESSION_NOTIFICATION_KEY = 'show_session_notification';
+const SESSION_REMINDER_KEY = 'session_reminder';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
 const PROGRESS_FAVORITE_GYMS_KEY = 'progress_favorite_gym_ids';
 const ACCENT_COLOR_KEY = 'accent_color';
@@ -64,6 +65,22 @@ export const getShowSessionNotification = (): boolean => {
 
 export const setShowSessionNotification = (value: boolean): void => {
   setSetting(SHOW_SESSION_NOTIFICATION_KEY, value ? '1' : '0');
+};
+
+/**
+ * Whether a live session nudges you every hour you're away from the app ("Still climbing?"),
+ * so a forgotten session gets ended near the right time. Defaults on; like the live notification
+ * it only fires once the OS permission is granted.
+ */
+export const getSessionReminder = (): boolean => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    SESSION_REMINDER_KEY,
+  ]);
+  return setting ? setting.value === '1' : true;
+};
+
+export const setSessionReminder = (value: boolean): void => {
+  setSetting(SESSION_REMINDER_KEY, value ? '1' : '0');
 };
 
 /** Which gym's grade distribution to show on the Progress screen, remembered across sessions. */

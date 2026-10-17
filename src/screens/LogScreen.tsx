@@ -30,6 +30,7 @@ import {
   getSessionsForDateRange,
   setSessionStatus,
 } from '../domain/sessionStore';
+import { finishSession } from './confirmEndTime';
 import { getRoutines, type RoutineSummary } from '../domain/routineStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
 import { getLastRoutineId, getShowSessionTimer, setLastRoutineId } from '../domain/settingsStore';
@@ -194,7 +195,11 @@ export function LogScreen() {
     const events = getSessionEvents(session.id);
     const logged = session.type === 'climb' ? applyClimbEvents(events).length : applySetEvents(events).length;
     const finish = () => {
-      setSessionStatus(session.id, logged > 0 ? 'completed' : 'abandoned');
+      if (logged > 0) {
+        finishSession(session.id, () => setData(loadDashboard()));
+        return;
+      }
+      setSessionStatus(session.id, 'abandoned');
       void syncActiveSessionNotification();
       setData(loadDashboard());
     };

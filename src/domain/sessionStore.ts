@@ -6,6 +6,7 @@ import {
   midpointGrade,
   type ClimbLog,
 } from './climbLogUtils';
+import { applySetEvents } from './strengthLogUtils';
 import type {
   ActiveSessionEventType,
   ClimbLogPayload,
@@ -196,6 +197,39 @@ export const setSessionStatus = (
     status,
     sessionId,
   ]);
+};
+
+/**
+ * When the last climb or set still standing in a session was logged, or null if none.
+ * Undone/deleted entries don't count -- this is "when did I actually stop".
+ */
+export const getLastLogAt = (sessionId: string): number | null => {
+  const session = getSessionById(sessionId);
+  if (!session) return null;
+  const events = getSessionEvents(sessionId);
+  const logs = session.type === 'climb' ? applyClimbEvents(events) : applySetEvents(events);
+  return logs.reduce<number | null>((latest, log) => (latest == null || log.createdAt > latest ? log.createdAt : latest), null);
+};
+
+/** Earliest end time allowed: the last log (you can't stop before your last climb), else a minute in. */
+export const getEarliestEndAt = (sessionId: string): number | null => {
+  const session = getSessionById(sessionId);
+  if (!session) return null;
+  return getLastLogAt(sessionId) ?? session.started_at + 60_000;
+};
+
+/**
+ * Moves a finished session's end time -- for when Done was tapped long after the last climb.
+ * Clamped between the earliest allowed end and now. The session header is a plain column (not
+ * replayed from events), so this is an in-place update like the title and notes.
+ */
+export const setSessionEndedAt = (sessionId: string, endedAt: number): number | null => {
+  const session = getSessionById(sessionId);
+  const earliest = getEarliestEndAt(sessionId);
+  if (!session || earliest == null || session.status !== 'completed') return null;
+  const clamped = Math.min(Date.now(), Math.max(earliest, endedAt));
+  run('UPDATE sessions SET completed_at = ? WHERE id = ?;', [clamped, sessionId]);
+  return clamped;
 };
 
 export const removeSessionFromHistory = (sessionId: string): void => {

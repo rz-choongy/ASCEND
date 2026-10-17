@@ -30,6 +30,7 @@ import {
   setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
+import { finishSession } from './confirmEndTime';
 import { getShowSessionTimer } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -251,8 +252,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           text: 'Finish session',
           onPress: () => {
             setSessionTitle(sessionId, title.trim());
-            setSessionStatus(sessionId, 'completed');
-            navigation.dispatch(e.data.action);
+            finishSession(sessionId, () => navigation.dispatch(e.data.action));
           },
         },
         {
@@ -354,8 +354,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSessionTitle(sessionId, title.trim());
-    setSessionStatus(sessionId, 'completed');
-    navigation.navigate('Tabs');
+    finishSession(sessionId, () => navigation.navigate('Tabs'));
   };
 
   if (!session) {

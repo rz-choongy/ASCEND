@@ -25,6 +25,7 @@ import {
   setSessionTitle,
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
+import { editEndTime } from './confirmEndTime';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -395,7 +396,20 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           />
           <Text style={styles.metaLine}>{formatDateLine(session.started_at)}</Text>
           {duration != null ? (
-            <Text style={styles.metaLine}>{duration}</Text>
+            session.status === 'completed' ? (
+              <Pressable
+                onPress={() => editEndTime(sessionId, bump)}
+                accessibilityRole="button"
+                accessibilityLabel={`Duration ${duration}. Edit end time`}
+                hitSlop={8}
+              >
+                <Text style={styles.metaLine}>
+                  {duration} · <Text style={styles.editLink}>Edit end time</Text>
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.metaLine}>{duration}</Text>
+            )
           ) : null}
         </View>
 
@@ -746,6 +760,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     color: colors.textSecondary,
     fontSize: 15,
     fontVariant: ['tabular-nums'],
+  },
+  editLink: {
+    ...font('medium'),
+    color: colors.accent,
   },
   sectionLabel: {
     ...typography.section,
