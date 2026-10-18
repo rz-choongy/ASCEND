@@ -211,23 +211,27 @@ export const getLastLogAt = (sessionId: string): number | null => {
   return logs.reduce<number | null>((latest, log) => (latest == null || log.createdAt > latest ? log.createdAt : latest), null);
 };
 
-/** Earliest end time allowed: the last log (you can't stop before your last climb), else a minute in. */
+/**
+ * Earliest end time allowed: the last log (you can't stop before your last climb), and never
+ * less than a minute after the start, even if a log's clock reads earlier than the start.
+ */
 export const getEarliestEndAt = (sessionId: string): number | null => {
   const session = getSessionById(sessionId);
   if (!session) return null;
-  return getLastLogAt(sessionId) ?? session.started_at + 60_000;
+  return Math.max(session.started_at + 60_000, getLastLogAt(sessionId) ?? 0);
 };
 
 /**
  * Moves a finished session's end time -- for when Done was tapped long after the last climb.
- * Clamped between the earliest allowed end and now. The session header is a plain column (not
+ * Clamped between the earliest allowed end and now; never before the start. The session header is a plain column (not
  * replayed from events), so this is an in-place update like the title and notes.
  */
 export const setSessionEndedAt = (sessionId: string, endedAt: number): number | null => {
   const session = getSessionById(sessionId);
   const earliest = getEarliestEndAt(sessionId);
   if (!session || earliest == null || session.status !== 'completed') return null;
-  const clamped = Math.min(Date.now(), Math.max(earliest, endedAt));
+  // The floor wins over "now", so a phone clock behind the start can't end it before it began.
+  const clamped = Math.max(earliest, Math.min(Date.now(), endedAt));
   run('UPDATE sessions SET completed_at = ? WHERE id = ?;', [clamped, sessionId]);
   return clamped;
 };

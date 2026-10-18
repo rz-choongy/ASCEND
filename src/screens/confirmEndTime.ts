@@ -1,5 +1,5 @@
 import { formatClockTime, formatDuration } from '../domain/dateUtils';
-import { getEarliestEndAt, getLastLogAt, getSessionById, setSessionEndedAt, setSessionStatus } from '../domain/sessionStore';
+import { getLastLogAt, getSessionById, setSessionEndedAt, setSessionStatus } from '../domain/sessionStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
 import { showDialog } from '../ui';
 
@@ -32,46 +32,6 @@ export const finishSession = (sessionId: string, onDone?: () => void): void => {
     [
       { text: `End at ${formatClockTime(lastLogAt)}`, onPress: () => complete(lastLogAt) },
       { text: 'End now', onPress: () => complete(null) },
-    ]
-  );
-};
-
-const STEPS_MIN = [-15, -5, 5, 15];
-
-/**
- * Adjusts a finished session's end time from its detail screen. Each tap applies straight away
- * and reopens the dialog, so you can step it a few times; "Done" closes it.
- */
-export const editEndTime = (sessionId: string, onChange: () => void): void => {
-  const session = getSessionById(sessionId);
-  if (!session || session.completed_at == null) return;
-  const endAt = session.completed_at;
-  const lastLogAt = getLastLogAt(sessionId);
-  const earliest = getEarliestEndAt(sessionId) ?? session.started_at;
-  const apply = (next: number) => {
-    setSessionEndedAt(sessionId, next);
-    onChange();
-    editEndTime(sessionId, onChange);
-  };
-
-  showDialog(
-    `Ended ${formatClockTime(endAt)}`,
-    `${formatDuration(session.started_at, endAt)} session.${
-      lastLogAt != null ? ` Last log at ${formatClockTime(lastLogAt)}.` : ''
-    }`,
-    [
-      ...(lastLogAt != null && lastLogAt !== endAt
-        ? [{ text: `End at last log (${formatClockTime(lastLogAt)})`, onPress: () => apply(lastLogAt) }]
-        : []),
-      // Only steps that actually move it: not before the last log, not past now.
-      ...STEPS_MIN.filter((min) => {
-        const next = endAt + min * 60_000;
-        return next >= earliest && next <= Date.now();
-      }).map((min) => ({
-        text: `${min > 0 ? '+' : '−'}${Math.abs(min)} min`,
-        onPress: () => apply(endAt + min * 60_000),
-      })),
-      { text: 'Done', style: 'cancel' as const },
     ]
   );
 };

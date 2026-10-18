@@ -25,7 +25,7 @@ import {
   setSessionTitle,
 } from '../domain/sessionStore';
 import { applySetEvents, type LoggedSet } from '../domain/strengthLogUtils';
-import { editEndTime } from './confirmEndTime';
+import { EndTimeSheet } from './EndTimeSheet';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -142,6 +142,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const { sessionId } = route.params;
 
+  const [editingEnd, setEditingEnd] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editingEntry, setEditingEntry] = useState<EditingEntry>(null);
   const [climbDraft, setClimbDraft] = useState<ClimbDraft>({
@@ -398,7 +399,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           {duration != null ? (
             session.status === 'completed' ? (
               <Pressable
-                onPress={() => editEndTime(sessionId, bump)}
+                onPress={() => setEditingEnd(true)}
                 accessibilityRole="button"
                 accessibilityLabel={`Duration ${duration}. Edit end time`}
                 hitSlop={8}
@@ -707,6 +708,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
         {/* The delete confirmation opens from inside this sheet, so it draws in here. */}
         {editingEntry !== null ? <DialogHost inline /> : null}
       </Modal>
+      <EndTimeSheet sessionId={sessionId} visible={editingEnd} onClose={() => setEditingEnd(false)} onSaved={bump} />
     </SafeAreaView>
   );
 };

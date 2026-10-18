@@ -12,6 +12,7 @@ import { getAll, getFirst, run } from '../db/db';
 import {
   countWideGradeBandClimbs,
   deleteEmptySession,
+  getEarliestEndAt,
   getLastLogAt,
   narrowWideGradeBands,
   setSessionEndedAt,
@@ -248,6 +249,29 @@ describe('session end time', () => {
   it('never ends before the last logged climb', () => {
     wire({ ...session('s1'), started_at: 0, completed_at: 220 * MIN }, [climb('e1', 90 * MIN)]);
     expect(setSessionEndedAt('s1', 60 * MIN)).toBe(90 * MIN);
+  });
+
+  it('never ends before the start when nothing was logged', () => {
+    wire({ ...session('s1'), started_at: 100 * MIN, completed_at: 220 * MIN }, []);
+    expect(setSessionEndedAt('s1', 50 * MIN)).toBe(101 * MIN);
+  });
+
+  it('never ends before the start even if a log is stamped earlier', () => {
+    wire({ ...session('s1'), started_at: 100 * MIN, completed_at: 220 * MIN }, [climb('e1', 80 * MIN)]);
+    expect(getEarliestEndAt('s1')).toBe(101 * MIN);
+    expect(setSessionEndedAt('s1', 90 * MIN)).toBe(101 * MIN);
+  });
+
+  it('never ends in the future', () => {
+    const now = Date.now();
+    wire({ ...session('s1'), started_at: now - 120 * MIN, completed_at: now - 10 * MIN }, [climb('e1', now - 60 * MIN)]);
+    expect(setSessionEndedAt('s1', now + 60 * MIN)).toBeLessThanOrEqual(Date.now());
+  });
+
+  it('keeps the start floor even when the phone clock is behind the start', () => {
+    const now = Date.now();
+    wire({ ...session('s1'), started_at: now + 30 * MIN, completed_at: now + 40 * MIN }, []);
+    expect(setSessionEndedAt('s1', now)).toBe(now + 31 * MIN);
   });
 
   it('leaves a session that is not completed alone', () => {

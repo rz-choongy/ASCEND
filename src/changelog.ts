@@ -21,7 +21,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-10-17',
     changes: [
       { kind: 'new', text: 'Forgot to stop a session? Tapping Done long after your last climb asks whether to end it at that climb instead of now.' },
-      { kind: 'new', text: 'Edit the end time of any finished session from its detail screen: jump to the last log or nudge it by 5 or 15 minutes.' },
+      { kind: 'new', text: 'Edit the end time of any finished session from its detail screen on a clock face: drag the minute hand round, or tap to jump to your last climb.' },
       { kind: 'new', text: 'A "Still climbing?" notification checks in every hour you are away from the app during a session. Turn it off in Settings.' },
     ],
   },
