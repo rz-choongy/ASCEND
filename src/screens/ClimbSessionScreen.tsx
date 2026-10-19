@@ -516,12 +516,20 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             const isSessionHigh = log.eventId === sessionHighEventId;
             const isLatest = index === 0;
             const elapsed = formatElapsed(log.createdAt - session.started_at);
+            // A wide band logged through the exact-grade picker: show the grade that was picked,
+            // since the chip only carries the gym's own label (e.g. "6").
+            const option = gradeOptions.find((grade) => grade.label === log.gradeLabel);
+            const pinnedGrade =
+              option && isGradeBand(option.min, option.max) && log.gradeMin === log.gradeMax
+                ? `V${log.gradeMin}`
+                : null;
             return (
               <View
                 key={log.eventId}
                 accessible
                 accessibilityLabel={[
                   log.gradeLabel,
+                  pinnedGrade,
                   log.result === 'FLASH' ? 'flash' : 'send',
                   isSessionHigh ? '30-day high' : null,
                   elapsed,
@@ -540,6 +548,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                     {log.gradeLabel}
                   </Text>
                 </View>
+                {pinnedGrade ? <Text style={styles.pinnedGrade}>{pinnedGrade}</Text> : null}
                 {log.result === 'FLASH' ? (
                   <View style={styles.flashMark}>
                     <BoltIcon size={14} color={colors.accent} filled />
@@ -856,6 +865,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   gradeChipText: {
     ...typography.numeric,
     fontSize: 15,
+  },
+  pinnedGrade: {
+    ...typography.numeric,
+    flexShrink: 0,
+    fontSize: 15,
+    color: colors.textPrimary,
   },
   flashMark: {
     flexShrink: 0,
