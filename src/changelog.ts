@@ -18,7 +18,7 @@ export type ChangelogEntry = {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '2.5.0',
-    date: '2026-10-17',
+    date: '2026-10-19',
     changes: [
       { kind: 'new', text: 'Forgot to stop a session? Tapping Done long after your last climb asks whether to end it at that climb instead of now.' },
       { kind: 'new', text: 'Edit the end time of any finished session from its detail screen on a clock face: drag the minute hand round, or tap to jump to your last climb.' },
