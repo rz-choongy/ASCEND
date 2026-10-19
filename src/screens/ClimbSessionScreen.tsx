@@ -437,6 +437,13 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         {gradeOptions.map((grade) => {
           const active = selectedGrade.label === grade.label;
           const tileColor = grade.color ?? colors.surface;
+          // Colour/number-graded gyms: show the V range under the gym's own label so you know
+          // what you're picking. V-scale labels already say it.
+          const vRange = /^v/i.test(grade.label)
+            ? null
+            : grade.min === grade.max
+              ? `V${grade.min}`
+              : `V${grade.min}–${grade.max}`;
           return (
             <PressableScale
               key={grade.id ?? grade.label}
@@ -462,6 +469,15 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
               >
                 {grade.label}
               </Text>
+              {vRange ? (
+                <Text
+                  style={[styles.gradeRangeText, { color: getContrastText(tileColor) }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {vRange}
+                </Text>
+              ) : null}
             </PressableScale>
           );
         })}
@@ -772,6 +788,13 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gradeTextActive: {
     ...font('bold'),
+  },
+  gradeRangeText: {
+    ...typography.body,
+    fontSize: 11,
+    lineHeight: 13,
+    opacity: 0.8,
+    fontVariant: ['tabular-nums'],
   },
 
   climbNameInput: {
