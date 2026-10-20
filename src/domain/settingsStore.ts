@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import { getFirst, run } from '../db/db';
 import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
 
@@ -188,4 +189,20 @@ export const getLastRoutineId = (): string | null => {
 export const setLastRoutineId = (routineId: string | null): void => {
   if (routineId) setSetting(LAST_ROUTINE_ID_KEY, routineId);
   else run('DELETE FROM app_settings WHERE key = ?;', [LAST_ROUTINE_ID_KEY]);
+};
+
+const INSTALL_ID_KEY = 'install_id';
+
+/**
+ * A random per-install ID, created on first use. Bug reports carry it so the triage side can tell
+ * the owner's reports (whose IDs are listed server-side, never in this repo) from everyone else's.
+ */
+export const getInstallId = (): string => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    INSTALL_ID_KEY,
+  ]);
+  if (setting?.value) return setting.value;
+  const id = Crypto.randomUUID();
+  setSetting(INSTALL_ID_KEY, id);
+  return id;
 };

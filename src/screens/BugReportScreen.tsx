@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { requireOptionalNativeModule } from 'expo';
 import * as Updates from 'expo-updates';
 import { APP_VERSION } from '../changelog';
+import { isBugReportApiConfigured, submitBugReport } from '../domain/bugReportApi';
+import { getInstallId } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   Button,
@@ -41,13 +43,18 @@ const buildLabel = Updates.isEmbeddedLaunch
     ? `${Updates.updateId.slice(0, 8)} · ${Updates.channel ?? 'no channel'}`
     : 'Unknown';
 
-const diagnosticsBlock = () =>
-  [
-    `App version: ${APP_VERSION}`,
-    `Build: ${buildLabel}`,
-    `Platform: ${Platform.OS} ${Platform.Version}`,
-    `Reported: ${new Date().toLocaleString()}`,
-  ].join('\n');
+const collectDiagnostics = (): Record<string, string> => ({
+  'App version': APP_VERSION,
+  Build: buildLabel,
+  Platform: `${Platform.OS} ${Platform.Version}`,
+  Install: getInstallId(),
+  Reported: new Date().toLocaleString(),
+});
+
+const formatDiagnostics = (diagnostics: Record<string, string>) =>
+  Object.entries(diagnostics)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n');
 
 export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'>) => {
   const { colors, typography, shadows } = useTheme();
@@ -57,7 +64,8 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  const diagnostics = useMemo(diagnosticsBlock, []);
+  const diagnosticsData = useMemo(collectDiagnostics, []);
+  const diagnostics = useMemo(() => formatDiagnostics(diagnosticsData), [diagnosticsData]);
   const canSend = description.trim().length > 0 && !sending;
 
   const handleAttachScreenshot = async () => {
@@ -88,6 +96,26 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
   const handleSend = async () => {
     if (!canSend) return;
     setSending(true);
+    // Straight to the report inbox when it's configured; email / share sheet is the fallback for
+    // builds without the env vars, or when the network call fails.
+    if (isBugReportApiConfigured()) {
+      try {
+        await submitBugReport({
+          source: 'user',
+          installId: diagnosticsData.Install,
+          description,
+          appVersion: APP_VERSION,
+          diagnostics: diagnosticsData,
+          screenshotUri,
+        });
+        setSending(false);
+        navigation.goBack();
+        showDialog('Report sent', 'Thanks! It goes straight to the fix queue.');
+        return;
+      } catch {
+        // Fall through to email.
+      }
+    }
     const subject = `ASCEND Bug Report (v${APP_VERSION})`;
     const body = `${description.trim()}\n\n---\n${diagnostics}`;
     try {
