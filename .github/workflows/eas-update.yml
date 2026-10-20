@@ -111,7 +111,7 @@ jobs:
         run: |
           MESSAGE="${COMMIT_MESSAGE%%$'\n'*}"
           [ -n "$MESSAGE" ] || MESSAGE="Manual update from ${GITHUB_SHA::7}"
-          npx eas-cli update --branch preview --message "$MESSAGE" --non-interactive
+          npx eas-cli update --branch preview --environment preview --message "$MESSAGE" --non-interactive
 
   production:
     name: Publish to production
@@ -143,4 +143,4 @@ jobs:
         run: |
           MESSAGE="${COMMIT_MESSAGE%%$'\n'*}"
           [ -n "$MESSAGE" ] || MESSAGE="Manual update from ${GITHUB_SHA::7}"
-          npx eas-cli update --branch production --message "$MESSAGE" --non-interactive
+          npx eas-cli update --branch production --environment production --message "$MESSAGE" --non-interactive
