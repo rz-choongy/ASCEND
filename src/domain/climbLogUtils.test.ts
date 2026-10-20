@@ -3,6 +3,8 @@ import {
   isGradeBand,
   midpointGrade,
   findSessionHighIndex,
+  formatVGrade,
+  loggedClimbVGrade,
 } from './climbLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
@@ -184,5 +186,36 @@ describe('findSessionHighIndex', () => {
 
   it('does not count a tie as a new high', () => {
     expect(findSessionHighIndex(logs, 6)).toBeNull();
+  });
+});
+
+describe('formatVGrade', () => {
+  it('returns null for labels that are already V grades', () => {
+    expect(formatVGrade('V5', 5, 5)).toBeNull();
+    expect(formatVGrade('v3-4', 3, 4)).toBeNull();
+  });
+
+  it('formats a single grade and a band', () => {
+    expect(formatVGrade('Green', 5, 5)).toBe('V5');
+    expect(formatVGrade('6', 4, 6)).toBe('V4–6');
+  });
+});
+
+describe('loggedClimbVGrade', () => {
+  it('returns null at a V-labelled gym', () => {
+    expect(loggedClimbVGrade({ gradeLabel: 'V5', gradeMin: 5, gradeMax: 5 }, { min: 5, max: 5 })).toBeNull();
+  });
+
+  it('shows the exact grade when one was logged', () => {
+    expect(loggedClimbVGrade({ gradeLabel: '5', gradeMin: 5, gradeMax: 5 }, { min: 4, max: 6 })).toBe('V5');
+  });
+
+  it("shows the option's range for a range-logged climb", () => {
+    expect(loggedClimbVGrade({ gradeLabel: 'Blue', gradeMin: 4, gradeMax: 6 }, { min: 4, max: 6 })).toBe('V4–6');
+  });
+
+  it("falls back to the climb's own grades when the option is missing", () => {
+    expect(loggedClimbVGrade({ gradeLabel: 'Blue', gradeMin: 4, gradeMax: 6 }, undefined)).toBe('V4–6');
+    expect(loggedClimbVGrade({ gradeLabel: 'Red', gradeMin: 7, gradeMax: 7 }, null)).toBe('V7');
   });
 });

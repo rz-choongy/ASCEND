@@ -17,6 +17,30 @@ export const isGradeBand = (gradeMin: number, gradeMax: number): boolean =>
 export const midpointGrade = (gradeMin: number, gradeMax: number): number =>
   Math.floor((gradeMin + gradeMax) / 2);
 
+/**
+ * V-scale text for a gym grade: "V5" for one grade, "V4–6" for a band. null when the gym's own
+ * label already starts with V, since repeating it would just be noise.
+ */
+export const formatVGrade = (label: string, gradeMin: number, gradeMax: number): string | null => {
+  if (/^v/i.test(label)) return null;
+  return gradeMin === gradeMax ? `V${gradeMin}` : `V${gradeMin}–${gradeMax}`;
+};
+
+/**
+ * The V grade shown beside a logged climb at a colour/number-graded gym. An exact pick wins
+ * (e.g. "V6" off a V4–6 band); otherwise the gym option's range, falling back to the climb's
+ * own stored range when the option has since been edited away.
+ */
+export const loggedClimbVGrade = (
+  log: { gradeLabel: string; gradeMin: number; gradeMax: number },
+  option?: { min: number; max: number } | null
+): string | null => {
+  if (log.gradeMin === log.gradeMax) return formatVGrade(log.gradeLabel, log.gradeMin, log.gradeMax);
+  return option
+    ? formatVGrade(log.gradeLabel, option.min, option.max)
+    : formatVGrade(log.gradeLabel, log.gradeMin, log.gradeMax);
+};
+
 export type ClimbLog = {
   eventId: string;
   gradeLabel: string;

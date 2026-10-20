@@ -17,6 +17,14 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.2',
+    date: '2026-10-21',
+    changes: [
+      { kind: 'improved', text: 'Every climb you log at a colour or number-graded gym now shows its V grade next to the chip, not just exact picks from a wide range.' },
+      { kind: 'improved', text: 'Turn the V grade on logged climbs, and the V range on grade tiles, on or off in Settings.' },
+    ],
+  },
+  {
     version: '2.5.1',
     date: '2026-10-19',
     changes: [

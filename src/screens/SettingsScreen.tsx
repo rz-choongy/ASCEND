@@ -17,11 +17,15 @@ import {
   getKilterUsername,
   getShowSessionNotification,
   getSessionReminder,
+  getShowLoggedVGrade,
   getShowSessionTimer,
+  getShowTileVRange,
   setKilterUsername,
   setShowSessionNotification,
   setSessionReminder,
+  setShowLoggedVGrade,
   setShowSessionTimer,
+  setShowTileVRange,
 } from '../domain/settingsStore';
 import {
   requestSessionNotificationPermission,
@@ -70,6 +74,8 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [loggedVGradeEnabled, setLoggedVGradeEnabled] = useState(true);
+  const [tileVRangeEnabled, setTileVRangeEnabled] = useState(true);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -83,6 +89,8 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setGymName(gym.name);
       setTimerEnabled(getShowSessionTimer());
+      setLoggedVGradeEnabled(getShowLoggedVGrade());
+      setTileVRangeEnabled(getShowTileVRange());
       setNotificationEnabled(getShowSessionNotification());
       setReminderEnabled(getSessionReminder());
       setKilterSyncedAt(getKilterLastSyncedAt());
@@ -103,6 +111,16 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const handleToggleTimer = (value: boolean) => {
     setTimerEnabled(value);
     setShowSessionTimer(value);
+  };
+
+  const handleToggleLoggedVGrade = (value: boolean) => {
+    setLoggedVGradeEnabled(value);
+    setShowLoggedVGrade(value);
+  };
+
+  const handleToggleTileVRange = (value: boolean) => {
+    setTileVRangeEnabled(value);
+    setShowTileVRange(value);
   };
 
   const handleToggleNotification = (value: boolean) => {
@@ -360,6 +378,30 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               <Switch
                 value={timerEnabled}
                 onValueChange={handleToggleTimer}
+                trackColor={{ false: colors.fill, true: colors.accent }}
+                thumbColor="#ffffff"
+              />
+            }
+          />
+          <ListRow
+            title="V grade on logged climbs"
+            subtitle="Show the V grade beside each climb at colour or number-graded gyms"
+            right={
+              <Switch
+                value={loggedVGradeEnabled}
+                onValueChange={handleToggleLoggedVGrade}
+                trackColor={{ false: colors.fill, true: colors.accent }}
+                thumbColor="#ffffff"
+              />
+            }
+          />
+          <ListRow
+            title="V range on grade tiles"
+            subtitle="Show each tile's V range under the gym's own grade"
+            right={
+              <Switch
+                value={tileVRangeEnabled}
+                onValueChange={handleToggleTileVRange}
                 trackColor={{ false: colors.fill, true: colors.accent }}
                 thumbColor="#ffffff"
               />
