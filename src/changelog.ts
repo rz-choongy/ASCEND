@@ -22,6 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { kind: 'improved', text: 'Every climb you log at a colour or number-graded gym now shows its V grade next to the chip, not just exact picks from a wide range.' },
       { kind: 'improved', text: 'Turn the V grade on logged climbs, and the V range on grade tiles, on or off in Settings.' },
+      { kind: 'improved', text: 'Bug reports send straight from the app, screenshot included, without opening your email.' },
     ],
   },
   {
