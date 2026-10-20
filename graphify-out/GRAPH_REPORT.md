@@ -1,73 +1,74 @@
-# Graph Report - ASCEND  (2026-10-20)
+# Graph Report - ASCEND  (2026-10-21)
 
 ## Corpus Check
-- 132 files · ~136,021 words
+- 132 files · ~136,670 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 1 file(s) not represented in the graph (top: (none) 1)
 
 ## Summary
-- 1132 nodes · 3737 edges · 59 communities (50 shown, 9 thin omitted)
+- 1138 nodes · 3768 edges · 60 communities (51 shown, 9 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 69 edges (avg confidence: 0.88)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `06381f92`
+- Built from commit: `e743fdad`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- react
-- Dock.tsx
-- StrengthSessionScreen.tsx
-- ClimbSessionScreen.tsx
+- BugReportScreen.tsx
+- progressInsights.ts
+- strengthProgress.ts
+- gymStore.ts
 - ASCEND Project Instructions
 - expo
 - J5: Create Strength Workout Template (HEVY-Style)
 - PRD: Climbing Sessions (Gym Setup + Grade Chips)
 - ui/index.ts
-- sessionStore.ts
+- SessionHistoryScreen.tsx
 - run
-- LogScreen.tsx
-- sessionNotification.ts
+- RoutineEditScreen.tsx
+- useTheme
 - dependencies
 - SettingsScreen.tsx
-- dashboard.ts
+- sessionStore.ts
 - ClimbProgressView.tsx
-- useTheme
+- ProgressScreen.tsx
 - package.json
 - applyClimbEvents
-- EndTimeSheet.tsx
-- SessionRow
-- kilterSync.ts
+- StrengthSessionScreen.tsx
 - bugReportApi.ts
-- RecentSessionsList.tsx
+- kilterSync.ts
+- LogScreen.tsx
+- dashboard.ts
 - App Navigation Design Prompt
 - J4: Resume Interrupted Session
-- App.tsx
+- colors.ts
 - ASCEND Design System
-- SessionHistoryScreen.tsx
 - font
+- PressableScale
 - exerciseData.ts
-- kilterMapping.ts
-- kilterSync.test.ts
+- LastSessionCard.tsx
+- ClimbSessionScreen.tsx
 - Execution Order (Build Steps 1-5)
 - Dark Mode UI Design Style
 - PRD: Target Users (Indoor Boulderers)
 - PRD: Home Screen (Resume + Planned + Quick Starts)
 - PRD: Settings (Units, Grade System, Export, Reset)
-- LastSessionCard.tsx
-- changelog.ts
+- spacing
+- ExerciseProgressScreen.tsx
 - CalendarScreen.tsx
 - ASCEND Feature Roadmap
 - applySetEvents
-- kilterSessionStore.ts
-- colors.ts
-- expo
-- react-native
-- AGENTS.md
-- BugReportScreen.tsx
 - StrengthProgressView.tsx
-- BugReportScreen
+- react-native
+- Button
+- RecentSessionsList.tsx
+- AGENTS.md
+- App.tsx
+- changelog.ts
+- dateUtils.ts
+- progressInsights.test.ts
 - README.md
 - Release Readiness
 - scripts
@@ -80,12 +81,12 @@
 2. `font()` - 77 edges
 3. `run()` - 66 edges
 4. `StrengthSessionScreen()` - 55 edges
-5. `react-native` - 49 edges
-6. `getFirst()` - 48 edges
+5. `getFirst()` - 50 edges
+6. `react-native` - 49 edges
 7. `getSessionEvents()` - 48 edges
 8. `react` - 47 edges
 9. `ThemeColors` - 47 edges
-10. `PressableScale()` - 39 edges
+10. `ClimbSessionScreen()` - 41 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Strength Workout Session Screen Design` --semantically_similar_to--> `Strength Logger Session Screen (Pull Day)`  [INFERRED] [semantically similar]
@@ -107,23 +108,23 @@
 - **Fast Logging UX Triad** — claudemd_fast_logging_principle, design_large_tap_targets, prd_design_principles [INFERRED 0.82]
 - **Session Logging Core Loop** — arch_event_based_model, arch_local_first, prd_climbing_sessions, prd_strength_training [INFERRED 0.85]
 
-## Communities (59 total, 9 thin omitted)
+## Communities (60 total, 9 thin omitted)
 
-### Community 0 - "react"
-Cohesion: 0.10
-Nodes (27): react, ChipProps, createStyles(), HitSlop, IconButtonProps, IconButtonVariant, AnimatedPressable, HitSlop (+19 more)
+### Community 0 - "BugReportScreen.tsx"
+Cohesion: 0.20
+Nodes (13): expo-image-picker, expo-mail-composer, expo-updates, BugReportScreen(), collectDiagnostics(), createStyles(), formatDiagnostics(), hasNativeModule() (+5 more)
 
-### Community 1 - "Dock.tsx"
-Cohesion: 0.38
-Nodes (8): createStyles(), Dock(), DockProps, TAB_BAR_HEIGHT, TAB_BAR_INSET, useTabBarBottomOffset(), useTabBarClearance(), useTabBarSideMargin()
+### Community 1 - "progressInsights.ts"
+Cohesion: 0.16
+Nodes (15): getGymById(), AllTimeStats, buildRecentSends(), buildStrengthVolumeTrend(), ClimbGymOption, DayCompletion, findHardestSendThisWeek(), formatShortDate() (+7 more)
 
-### Community 2 - "StrengthSessionScreen.tsx"
-Cohesion: 0.06
-Nodes (72): getCategories(), getExerciseNames(), getExercises(), setExerciseCategory(), setExerciseFavorite(), getRoutine(), getCompletedSessions(), routineFromSets() (+64 more)
+### Community 2 - "strengthProgress.ts"
+Cohesion: 0.14
+Nodes (20): buildExerciseDetail(), buildLoggerReference(), collectHistories(), estimateOneRepMax(), ExerciseHistory, exerciseKeyFor(), ExerciseSummary, findRecordSetIds() (+12 more)
 
-### Community 3 - "ClimbSessionScreen.tsx"
-Cohesion: 0.06
-Nodes (71): AppSettingRow, createGym(), CreateGymInput, defaultColorGrades, defaultNumericGrades, defaultOptionsForType(), defaultVScaleGrades, deleteGym() (+63 more)
+### Community 3 - "gymStore.ts"
+Cohesion: 0.08
+Nodes (54): react-native-safe-area-context, AppSettingRow, createGym(), CreateGymInput, defaultColorGrades, defaultNumericGrades, defaultOptionsForType(), defaultVScaleGrades (+46 more)
 
 ### Community 4 - "ASCEND Project Instructions"
 Cohesion: 0.12
@@ -142,112 +143,112 @@ Cohesion: 0.22
 Nodes (11): Climbing Grade Data Model, Climbing Session Screen Design, Progress Dashboards Design, Session Summary Screen Design, Climbing Session Finish/Review Screen, Climbing Analytics Dashboard (V-Scale, Max Send Trend), Tape-Based Climbing Session Log Screen, J2: Climbing Session Fast Path (+3 more)
 
 ### Community 8 - "ui/index.ts"
-Cohesion: 0.14
-Nodes (24): createStyles(), ExercisePickerSheet(), Filter, Props, Chip(), createStyles(), DialogButton, DialogHost() (+16 more)
+Cohesion: 0.16
+Nodes (20): ExerciseCategoryRow, createStyles(), ExercisePickerSheet(), ExerciseUsage, Filter, Props, Chip(), ChipProps (+12 more)
 
-### Community 9 - "sessionStore.ts"
-Cohesion: 0.07
-Nodes (33): ExternalClimbInput, ExternalClimbSessionInput, getEarliestEndAt(), getLastLogAt(), basePayload, mockGetFirst, mockRun, Sess (+25 more)
+### Community 9 - "SessionHistoryScreen.tsx"
+Cohesion: 0.09
+Nodes (44): angleFromPoint(), clampToRange(), DIAL_MAX_SPAN_MS, dialRange, hourHandAngle(), minuteHandAngle(), snapToMinute(), stepMinutes() (+36 more)
 
 ### Community 10 - "run"
 Cohesion: 0.05
-Nodes (78): Climb + Gym Workout Tracker, Current Codebase Shape, Graph Index, Relationship Notes, Repo Graph, Runtime Map, db, getAll() (+70 more)
+Nodes (61): Climb + Gym Workout Tracker, Current Codebase Shape, Graph Index, Relationship Notes, Repo Graph, Runtime Map, db, getAll() (+53 more)
 
-### Community 11 - "LogScreen.tsx"
+### Community 11 - "RoutineEditScreen.tsx"
 Cohesion: 0.15
-Nodes (25): lastClimbSessions(), getRoutines(), createSession(), getActiveSession(), getSessionsForDateRange(), getLastRoutineId(), setLastRoutineId(), formatDaysAgo() (+17 more)
+Nodes (25): createCategory(), createExercise(), defaultExercises, ensureDefaultExercisesSeeded(), findCategoryByName(), getExercises(), normalizeCategoryName(), normalizeExerciseName() (+17 more)
 
-### Community 12 - "sessionNotification.ts"
+### Community 12 - "useTheme"
 Cohesion: 0.21
-Nodes (16): expo-notifications, formatClockTime(), formatDuration(), describeWhere(), dismiss(), ensureChannel(), formatClock(), loadModule() (+8 more)
+Nodes (14): react, createStyles(), Props, StartCard(), createStyles(), Props, WeekCard(), Card() (+6 more)
 
 ### Community 13 - "dependencies"
 Cohesion: 0.08
 Nodes (26): dependencies, expo, expo-crypto, expo-font, @expo-google-fonts/geist, @expo-google-fonts/geist-mono, expo-haptics, expo-image-picker (+18 more)
 
 ### Community 14 - "SettingsScreen.tsx"
-Cohesion: 0.14
-Nodes (29): requestSessionNotificationPermission(), countWideGradeBandClimbs(), findWideBandClimbs(), narrowWideGradeBands(), summarize(), AppSettingRow, getInstallId(), getKilterLastSyncedAt() (+21 more)
+Cohesion: 0.08
+Nodes (54): getFirst(), formatClockTime(), describeWhere(), dismiss(), ensureChannel(), formatClock(), loadModule(), NotificationsModule (+46 more)
 
-### Community 15 - "dashboard.ts"
-Cohesion: 0.18
-Nodes (12): buildRecentSessions(), durationOf(), ExerciseTopSet, GradeCount, lastStrengthSessions(), plural(), RecentSession, summarizeClimbSession() (+4 more)
+### Community 15 - "sessionStore.ts"
+Cohesion: 0.08
+Nodes (31): buildSessionReplayMap(), CalendarInsightColors, findHardestClimb(), colors, mockGetSessionEvents, ClimbLog, ExternalClimbInput, ExternalClimbSessionInput (+23 more)
 
 ### Community 16 - "ClimbProgressView.tsx"
-Cohesion: 0.09
-Nodes (48): buildWeekActivity(), addDays(), startOfWeek(), AllTimeStats, buildAllTimeStats(), buildGradeDistribution(), buildGradeDistributionAcrossGyms(), buildRecentSends() (+40 more)
+Cohesion: 0.16
+Nodes (22): buildAllTimeStats(), buildWeekCompletion(), buildWeeklyFrequency(), findFirstReachedDate(), findFlashRate(), findLongestStreakEver(), findMostClimbsInSession(), getAvailableClimbGyms() (+14 more)
 
-### Community 17 - "useTheme"
-Cohesion: 0.29
-Nodes (11): firstOfMonth(), getSessionStreak(), BodyweightCard(), createStyles(), createStyles(), MONTH_NAMES, ProgressMode, ProgressScreen() (+3 more)
+### Community 17 - "ProgressScreen.tsx"
+Cohesion: 0.15
+Nodes (15): react-native-svg, firstOfMonth(), BodyweightCard(), createStyles(), createStyles(), MONTH_NAMES, ProgressMode, ProgressScreen() (+7 more)
 
 ### Community 18 - "package.json"
-Cohesion: 0.08
-Nodes (25): jest, preset, main, name, private, version, babel-preset-expo, expo-font (+17 more)
+Cohesion: 0.07
+Nodes (27): config, { getDefaultConfig }, jest, preset, main, name, private, version (+19 more)
 
 ### Community 19 - "applyClimbEvents"
-Cohesion: 0.19
-Nodes (13): applyClimbEvents(), ClimbDeletePayload, ClimbEditPayload, ClimbLogPayload, ClimbRelabelPayload, EventLike, findSessionHighIndex(), isClimbPayload() (+5 more)
+Cohesion: 0.18
+Nodes (16): applyClimbEvents(), ClimbDeletePayload, ClimbEditPayload, ClimbLogPayload, ClimbRelabelPayload, EventLike, findSessionHighIndex(), formatVGrade() (+8 more)
 
-### Community 20 - "EndTimeSheet.tsx"
-Cohesion: 0.28
-Nodes (15): angleFromPoint(), clampToRange(), DIAL_MAX_SPAN_MS, dialRange, hourHandAngle(), minuteHandAngle(), snapToMinute(), stepMinutes() (+7 more)
+### Community 20 - "StrengthSessionScreen.tsx"
+Cohesion: 0.16
+Nodes (19): getAbandonedSessions(), LoggerReference, parseWeightInput(), roundWeight(), SetInput, createPanelStyles(), createStyles(), DEFAULT_INPUT (+11 more)
 
-### Community 21 - "SessionRow"
-Cohesion: 0.14
-Nodes (9): buildSessionReplayMap(), CalendarInsightColors, findHardestClimb(), colors, mockGetSessionEvents, ClimbLog, mockGetSessionEvents, PALETTE (+1 more)
-
-### Community 22 - "kilterSync.ts"
-Cohesion: 0.12
-Nodes (23): fetchKilterLogs(), call(), createKilterAuth(), Deps, form(), KilterAuthError, KilterAuthErrorKind, SessionStore (+15 more)
-
-### Community 23 - "bugReportApi.ts"
+### Community 21 - "bugReportApi.ts"
 Cohesion: 0.20
 Nodes (13): expo-crypto, authHeaders(), BugReportInput, BugReportSource, buildBugReportRow(), isBugReportApiConfigured(), SCREENSHOT_BUCKET, screenshotExtension() (+5 more)
 
-### Community 24 - "RecentSessionsList.tsx"
-Cohesion: 0.27
-Nodes (11): createStyles(), DAY_SHORT, Props, RecentSessionsList(), whenLabel(), createStyles(), Props, StartCard() (+3 more)
+### Community 22 - "kilterSync.ts"
+Cohesion: 0.07
+Nodes (47): getGradeOptionsForGym(), importExternalClimbSession(), inTransaction(), setKilterLastSyncedAt(), fetchKilterLogs(), call(), createKilterAuth(), Deps (+39 more)
 
-### Community 27 - "App.tsx"
-Cohesion: 0.18
-Nodes (15): App(), AppContent(), Stack, Tab, TabIcon(), TabIconProps, TabNavigator(), @react-navigation/bottom-tabs (+7 more)
+### Community 23 - "LogScreen.tsx"
+Cohesion: 0.16
+Nodes (21): lastClimbSessions(), WeekActivity, createSession(), getActiveSession(), getSessionStreak(), uuid(), getLastRoutineId(), createStyles() (+13 more)
+
+### Community 24 - "dashboard.ts"
+Cohesion: 0.15
+Nodes (14): buildRecentSessions(), durationOf(), ExerciseTopSet, GradeCount, LastSessions, lastStrengthSessions(), plural(), RecentSession (+6 more)
+
+### Community 27 - "colors.ts"
+Cohesion: 0.21
+Nodes (13): ThemeContext, ThemeContextValue, ThemeProvider(), AccentColorId, AccentTint, applyAccent(), darkColors, gradePalette (+5 more)
 
 ### Community 28 - "ASCEND Design System"
 Cohesion: 0.08
-Nodes (24): ASCEND Design System, Buttons, CalendarScreen, Chips, Claude Design Prompt (copy-paste into design tools), ClimbSessionScreen, Color Palette, Components (+16 more)
+Nodes (25): ASCEND Design System, Buttons, CalendarScreen, Chips, Claude Design Prompt (copy-paste into design tools), ClimbSessionScreen, Color Palette, Components (+17 more)
 
-### Community 29 - "SessionHistoryScreen.tsx"
-Cohesion: 0.17
-Nodes (18): setSessionNotes(), setSessionTitle(), ClimbDraft, createStyles(), EditingEntry, formatDateLine(), formatLogTime(), formatSessionType() (+10 more)
+### Community 29 - "font"
+Cohesion: 0.27
+Nodes (10): ChangelogScreen(), createStyles(), formatEntryDate(), KIND_LABEL, createStyles(), KilterConnectScreen(), createStyles(), Props (+2 more)
 
-### Community 30 - "font"
-Cohesion: 0.16
-Nodes (17): expo-haptics, ChangelogScreen(), createStyles(), formatEntryDate(), KIND_LABEL, createStyles(), Props, createStyles() (+9 more)
+### Community 30 - "PressableScale"
+Cohesion: 0.12
+Nodes (20): AppContent(), expo-haptics, createStyles(), DialogButton, DialogHost(), DialogRequest, HostProps, hosts (+12 more)
 
 ### Community 31 - "exerciseData.ts"
-Cohesion: 0.18
-Nodes (14): belongsTo(), countExerciseData(), deleteExerciseWithData(), ExerciseDataCount, facePulls, mockCorrect, mockDeactivate, mockEvents (+6 more)
-
-### Community 32 - "kilterMapping.ts"
 Cohesion: 0.19
-Nodes (17): CLIMB_NAME_KEYS, dayKeyOf(), extractLogList(), GradeOption, ImportedClimb, ImportedSession, KilterLog, mapKilterLogs() (+9 more)
+Nodes (11): belongsTo(), countExerciseData(), deleteExerciseWithData(), ExerciseDataCount, facePulls, mockCorrect, mockDeactivate, mockEvents (+3 more)
 
-### Community 33 - "kilterSync.test.ts"
-Cohesion: 0.25
-Nodes (5): importExternalClimbSession(), inTransaction(), kilterAuth, mockFetch, mockImport
+### Community 32 - "LastSessionCard.tsx"
+Cohesion: 0.29
+Nodes (10): ClimbSessionSummary, countDelta(), Delta, percentDelta(), createStyles(), DAY_SHORT, dayLabel(), gradeDelta() (+2 more)
 
-### Community 39 - "LastSessionCard.tsx"
-Cohesion: 0.18
-Nodes (16): ClimbSessionSummary, LastSessions, StrengthSessionSummary, WeekActivity, countDelta(), Delta, percentDelta(), createStyles() (+8 more)
+### Community 33 - "ClimbSessionScreen.tsx"
+Cohesion: 0.19
+Nodes (17): appendEvent(), canChangeSessionGym(), deleteEmptySession(), getSessionEvents(), isSessionEventType(), useClimbSessionLogs(), ClimbSessionScreen(), ClimbSessionScreenProps (+9 more)
 
-### Community 40 - "changelog.ts"
-Cohesion: 0.38
-Nodes (4): APP_VERSION, ChangeKind, CHANGELOG, ChangelogEntry
+### Community 39 - "spacing"
+Cohesion: 0.21
+Nodes (8): Bar, BarChart(), BarChartProps, BarSegment, createStyles(), LegendItem, ScreenHeaderProps, spacing
+
+### Community 40 - "ExerciseProgressScreen.tsx"
+Cohesion: 0.19
+Nodes (18): ExerciseDetail, ExerciseSession, formatMonthDay(), formatVolume(), formatWeight(), sliceSeriesToRange(), StrengthMetric, createStyles() (+10 more)
 
 ### Community 41 - "CalendarScreen.tsx"
-Cohesion: 0.10
-Nodes (31): SessionReplay, formatElapsed(), formatLocalDate(), getAbandonedSessions(), getSessionsForMonth(), buildMonthGrid(), CalendarNavProp, CalendarScreen() (+23 more)
+Cohesion: 0.11
+Nodes (30): SessionReplay, formatLocalDate(), getSessionsForDateRange(), getSessionsForMonth(), buildMonthGrid(), CalendarNavProp, CalendarScreen(), formatGroupLabel() (+22 more)
 
 ### Community 42 - "ASCEND Feature Roadmap"
 Cohesion: 0.15
@@ -257,37 +258,41 @@ Nodes (12): 2a — Supabase Sync (Priority), 2b — UI Upgrade, ASCEND Feature R
 Cohesion: 0.23
 Nodes (10): applySetEvents(), EventLike, isSetDeletePayload(), isSetEditPayload(), isSetPayload(), LoggedSet, SetDeletePayload, SetEditPayload (+2 more)
 
-### Community 44 - "kilterSessionStore.ts"
-Cohesion: 0.48
-Nodes (5): clearKilterSession(), getKilterSession(), setKilterSession(), databaseSessionStore, mockGet
+### Community 44 - "StrengthProgressView.tsx"
+Cohesion: 0.24
+Nodes (10): formatDaysAgo(), createStyles(), ExerciseRow(), ExerciseRowProps, NavProp, Props, Sparkline(), BodyweightRow() (+2 more)
 
-### Community 45 - "colors.ts"
-Cohesion: 0.15
-Nodes (18): Cards & grouped lists, getThemeMode(), Card(), CardProps, CardTone, createStyles(), ThemeContext, ThemeContextValue (+10 more)
+### Community 45 - "react-native"
+Cohesion: 0.14
+Nodes (20): react-native, CardProps, CardTone, HitSlop, IconButtonProps, IconButtonVariant, ListRowProps, sectionHeaderStyles (+12 more)
 
-### Community 46 - "expo"
-Cohesion: 0.50
-Nodes (3): config, { getDefaultConfig }, expo
+### Community 46 - "Button"
+Cohesion: 0.26
+Nodes (10): ActiveSessionCard(), createStyles(), formatClock(), Props, Button(), ButtonProps, ButtonVariant, createStyles() (+2 more)
 
-### Community 47 - "react-native"
-Cohesion: 0.40
-Nodes (5): Dividers & separators, react-native, createStyles(), Divider(), DividerProps
+### Community 47 - "RecentSessionsList.tsx"
+Cohesion: 0.36
+Nodes (8): formatDuration(), createStyles(), DAY_SHORT, Props, RecentSessionsList(), whenLabel(), DumbbellIcon(), MountainMarkIcon()
 
 ### Community 48 - "AGENTS.md"
 Cohesion: 0.18
 Nodes (10): About This Project, Current Focus, Decision State, Do Not, Engineering Rules, graphify, Mode 1 Architecture, Rules (+2 more)
 
-### Community 49 - "BugReportScreen.tsx"
-Cohesion: 0.11
-Nodes (29): react-native-safe-area-context, @react-navigation/native, RootStackScreenProps, createStyles(), createStyles(), Props, createStyles(), GymSelectScreenProps (+21 more)
+### Community 49 - "App.tsx"
+Cohesion: 0.08
+Nodes (42): App(), Stack, Tab, TabIcon(), TabIconProps, TabNavigator(), Cards & grouped lists, @react-navigation/bottom-tabs (+34 more)
 
-### Community 50 - "StrengthProgressView.tsx"
-Cohesion: 0.16
-Nodes (12): createStyles(), ExerciseRow(), ExerciseRowProps, NavProp, Props, Sparkline(), Bar, BarChart() (+4 more)
+### Community 50 - "changelog.ts"
+Cohesion: 0.38
+Nodes (4): APP_VERSION, ChangeKind, CHANGELOG, ChangelogEntry
 
-### Community 51 - "BugReportScreen"
+### Community 51 - "dateUtils.ts"
+Cohesion: 0.60
+Nodes (4): buildWeekActivity(), addDays(), formatElapsed(), startOfWeek()
+
+### Community 52 - "progressInsights.test.ts"
 Cohesion: 0.33
-Nodes (6): expo-image-picker, expo-mail-composer, BugReportScreen(), collectDiagnostics(), formatDiagnostics(), hasNativeModule()
+Nodes (3): buildGradeDistribution(), mockGetSessionEvents, PALETTE
 
 ### Community 54 - "Release Readiness"
 Cohesion: 0.25
@@ -317,17 +322,17 @@ Nodes (3): COI_HEADERS, http, server
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `font()` connect `font` to `react`, `Dock.tsx`, `StrengthSessionScreen.tsx`, `ClimbSessionScreen.tsx`, `LastSessionCard.tsx`, `ui/index.ts`, `CalendarScreen.tsx`, `colors.ts`, `SettingsScreen.tsx`, `ClimbProgressView.tsx`, `BugReportScreen.tsx`, `useTheme`, `StrengthProgressView.tsx`, `EndTimeSheet.tsx`, `RecentSessionsList.tsx`, `SessionHistoryScreen.tsx`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `package.json`?**
   _High betweenness centrality (0.047) - this node is a cross-community bridge._
-- **Why does `useTheme()` connect `useTheme` to `react`, `Dock.tsx`, `StrengthSessionScreen.tsx`, `ClimbSessionScreen.tsx`, `ui/index.ts`, `run`, `LogScreen.tsx`, `SettingsScreen.tsx`, `ClimbProgressView.tsx`, `EndTimeSheet.tsx`, `RecentSessionsList.tsx`, `App.tsx`, `SessionHistoryScreen.tsx`, `font`, `LastSessionCard.tsx`, `CalendarScreen.tsx`, `colors.ts`, `react-native`, `BugReportScreen.tsx`, `StrengthProgressView.tsx`, `BugReportScreen`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `useTheme()` connect `useTheme` to `BugReportScreen.tsx`, `gymStore.ts`, `ui/index.ts`, `SessionHistoryScreen.tsx`, `RoutineEditScreen.tsx`, `SettingsScreen.tsx`, `ClimbProgressView.tsx`, `ProgressScreen.tsx`, `StrengthSessionScreen.tsx`, `LogScreen.tsx`, `colors.ts`, `font`, `PressableScale`, `LastSessionCard.tsx`, `ClimbSessionScreen.tsx`, `spacing`, `ExerciseProgressScreen.tsx`, `CalendarScreen.tsx`, `StrengthProgressView.tsx`, `react-native`, `Button`, `RecentSessionsList.tsx`, `App.tsx`?**
+  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+- **Why does `run()` connect `run` to `ClimbSessionScreen.tsx`, `gymStore.ts`, `SessionHistoryScreen.tsx`, `RoutineEditScreen.tsx`, `SettingsScreen.tsx`, `sessionStore.ts`, `App.tsx`, `kilterSync.ts`, `LogScreen.tsx`, `exerciseData.ts`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **What connects `Stack`, `Tab`, `TabIconProps` to the rest of the system?**
   _372 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `react` be split into smaller, more focused modules?**
-  _Cohesion score 0.09982174688057041 - nodes in this community are weakly interconnected._
-- **Should `StrengthSessionScreen.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.06329113924050633 - nodes in this community are weakly interconnected._
-- **Should `ClimbSessionScreen.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05981981981981982 - nodes in this community are weakly interconnected._
+- **Should `strengthProgress.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.14333333333333334 - nodes in this community are weakly interconnected._
+- **Should `gymStore.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.07581453634085213 - nodes in this community are weakly interconnected._
+- **Should `ASCEND Project Instructions` be split into smaller, more focused modules?**
+  _Cohesion score 0.125 - nodes in this community are weakly interconnected._

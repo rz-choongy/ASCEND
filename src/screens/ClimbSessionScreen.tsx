@@ -18,7 +18,13 @@ import {
   getGyms,
   getSelectedClimbGym,
 } from '../domain/gymStore';
-import { applyClimbEvents, findSessionHighIndex, isGradeBand } from '../domain/climbLogUtils';
+import {
+  applyClimbEvents,
+  findSessionHighIndex,
+  formatVGrade,
+  isGradeBand,
+  loggedClimbVGrade,
+} from '../domain/climbLogUtils';
 import { formatElapsed } from '../domain/dateUtils';
 import {
   appendEvent,
@@ -31,7 +37,11 @@ import {
   setSessionTitle,
 } from '../domain/sessionStore';
 import { finishSession } from './confirmEndTime';
-import { getShowSessionTimer } from '../domain/settingsStore';
+import {
+  getShowLoggedVGrade,
+  getShowSessionTimer,
+  getShowTileVRange,
+} from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -139,6 +149,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [title, setTitle] = useState('');
   const [climbName, setClimbName] = useState('');
   const [showTimer, setShowTimer] = useState(true);
+  const [showLoggedVGrade, setShowLoggedVGrade] = useState(true);
+  const [showTileVRange, setShowTileVRange] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   /** Set while waiting for the climber to pin down a wide band's exact grade. */
   const [pendingLog, setPendingLog] = useState<{
@@ -194,6 +206,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       setSession(refreshedSession);
       setTitle((prev) => prev || refreshedSession?.title || '');
       setShowTimer(getShowSessionTimer());
+      setShowLoggedVGrade(getShowLoggedVGrade());
+      setShowTileVRange(getShowTileVRange());
       setNow(Date.now());
       const routeGymId = route.params.gymId;
       const sessionGymId = refreshedSession?.gym_id ?? null;
@@ -439,11 +453,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           const tileColor = grade.color ?? colors.surface;
           // Colour/number-graded gyms: show the V range under the gym's own label so you know
           // what you're picking. V-scale labels already say it.
-          const vRange = /^v/i.test(grade.label)
-            ? null
-            : grade.min === grade.max
-              ? `V${grade.min}`
-              : `V${grade.min}–${grade.max}`;
+          const vRange = showTileVRange ? formatVGrade(grade.label, grade.min, grade.max) : null;
           return (
             <PressableScale
               key={grade.id ?? grade.label}
@@ -532,13 +542,10 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             const isSessionHigh = log.eventId === sessionHighEventId;
             const isLatest = index === 0;
             const elapsed = formatElapsed(log.createdAt - session.started_at);
-            // A wide band logged through the exact-grade picker: show the grade that was picked,
-            // since the chip only carries the gym's own label (e.g. "6").
+            // Colour/number-graded gyms: the chip only carries the gym's own label (e.g. "5"), so
+            // show the V grade beside it -- the exact pick if there was one, else the band.
             const option = gradeOptions.find((grade) => grade.label === log.gradeLabel);
-            const pinnedGrade =
-              option && isGradeBand(option.min, option.max) && log.gradeMin === log.gradeMax
-                ? `V${log.gradeMin}`
-                : null;
+            const pinnedGrade = showLoggedVGrade ? loggedClimbVGrade(log, option) : null;
             return (
               <View
                 key={log.eventId}

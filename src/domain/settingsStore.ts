@@ -4,6 +4,8 @@ import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode }
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
+const SHOW_LOGGED_V_GRADE_KEY = 'show_logged_v_grade';
+const SHOW_TILE_V_RANGE_KEY = 'show_tile_v_range';
 const SHOW_SESSION_NOTIFICATION_KEY = 'show_session_notification';
 const SESSION_REMINDER_KEY = 'session_reminder';
 const PROGRESS_GRADE_GYM_ID_KEY = 'progress_grade_gym_id';
@@ -50,6 +52,33 @@ export const getShowSessionTimer = (): boolean => {
 
 export const setShowSessionTimer = (value: boolean): void => {
   setSetting(SHOW_SESSION_TIMER_KEY, value ? '1' : '0');
+};
+
+/**
+ * Whether each logged climb in a session shows its V grade next to the chip, at gyms whose
+ * labels aren't V grades already (colours, numbers). Defaults on.
+ */
+export const getShowLoggedVGrade = (): boolean => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    SHOW_LOGGED_V_GRADE_KEY,
+  ]);
+  return setting ? setting.value === '1' : true;
+};
+
+export const setShowLoggedVGrade = (value: boolean): void => {
+  setSetting(SHOW_LOGGED_V_GRADE_KEY, value ? '1' : '0');
+};
+
+/** Whether grade tiles show their V range under a non-V label (e.g. "V4–6"). Defaults on. */
+export const getShowTileVRange = (): boolean => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    SHOW_TILE_V_RANGE_KEY,
+  ]);
+  return setting ? setting.value === '1' : true;
+};
+
+export const setShowTileVRange = (value: boolean): void => {
+  setSetting(SHOW_TILE_V_RANGE_KEY, value ? '1' : '0');
 };
 
 /**
