@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.2',
+    date: '2026-10-25',
+    changes: [
+      { kind: 'fixed', text: 'Report a bug now always sends, even on an install where the mail module isn\'t built in yet -- it falls back to the share sheet instead of showing an error.' },
+    ],
+  },
+  {
     version: '2.2.1',
     date: '2026-09-24',
     changes: [

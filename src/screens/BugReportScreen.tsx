@@ -80,10 +80,24 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
     const subject = `ASCEND Bug Report (v${APP_VERSION})`;
     const body = `${description.trim()}\n\n---\n${diagnostics}`;
     try {
-      // See the comment in handleAttachScreenshot -- same reason this is a
-      // lazy import rather than a module-level one.
-      const MailComposer = await import('expo-mail-composer');
-      if (await MailComposer.isAvailableAsync()) {
+      // expo-mail-composer gives the nicer flow (prefilled recipient + attachment),
+      // but on an install whose native binary predates this feature the module
+      // isn't compiled in at all -- the dynamic import itself throws. That's not
+      // a send failure, just this module being unavailable here, so it's caught
+      // locally and treated the same as MailComposer reporting itself unavailable:
+      // fall through to the share sheet below instead of bubbling to the outer
+      // catch (which would surface a hard "couldn't send" error for something
+      // that can still go out another way).
+      let mailAvailable = false;
+      let MailComposer: typeof import('expo-mail-composer') | undefined;
+      try {
+        MailComposer = await import('expo-mail-composer');
+        mailAvailable = await MailComposer.isAvailableAsync();
+      } catch {
+        mailAvailable = false;
+      }
+
+      if (mailAvailable && MailComposer) {
         const result = await MailComposer.composeAsync({
           recipients: [REPORT_EMAIL],
           subject,
@@ -93,14 +107,15 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
         if (result.status !== MailComposer.MailComposerStatus.CANCELLED) {
           navigation.goBack();
         }
-      } else {
-        // No mail account configured -- hand the text to the share sheet so the
-        // report can still go out some other way. The share sheet doesn't
-        // reliably carry both a file and a message together, so this
-        // fallback path is text-only even if a screenshot was attached.
-        await Share.share({ message: `${subject}\n\n${body}` });
-        navigation.goBack();
+        return;
       }
+
+      // No mail account configured, or the module isn't available on this install --
+      // hand the text to the share sheet so the report can still go out some other
+      // way. The share sheet doesn't reliably carry both a file and a message
+      // together, so this fallback path is text-only even if a screenshot was attached.
+      await Share.share({ message: `${subject}\n\n${body}` });
+      navigation.goBack();
     } catch (e) {
       showDialog("Couldn't send report", e instanceof Error ? e.message : 'Something went wrong. Try again.');
     } finally {
