@@ -82,4 +82,11 @@ jobs:
       - name: eas build --profile production
         env:
           PLATFORM: ${{ inputs.platform }}
-        run: npx eas-cli build --platform "$PLATFORM" --profile production --non-interactive --no-wait
+        # Android production builds go straight to the Play internal testing track
+        # (eas.json submit.production). The Play service account key lives in EAS
+        # credentials, not in this repo.
+        # Only Android has a submit target, so iOS / all builds skip it.
+        run: |
+          SUBMIT=""
+          [ "$PLATFORM" = "android" ] && SUBMIT="--auto-submit"
+          npx eas-cli build --platform "$PLATFORM" --profile production --non-interactive --no-wait $SUBMIT
