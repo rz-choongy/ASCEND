@@ -15,6 +15,7 @@ import {
   buildSessionReplayMap,
   type SessionReplay,
 } from '../domain/calendarInsights';
+import { buildMonthGrid, chunkWeeks } from '../domain/calendarGrid';
 import { addDays, formatDuration, formatLocalDate, startOfWeek } from '../domain/dateUtils';
 import {
   getAbandonedSessions,
@@ -71,29 +72,6 @@ function sameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
-}
-
-/** Returns a Monday-anchored grid of Date | null for the month. */
-function buildMonthGrid(monthStart: Date): (Date | null)[] {
-  const year = monthStart.getFullYear();
-  const month = monthStart.getMonth();
-  const firstDayOfWeek = monthStart.getDay(); // 0=Sun
-  // Convert to Mon-based offset: Mon=0, Sun=6.
-  const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const totalCells = Math.ceil((offset + daysInMonth) / 7) * 7;
-
-  const cells: (Date | null)[] = [];
-  for (let i = 0; i < totalCells; i++) {
-    const dayIndex = i - offset + 1;
-    if (dayIndex < 1 || dayIndex > daysInMonth) {
-      cells.push(null);
-    } else {
-      cells.push(new Date(year, month, dayIndex));
-    }
-  }
-  return cells;
 }
 
 type SessionGroup = { dateKey: string; date: Date; sessions: SessionRow[] };
@@ -444,51 +422,56 @@ export function CalendarScreen() {
           </View>
 
           <View style={styles.grid}>
-            {grid.map((day, idx) => {
-              if (!day) {
-                return <View key={`blank-${idx}`} style={styles.dayCell} />;
-              }
+            {chunkWeeks(grid).map((week, weekIdx) => (
+              <View key={`week-${weekIdx}`} style={styles.weekRow}>
+                {week.map((day, dayIdx) => {
+                  const idx = weekIdx * 7 + dayIdx;
+                  if (!day) {
+                    return <View key={`blank-${idx}`} style={styles.dayCell} />;
+                  }
 
-              const key = formatLocalDate(day);
-              const daySessions = (sessionsByDate.get(key) ?? []).filter(
-                (s) => !typeFilter || s.type === typeFilter
-              );
-              const climbed = daySessions.some((s) => s.type === 'climb');
-              const trained = daySessions.some((s) => s.type === 'strength');
-              const isToday = sameDay(day, today);
-              const isSelected = sameDay(day, selectedDate);
+                  const key = formatLocalDate(day);
+                  const daySessions = (sessionsByDate.get(key) ?? []).filter(
+                    (s) => !typeFilter || s.type === typeFilter
+                  );
+                  const climbed = daySessions.some((s) => s.type === 'climb');
+                  const trained = daySessions.some((s) => s.type === 'strength');
+                  const isToday = sameDay(day, today);
+                  const isSelected = sameDay(day, selectedDate);
 
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={styles.dayCell}
-                  onPress={() => setSelectedDate(day)}
-                  activeOpacity={0.7}
-                >
-                  <View
-                    style={[
-                      styles.dayNumberWrapper,
-                      isSelected && styles.dayNumberSelected,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dayNumber,
-                        isToday && !isSelected && styles.dayNumberTodayText,
-                        isSelected && styles.dayNumberSelectedText,
-                      ]}
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      style={styles.dayCell}
+                      onPress={() => setSelectedDate(day)}
+                      activeOpacity={0.7}
                     >
-                      {day.getDate()}
-                    </Text>
-                  </View>
-                  {/* Same marks as the Today week strip: a filled dot for a climb, a ring
-                      around it for strength. */}
-                  <View style={[styles.dayRing, trained ? styles.dayRingStrength : null]}>
-                    <View style={[styles.dayDot, climbed ? styles.dayDotClimb : null]} />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                      <View
+                        style={[
+                          styles.dayNumberWrapper,
+                          isSelected && styles.dayNumberSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.dayNumber,
+                            isToday && !isSelected && styles.dayNumberTodayText,
+                            isSelected && styles.dayNumberSelectedText,
+                          ]}
+                        >
+                          {day.getDate()}
+                        </Text>
+                      </View>
+                      {/* Same marks as the Today week strip: a filled dot for a climb, a ring
+                          around it for strength. */}
+                      <View style={[styles.dayRing, trained ? styles.dayRingStrength : null]}>
+                        <View style={[styles.dayDot, climbed ? styles.dayDotClimb : null]} />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ))}
           </View>
 
           <View style={styles.divider} />
@@ -618,12 +601,15 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
 
   // Grid
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     paddingHorizontal: spacing.xs,
   },
+  // One row per week. Percentage widths (100/7%) in a wrapping row round up on some Android
+  // densities, so the 7th cell wrapped and every week showed 6 days, shifting all the dates.
+  weekRow: {
+    flexDirection: 'row',
+  },
   dayCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     alignItems: 'center',
     paddingVertical: 2,
     paddingHorizontal: 2,

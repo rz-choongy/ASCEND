@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.3',
+    date: '2026-10-26',
+    changes: [
+      { kind: 'fixed', text: 'The month calendar could show six days a week on some phones, putting every date under the wrong weekday.' },
+    ],
+  },
+  {
     version: '2.5.2',
     date: '2026-10-21',
     changes: [
