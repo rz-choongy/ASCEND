@@ -6,6 +6,7 @@ import {
   buildAllTimeStats,
   buildGradeDistribution,
   buildGradeDistributionAcrossGyms,
+  buildHardestSendTrend,
   buildWeekCompletion,
   buildWeeklyFrequency,
   findFirstReachedDate,
@@ -23,13 +24,14 @@ import {
 } from '../../domain/settingsStore';
 import { formatMonthDay } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
-import { Chip, StatGrid, StatTile, font, getContrastText, radius, spacing, useTheme, type Shadows } from '../../ui';
+import { Chip, LineChart, StatGrid, StatTile, font, getContrastText, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 import { GymScopeSheet, type GymScopeOption } from './GymScopeSheet';
 
 const WEEKS_SHOWN = 8;
 const SENDS_BARS_SHOWN = 6;
+const TREND_WEEKS = 12;
 
 /** Sentinel scope meaning "pool every gym", stored alongside real gym ids. */
 const ALL_GYMS = '__all__';
@@ -61,6 +63,7 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
   const allTimeStats = useMemo(() => buildAllTimeStats(scopedSessions), [scopedSessions]);
   const weeklyFrequency = useMemo(() => buildWeeklyFrequency(sessions, WEEKS_SHOWN), [sessions]);
   const weekCompletion = useMemo(() => buildWeekCompletion(sessions), [sessions]);
+  const gradeTrend = useMemo(() => buildHardestSendTrend(sessions, TREND_WEEKS), [sessions]);
   const availableGyms = useMemo(() => getAvailableClimbGyms(scopedSessions), [scopedSessions]);
 
   const activeScope = useMemo(() => {
@@ -277,6 +280,20 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
               grade doesn't.
             </Text>
           ) : null}
+        </View>
+      ) : null}
+
+      {gradeTrend.length >= 2 ? (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Grade trend</Text>
+            <Text style={styles.cardMeta}>hardest send · last {TREND_WEEKS} weeks</Text>
+          </View>
+          <LineChart
+            points={gradeTrend.map((p) => ({ value: p.grade, label: p.weekLabel }))}
+            height={120}
+            valueFormatter={(value) => `V${Math.round(value)}`}
+          />
         </View>
       ) : null}
 

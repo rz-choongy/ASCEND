@@ -21,13 +21,16 @@ Legend: ✅ Done · 🔄 In Progress · 🔜 Next · 📋 Planned · 💭 Consid
 
 ---
 
-## Mode 1 Polish — In Progress 🔄
+## Mode 1 Polish — Mostly done
+
+Shipped through 2.5.3 (see `src/changelog.ts` for the full log): routines, live session
+notification, end-time editor, V grades on colour/number gyms, in-app bug reports, haptics.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| CalendarScreen month nav limits | 🔄 | Cap prev at 12 months, disable future |
-| CalendarScreen reset to today on focus | 🔄 | selectedDate stale bug |
-| GymSelectScreen empty state | 🔄 | "No gyms yet" message |
+| CalendarScreen month nav limits | ✅ | Prev capped at 12 months, future disabled |
+| CalendarScreen reset to today on focus | 🔄 | Unverified, check before closing |
+| GymSelectScreen empty state | ✅ | "No gyms yet" message |
 | SessionHistoryScreen grade chips in edit | 🔄 | Inconsistent fallback to TextInput |
 | DESIGN.md design brief | ✅ | Done |
 | ROADMAP.md | ✅ | This file |
@@ -62,16 +65,16 @@ Legend: ✅ Done · 🔄 In Progress · 🔜 Next · 📋 Planned · 💭 Consid
 
 ---
 
-## Mode 3 — Progress + Analytics 📋
+## Mode 3 — Progress + Analytics 🔄
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Climbing progress — grade trend line | 📋 | Hardest send over time |
-| Climbing volume — grade bucket chart | 📋 | Stacked bar, per session or weekly |
-| Strength volume — total kg per session | 📋 | Simple trend, not complex |
-| Session frequency chart | 📋 | Climbing vs strength split |
-| Personal records | 📋 | Heaviest set, hardest grade |
-| Grade distribution per session | 📋 | Data model already supports this |
+| Climbing progress — grade trend line | ✅ | 2.6.0: weekly hardest send in V, all gyms pooled, last 12 weeks |
+| Climbing volume — grade bucket chart | ✅ | Grade pyramid, per gym or pooled |
+| Strength volume — total kg per session | ✅ | Per-exercise trend, est. 1RM, volume |
+| Session frequency chart | ✅ | 8-week frequency card |
+| Personal records | ✅ | Hardest send, longest streak, flash rate, most climbs |
+| Bodyweight trend | ✅ | Progress screen card |
 
 Schema: No new tables needed — all derivable from events.
 

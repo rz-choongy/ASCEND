@@ -8,7 +8,11 @@ jest.mock('./gymStore', () => ({
 }));
 
 import { getSessionEvents } from './sessionStore';
-import { buildGradeDistribution, buildGradeDistributionAcrossGyms } from './progressInsights';
+import {
+  buildGradeDistribution,
+  buildGradeDistributionAcrossGyms,
+  buildHardestSendTrend,
+} from './progressInsights';
 import type { SessionRow } from './types';
 
 const mockGetSessionEvents = getSessionEvents as jest.Mock;
@@ -145,5 +149,73 @@ describe('flash counts', () => {
     );
     const bars = buildGradeDistributionAcrossGyms([makeSession('a', 'gym-1'), makeSession('b', 'gym-2')], PALETTE);
     expect(bars[0]).toMatchObject({ label: 'V4', count: 2, flashCount: 1 });
+  });
+});
+
+describe('buildHardestSendTrend', () => {
+  // Wednesday 2026-10-28; its week starts Monday 2026-10-26.
+  const TODAY = new Date(2026, 9, 28);
+  const at = (month: number, day: number) => new Date(2026, month, day, 18).getTime();
+  const sessionAt = (id: string, gymId: string, startedAt: number): SessionRow => ({
+    ...makeSession(id, gymId),
+    started_at: startedAt,
+  });
+
+  it('keeps the hardest send of each week, oldest week first', () => {
+    mockGetSessionEvents.mockImplementation((sessionId: string) =>
+      ({
+        mon: [climbEvent('e1', 'V3', 3, 3), climbEvent('e2', 'V5', 5, 5)],
+        tue: [climbEvent('e3', 'V4', 4, 4)],
+        prev: [climbEvent('e4', 'V6', 6, 6)],
+      })[sessionId] ?? []
+    );
+
+    const trend = buildHardestSendTrend(
+      [sessionAt('mon', 'gym-1', at(9, 26)), sessionAt('tue', 'gym-1', at(9, 27)), sessionAt('prev', 'gym-1', at(9, 21))],
+      12,
+      TODAY
+    );
+
+    expect(trend).toEqual([
+      { weekLabel: '19 Oct', grade: 6 },
+      { weekLabel: '26 Oct', grade: 5 },
+    ]);
+  });
+
+  it('pools gyms on the V scale and uses the midpoint of a band', () => {
+    mockGetSessionEvents.mockImplementation((sessionId: string) =>
+      sessionId === 'a' ? [climbEvent('e1', 'Purple', 3, 7)] : [climbEvent('e2', 'Blue', 4, 4)]
+    );
+
+    const trend = buildHardestSendTrend(
+      [sessionAt('a', 'gym-1', at(9, 26)), sessionAt('b', 'gym-2', at(9, 27))],
+      12,
+      TODAY
+    );
+
+    expect(trend).toEqual([{ weekLabel: '26 Oct', grade: 5 }]);
+  });
+
+  it('skips weeks without climbing and drops sessions before the window', () => {
+    mockGetSessionEvents.mockReturnValue([climbEvent('e1', 'V2', 2, 2)]);
+
+    const trend = buildHardestSendTrend(
+      [
+        sessionAt('old', 'gym-1', at(9, 4)), // week of 28 Sep, outside a 4-week window
+        sessionAt('a', 'gym-1', at(9, 6)),
+        sessionAt('b', 'gym-1', at(9, 27)),
+      ],
+      4,
+      TODAY
+    );
+
+    expect(trend.map((p) => p.weekLabel)).toEqual(['5 Oct', '26 Oct']);
+  });
+
+  it('ignores strength sessions and empty climb sessions', () => {
+    mockGetSessionEvents.mockReturnValue([]);
+    const strength = { ...sessionAt('s', 'gym-1', at(9, 26)), type: 'strength' as const };
+
+    expect(buildHardestSendTrend([strength, sessionAt('c', 'gym-1', at(9, 26))], 12, TODAY)).toEqual([]);
   });
 });

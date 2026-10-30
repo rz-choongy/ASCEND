@@ -180,6 +180,43 @@ export const buildGradeDistributionAcrossGyms = (
     }));
 };
 
+export type GradeTrendPoint = {
+  weekLabel: string;
+  /** Hardest send that week, on the V scale. */
+  grade: number;
+};
+
+/**
+ * Hardest send per week over the last `weeks` weeks, oldest first, pooled across gyms.
+ *
+ * Uses the midpoint grade, like the pooled pyramid, so a wide colour band doesn't lift the line
+ * to the top of its range. Weeks without a climb are left out rather than plotted as zero -- a
+ * week off is not a drop in grade.
+ */
+export const buildHardestSendTrend = (
+  sessions: SessionRow[],
+  weeks: number,
+  today: Date = new Date()
+): GradeTrendPoint[] => {
+  const thisWeekStart = startOfWeek(today);
+  const firstWeekStart = addDays(thisWeekStart, -(weeks - 1) * 7).getTime();
+  const hardestByWeek = new Map<number, number>();
+
+  sessions
+    .filter((session) => session.type === 'climb' && session.started_at >= firstWeekStart)
+    .forEach((session) => {
+      const weekStart = startOfWeek(new Date(session.started_at)).getTime();
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        const grade = midpointGrade(log.gradeMin, log.gradeMax);
+        if (grade > (hardestByWeek.get(weekStart) ?? -Infinity)) hardestByWeek.set(weekStart, grade);
+      });
+    });
+
+  return Array.from(hardestByWeek.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([weekStart, grade]) => ({ weekLabel: formatShortDate(weekStart), grade }));
+};
+
 export const buildStrengthVolumeTrend = (sessions: SessionRow[], limit: number): VolumeTrendBar[] => {
   const strengthSessions = sessions
     .filter((session) => session.type === 'strength')

@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.0',
+    date: '2026-10-30',
+    changes: [
+      { kind: 'new', text: 'Grade trend on Progress: your hardest send each week over the last 12 weeks, in V grades across all your gyms.' },
+    ],
+  },
+  {
     version: '2.5.3',
     date: '2026-10-26',
     changes: [
