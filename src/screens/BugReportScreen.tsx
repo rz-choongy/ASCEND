@@ -98,6 +98,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
     setSending(true);
     // Straight to the report inbox when it's configured; email / share sheet is the fallback for
     // builds without the env vars, or when the network call fails.
+    let inboxError: string | null = null;
     if (isBugReportApiConfigured()) {
       try {
         await submitBugReport({
@@ -112,12 +113,15 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
         navigation.goBack();
         showDialog('Report sent', 'Thanks! It goes straight to the fix queue.');
         return;
-      } catch {
-        // Fall through to email.
+      } catch (e) {
+        // Fall through to email, but keep the reason: a silent fallback hid inbox failures before.
+        inboxError = e instanceof Error ? e.message : String(e);
+        console.warn(`Bug report inbox failed, falling back to email: ${inboxError}`);
       }
     }
     const subject = `ASCEND Bug Report (v${APP_VERSION})`;
-    const body = `${description.trim()}\n\n---\n${diagnostics}`;
+    const inboxLine = inboxError ? `\nInbox error: ${inboxError}` : '';
+    const body = `${description.trim()}\n\n---\n${diagnostics}${inboxLine}`;
     try {
       // See the comment in handleAttachScreenshot -- same reason this is a
       // lazy import rather than a module-level one.

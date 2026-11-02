@@ -33,6 +33,7 @@ import {
 } from '../domain/sessionNotification';
 import { formatDaysAgo } from '../domain/strengthProgress';
 import { APP_VERSION } from '../changelog';
+import { isBugReportApiConfigured } from '../domain/bugReportApi';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
@@ -483,7 +484,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         <ListGroup>
           <ListRow
             title="Report a bug"
-            subtitle="Send a description and diagnostics by email"
+            subtitle={
+              isBugReportApiConfigured()
+                ? 'Send a description and diagnostics straight to the fix queue'
+                : 'Send a description and diagnostics by email'
+            }
             onPress={() => navigation.navigate('BugReport')}
           />
         </ListGroup>
