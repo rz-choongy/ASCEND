@@ -599,32 +599,34 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           const isSingleValue = gradingType !== 'color' && row.gradeMin === row.gradeMax;
           return (
             <View key={row.draftId} style={styles.gradeRow}>
-              <View style={styles.moveColumn}>
-                <IconButton
-                  variant="bare"
-                  size={26}
-                  hitSlop={4}
-                  disabled={index === 0}
-                  onPress={() => moveRow(index, -1)}
-                  accessibilityLabel={`Move ${row.label || 'grade'} up`}
-                >
-                  <Text style={[styles.moveGlyph, index === 0 ? styles.moveGlyphDisabled : null]}>▲</Text>
-                </IconButton>
-                <IconButton
-                  variant="bare"
-                  size={26}
-                  hitSlop={4}
-                  disabled={index === rows.length - 1}
-                  onPress={() => moveRow(index, 1)}
-                  accessibilityLabel={`Move ${row.label || 'grade'} down`}
-                >
-                  <Text
-                    style={[styles.moveGlyph, index === rows.length - 1 ? styles.moveGlyphDisabled : null]}
+              {gradingType === 'color' ? (
+                <View style={styles.moveColumn}>
+                  <IconButton
+                    variant="bare"
+                    size={26}
+                    hitSlop={4}
+                    disabled={index === 0}
+                    onPress={() => moveRow(index, -1)}
+                    accessibilityLabel={`Move ${row.label || 'grade'} up`}
                   >
-                    ▼
-                  </Text>
-                </IconButton>
-              </View>
+                    <Text style={[styles.moveGlyph, index === 0 ? styles.moveGlyphDisabled : null]}>▲</Text>
+                  </IconButton>
+                  <IconButton
+                    variant="bare"
+                    size={26}
+                    hitSlop={4}
+                    disabled={index === rows.length - 1}
+                    onPress={() => moveRow(index, 1)}
+                    accessibilityLabel={`Move ${row.label || 'grade'} down`}
+                  >
+                    <Text
+                      style={[styles.moveGlyph, index === rows.length - 1 ? styles.moveGlyphDisabled : null]}
+                    >
+                      ▼
+                    </Text>
+                  </IconButton>
+                </View>
+              ) : null}
               <TextInput
                 value={row.label}
                 onChangeText={(value) => updateRow(index, { label: value })}
