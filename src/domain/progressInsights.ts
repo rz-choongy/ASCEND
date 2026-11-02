@@ -1,6 +1,6 @@
 import { applyClimbEvents, midpointGrade, type ClimbLog } from './climbLogUtils';
 import { addDays, startOfWeek } from './dateUtils';
-import { getGymById } from './gymStore';
+import { gymDisplayNameById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
 import type { SessionRow } from './types';
@@ -29,7 +29,7 @@ export const getAvailableClimbGyms = (sessions: SessionRow[]): ClimbGymOption[] 
       if (seen.has(key)) return;
       seen.add(key);
       const gymName = session.gym_id
-        ? (getGymById(session.gym_id)?.name ?? 'Unknown gym')
+        ? (gymDisplayNameById(session.gym_id) ?? 'Unknown gym')
         : UNSPECIFIED_GYM_LABEL;
       options.push({ gymId: session.gym_id, gymName });
     });
@@ -258,7 +258,7 @@ export const buildAllTimeStats = (sessions: SessionRow[]): AllTimeStats => {
 
 const gymNameFor = (gymId: string | undefined): string => {
   if (!gymId) return UNSPECIFIED_GYM_LABEL;
-  return getGymById(gymId)?.name ?? UNSPECIFIED_GYM_LABEL;
+  return gymDisplayNameById(gymId) ?? UNSPECIFIED_GYM_LABEL;
 };
 
 export type DayCompletion = {

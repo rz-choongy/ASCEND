@@ -1,6 +1,6 @@
 import { applyClimbEvents } from './climbLogUtils';
 import { addDays, startOfWeek } from './dateUtils';
-import { getGymById } from './gymStore';
+import { gymDisplayNameById } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
 import { estimateOneRepMax, exerciseKeyFor, findRecordSetIds, type ExerciseNames } from './strengthProgress';
@@ -92,7 +92,7 @@ export const summarizeClimbSession = (session: SessionRow): ClimbSessionSummary 
     sessionId: session.id,
     startedAt: session.started_at,
     durationMs: durationOf(session),
-    gymName: (session.gym_id && getGymById(session.gym_id)?.name) || 'Climbing',
+    gymName: (session.gym_id && gymDisplayNameById(session.gym_id)) || 'Climbing',
     sends: logs.length,
     flashRate: logs.length === 0 ? 0 : Math.round((flashes / logs.length) * 100),
     bestGradeLabel: hardest?.label ?? null,

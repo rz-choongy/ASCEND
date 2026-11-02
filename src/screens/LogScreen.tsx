@@ -20,7 +20,7 @@ import {
 } from '../domain/dashboard';
 import { addDays, startOfWeek } from '../domain/dateUtils';
 import { getExerciseNames } from '../domain/exerciseStore';
-import { ensureSelectedClimbGym, getGymById, getSelectedClimbGym } from '../domain/gymStore';
+import { ensureSelectedClimbGym, getSelectedClimbGym, gymDisplayName, gymDisplayNameById } from '../domain/gymStore';
 import {
   createSession,
   getActiveSession,
@@ -94,7 +94,7 @@ const loadDashboard = (): Dashboard => {
   const lastRoutineId = getLastRoutineId();
   return {
     activeSession: getActiveSession(),
-    gymName: (getSelectedClimbGym() ?? ensureSelectedClimbGym()).name,
+    gymName: gymDisplayName(getSelectedClimbGym() ?? ensureSelectedClimbGym()),
     streak: getSessionStreak(),
     showTimer: getShowSessionTimer(),
     lastType: completed[completed.length - 1]?.type ?? null,
@@ -219,7 +219,7 @@ export function LogScreen() {
 
   const activeWhere = activeSession
     ? activeSession.type === 'climb'
-      ? (activeSession.gym_id && getGymById(activeSession.gym_id)?.name) || data.gymName
+      ? (activeSession.gym_id && gymDisplayNameById(activeSession.gym_id)) || data.gymName
       : activeSession.title?.trim() || ''
     : '';
 

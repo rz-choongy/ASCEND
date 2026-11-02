@@ -8,7 +8,8 @@ let mockUuidCount = 0;
 jest.mock('expo-crypto', () => ({ randomUUID: () => `new-${++mockUuidCount}` }));
 
 import { getAll, getFirst, run } from '../db/db';
-import { replaceGymGradeOptions } from './gymStore';
+import { gymDisplayName, replaceGymGradeOptions } from './gymStore';
+import type { GymRow } from './types';
 
 const mockGetAll = getAll as jest.Mock;
 const mockGetFirst = getFirst as jest.Mock;
@@ -52,5 +53,17 @@ describe('replaceGymGradeOptions', () => {
     ]);
     expect(sqlCalls('UPDATE gym_grade_options')).toEqual([]);
     expect(sqlCalls('INSERT INTO gym_grade_options')[0][0]).toBe('new-1');
+  });
+});
+
+describe('gymDisplayName', () => {
+  it('prefixes a branch with its company name', () => {
+    mockGetFirst.mockReturnValue({ id: 'bump', name: 'BUMP Bouldering', parent_id: null });
+    const branch = { id: 'bb', name: 'Blackburn', parent_id: 'bump' } as GymRow;
+    expect(gymDisplayName(branch)).toBe('BUMP Bouldering · Blackburn');
+  });
+
+  it('leaves a top-level gym as is', () => {
+    expect(gymDisplayName({ id: 'g', name: 'Boulder Lab', parent_id: null } as GymRow)).toBe('Boulder Lab');
   });
 });

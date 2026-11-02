@@ -21,6 +21,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-11-02',
     changes: [
       { kind: 'new', text: 'Reorder colour grades in the gym editor with the up and down arrows on each row.' },
+      { kind: 'improved', text: 'Branches show with their gym name, like "BUMP Bouldering · Blackburn".' },
+      { kind: 'improved', text: 'Numeric and colour grades always show a start and end V, so any grade can cover a range.' },
     ],
   },
   {

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
-import { ensureSelectedClimbGym, getSelectedClimbGym } from '../domain/gymStore';
+import { ensureSelectedClimbGym, getSelectedClimbGym, gymDisplayName } from '../domain/gymStore';
 import { KilterAuthError } from '../integrations/kilter/kilterAuth';
 import { kilterAuth } from '../integrations/kilter/kilterClient';
 import { syncKilter } from '../integrations/kilter/kilterSync';
@@ -87,7 +87,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   useFocusEffect(
     useCallback(() => {
       const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
-      setGymName(gym.name);
+      setGymName(gymDisplayName(gym));
       setTimerEnabled(getShowSessionTimer());
       setLoggedVGradeEnabled(getShowLoggedVGrade());
       setTileVRangeEnabled(getShowTileVRange());

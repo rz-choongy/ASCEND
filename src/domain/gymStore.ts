@@ -270,6 +270,18 @@ export const getGymById = (gymId: string): GymRow | null => {
   return getFirst<GymRow>('SELECT * FROM gyms WHERE id = ? LIMIT 1;', [gymId]);
 };
 
+/** Branches read as "Company · Branch" anywhere they appear without their parent alongside. */
+export const gymDisplayName = (gym: GymRow): string => {
+  if (!gym.parent_id) return gym.name;
+  const parent = getGymById(gym.parent_id);
+  return parent ? `${parent.name} · ${gym.name}` : gym.name;
+};
+
+export const gymDisplayNameById = (gymId: string): string | null => {
+  const gym = getGymById(gymId);
+  return gym ? gymDisplayName(gym) : null;
+};
+
 export const getSelectedClimbGym = (): GymRow | null => {
   ensureDefaultClimbGymSeeded();
   const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [

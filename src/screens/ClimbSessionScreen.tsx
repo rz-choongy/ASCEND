@@ -17,6 +17,7 @@ import {
   getGradeOptionsForGym,
   getGyms,
   getSelectedClimbGym,
+  gymDisplayNameById,
 } from '../domain/gymStore';
 import {
   applyClimbEvents,
@@ -144,6 +145,10 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [session, setSession] = useState(() => getSessionById(sessionId));
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentGym, setCurrentGym] = useState<GymLike | null>(null);
+  const currentGymName = useMemo(
+    () => (currentGym ? (gymDisplayNameById(currentGym.id) ?? currentGym.name) : null),
+    [currentGym]
+  );
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
   const [selectedGrade, setSelectedGrade] = useState<GradeOption>(GRADE_OPTIONS[0]);
   const [title, setTitle] = useState('');
@@ -398,7 +403,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
           <CloseIcon color={colors.textSecondary} />
         </IconButton>
         <Text style={styles.headerGym} numberOfLines={1}>
-          {currentGym?.name ?? 'Boulder gym'}
+          {currentGymName ?? 'Boulder gym'}
         </Text>
         {showTimer && session.status === 'active' ? (
           <View style={styles.timerCol}>
@@ -433,7 +438,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       >
         <View>
           <Text style={styles.gymSelectorLabel}>Climb grades</Text>
-          <Text style={styles.gymSelectorName}>{currentGym?.name ?? 'Default V-Scale'}</Text>
+          <Text style={styles.gymSelectorName}>{currentGymName ?? 'Default V-Scale'}</Text>
         </View>
         {/* Once a climb is logged the gym is fixed, so say so instead of offering a dead button. */}
         {gymLocked ? (

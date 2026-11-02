@@ -5821,7 +5821,7 @@
       "file_type": "code",
       "norm_label": "createstyles()",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L767"
+      "source_location": "L769"
     },
     {
       "id": "src_screens_gymeditscreen_findduplicatelabel",
@@ -20600,7 +20600,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L795",
+      "source_location": "L797",
       "weight": 1.0
     },
     {
@@ -20876,7 +20876,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L603",
+      "source_location": "L604",
       "weight": 1.0
     },
     {
@@ -20888,7 +20888,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L639",
+      "source_location": "L641",
       "weight": 1.0
     },
     {
@@ -55368,7 +55368,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L767",
+      "source_location": "L769",
       "weight": 1.0
     },
     {
@@ -59106,5 +59106,5 @@
       "source_file": "Docs for reference/Architecture.md"
     }
   ],
-  "built_at_commit": "f4a31a29838c1ad73454959186579de985289b77"
+  "built_at_commit": "88a916fd41d57f9dc02ca80ec84125235f2746d1"
 }

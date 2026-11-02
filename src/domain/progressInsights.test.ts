@@ -4,7 +4,7 @@ jest.mock('./sessionStore', () => ({
   getSessionEvents: jest.fn(),
 }));
 jest.mock('./gymStore', () => ({
-  getGymById: jest.fn(() => null),
+  gymDisplayNameById: jest.fn(() => null),
 }));
 
 import { getSessionEvents } from './sessionStore';

@@ -1,4 +1,4 @@
-import { getGymById, getSelectedClimbGym } from './gymStore';
+import { getSelectedClimbGym, gymDisplayName, gymDisplayNameById } from './gymStore';
 import { formatClockTime } from './dateUtils';
 import { getActiveSession, getLastLogAt } from './sessionStore';
 import { getAccentColorId, getSessionReminder, getShowSessionNotification } from './settingsStore';
@@ -82,8 +82,9 @@ const formatClock = (ms: number): string => {
 /** Where it's happening — the gym for a climb, the session title for strength. Mirrors LogScreen. */
 const describeWhere = (session: SessionRow): string => {
   if (session.type === 'climb') {
-    const byId = session.gym_id ? getGymById(session.gym_id)?.name : null;
-    return byId || getSelectedClimbGym()?.name || '';
+    const byId = session.gym_id ? gymDisplayNameById(session.gym_id) : null;
+    const selected = getSelectedClimbGym();
+    return byId || (selected ? gymDisplayName(selected) : '');
   }
   return session.title?.trim() || '';
 };

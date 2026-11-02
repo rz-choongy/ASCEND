@@ -596,7 +596,9 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
 
         {rows.map((row, index) => {
           const swatchColor = row.colorHex || colors.border;
-          const isSingleValue = gradingType !== 'color' && row.gradeMin === row.gradeMax;
+          // V-Scale grades are their own V. Numeric and colour grades map to a V range, so they always
+          // show both ends and any row can widen or narrow it.
+          const isSingleValue = gradingType === 'v_scale' && row.gradeMin === row.gradeMax;
           return (
             <View key={row.draftId} style={styles.gradeRow}>
               {gradingType === 'color' ? (
