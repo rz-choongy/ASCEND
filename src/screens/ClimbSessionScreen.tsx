@@ -363,12 +363,13 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
   const handleDone = () => {
     if (session?.status !== 'active') {
-      navigation.navigate('Tabs');
+      navigation.popTo('Tabs');
       return;
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSessionTitle(sessionId, title.trim());
-    finishSession(sessionId, () => navigation.navigate('Tabs'));
+    // popTo goes back to the existing tabs; navigate would stack a second copy on top.
+    finishSession(sessionId, () => navigation.popTo('Tabs'));
   };
 
   if (!session) {
@@ -380,6 +381,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   }
 
   const hasLogs = recentLogs.length > 0;
+  const gymLocked = session.status === 'active' && !canChangeSessionGym(sessionId);
   const elapsedMs = Math.max(0, now - session.started_at);
 
   return (
@@ -426,30 +428,34 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
       <Pressable
         style={styles.gymSelector}
-        onPress={() => {
-          if (!canChangeSessionGym(sessionId)) {
-            showDialog(
-              'Gym locked for this session',
-              'Finish this climbing session before switching gyms. Logged climbs keep their original gym and grade colors.'
-            );
-            return;
-          }
-          navigation.navigate('GymSelect', { returnToSessionId: sessionId });
-        }}
+        disabled={gymLocked}
+        onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
       >
         <View>
           <Text style={styles.gymSelectorLabel}>Climb grades</Text>
           <Text style={styles.gymSelectorName}>{currentGym?.name ?? 'Default V-Scale'}</Text>
         </View>
-        <Text style={styles.gymSelectorAction}>Change</Text>
+        {/* Once a climb is logged the gym is fixed, so say so instead of offering a dead button. */}
+        {gymLocked ? (
+          <Text style={styles.gymSelectorLocked}>Locked</Text>
+        ) : (
+          <Text style={styles.gymSelectorAction}>Change</Text>
+        )}
       </Pressable>
 
       {/* Grade grid — each tile tinted with its own grade color (shared with the log
           list below and the Progress grade pyramid), with a tonal amber ring marking
           the active tile. */}
-      <View style={styles.gradeGrid}>
+      <ScrollView
+        style={[styles.gradeGridWrap, gradeOptions.length > 12 ? styles.gradeGridScroll : null]}
+        scrollEnabled={gradeOptions.length > 12}
+        contentContainerStyle={styles.gradeGrid}
+        nestedScrollEnabled
+      >
         {gradeOptions.map((grade) => {
-          const active = selectedGrade.label === grade.label;
+          // Match by id so two grades sharing a label can't both light up.
+          const active =
+            selectedGrade.id && grade.id ? selectedGrade.id === grade.id : selectedGrade.label === grade.label;
           const tileColor = grade.color ?? colors.surface;
           // Colour/number-graded gyms: show the V range under the gym's own label so you know
           // what you're picking. V-scale labels already say it.
@@ -461,7 +467,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
               style={[
                 styles.gradeTile,
                 { backgroundColor: tileColor },
-                active ? styles.gradeTileActive : null,
+                // Ring in the tile's own contrast colour: the amber accent vanished on yellow tiles.
+                active ? [styles.gradeTileActive, { borderColor: getContrastText(tileColor) }] : null,
               ]}
               onPress={() => {
                 void Haptics.selectionAsync();
@@ -491,7 +498,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             </PressableScale>
           );
         })}
-      </View>
+      </ScrollView>
 
       <TextInput
         style={styles.climbNameInput}
@@ -544,8 +551,9 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             const elapsed = formatElapsed(log.createdAt - session.started_at);
             // Colour/number-graded gyms: the chip only carries the gym's own label (e.g. "5"), so
             // show the V grade beside it -- the exact pick if there was one, else the band.
-            const option = gradeOptions.find((grade) => grade.label === log.gradeLabel);
-            const pinnedGrade = showLoggedVGrade ? loggedClimbVGrade(log, option) : null;
+            // The stored range is the band that applied when it was logged; the gym's current
+            // option may have been edited since.
+            const pinnedGrade = showLoggedVGrade ? loggedClimbVGrade(log, null) : null;
             return (
               <View
                 key={log.eventId}
@@ -761,6 +769,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 16,
     marginTop: 1,
   },
+  gymSelectorLocked: {
+    ...font('medium'),
+    color: colors.textMuted,
+    fontSize: 16,
+  },
   gymSelectorAction: {
     ...font('medium'),
     color: colors.accent,
@@ -772,7 +785,14 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xxs,
+  },
+  gradeGridWrap: {
+    flexGrow: 0,
     marginBottom: spacing.sm,
+  },
+  // Big grade lists scroll inside about three and a half rows, so the session log keeps its room.
+  gradeGridScroll: {
+    maxHeight: 186,
   },
   gradeTile: {
     // Four per row: 4 x 23.9% + 3 x 4px gap fills the row at any phone width.
@@ -800,7 +820,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     ...typography.body,
     fontSize: 11,
     lineHeight: 13,
-    opacity: 0.8,
     fontVariant: ['tabular-nums'],
   },
 

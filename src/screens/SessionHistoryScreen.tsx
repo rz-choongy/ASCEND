@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getExerciseNames, getExercises } from '../domain/exerciseStore';
 import { applyClimbEvents, type ClimbLog } from '../domain/climbLogUtils';
 import { formatDuration } from '../domain/dateUtils';
-import { getGradeOptionsForGym } from '../domain/gymStore';
+import { defaultOptionsForType, getGradeOptionsForGym } from '../domain/gymStore';
 import {
   appendSessionCorrectionEvent,
   getSessionById,
@@ -172,12 +172,16 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     [session, events]
   );
 
+  // The gym the climb was logged at, else the session's. Old sessions with no gym get the
+  // default V-scale chips rather than free-text fields that accepted any range.
+  const editingGymId =
+    (editingEntry?.kind === 'climb' ? editingEntry.entry.gymId : null) ?? session?.gym_id ?? null;
   const gradeOptions = useMemo(() => {
-    if (!session?.gym_id) return [];
-    return getGradeOptionsForGym(session.gym_id)
+    const source = editingGymId ? getGradeOptionsForGym(editingGymId) : defaultOptionsForType('v_scale');
+    return source
       .map(normalizeGradeOption)
       .filter((grade): grade is GradeOption => grade !== null);
-  }, [session?.gym_id]);
+  }, [editingGymId]);
 
   const climbStats = useMemo(() => {
     if (session?.type !== 'climb' || climbs.length === 0) return null;
@@ -274,15 +278,40 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
   };
 
   const selectGrade = (grade: GradeOption) => {
-    setClimbDraft((draft) => ({
-      ...draft,
-      gradeLabel: grade.label,
-      gradeMin: `${grade.gradeMin}`,
-      gradeMax: `${grade.gradeMax}`,
-      gradeColor: grade.colorHex ?? null,
-      gradeId: grade.id,
-    }));
+    setClimbDraft((draft) => {
+      // Keep an exact pick (e.g. V5 off Blue V4-6) when it still fits the band, instead of
+      // widening the climb back to the full range.
+      const exact = Number(draft.gradeMin);
+      const keepExact =
+        draft.gradeMin === draft.gradeMax && exact >= grade.gradeMin && exact <= grade.gradeMax;
+      return {
+        ...draft,
+        gradeLabel: grade.label,
+        gradeMin: keepExact ? draft.gradeMin : `${grade.gradeMin}`,
+        gradeMax: keepExact ? draft.gradeMax : `${grade.gradeMax}`,
+        gradeColor: grade.colorHex ?? null,
+        gradeId: grade.id,
+      };
+    });
   };
+
+  const pickExactGrade = (value: number) => {
+    setClimbDraft((draft) => ({ ...draft, gradeMin: `${value}`, gradeMax: `${value}` }));
+  };
+
+  // Climbs logged before grade ids were kept on edit can carry an id no option has; match
+  // those by label instead.
+  const draftIdKnown = gradeOptions.some((grade) => grade.id && grade.id === climbDraft.gradeId);
+  const isDraftGrade = (grade: GradeOption) =>
+    draftIdKnown ? grade.id === climbDraft.gradeId : climbDraft.gradeLabel === grade.label;
+  const draftBand = gradeOptions.find(isDraftGrade);
+  const exactChoices =
+    draftBand && draftBand.gradeMax > draftBand.gradeMin
+      ? Array.from(
+          { length: draftBand.gradeMax - draftBand.gradeMin + 1 },
+          (_, index) => draftBand.gradeMin + index
+        )
+      : [];
 
   const closeEdit = () => {
     setEditingEntry(null);
@@ -575,7 +604,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                 {gradeOptions.length > 0 ? (
                   <View style={styles.gradeChipRow}>
                     {gradeOptions.map((grade) => {
-                      const selected = climbDraft.gradeLabel === grade.label;
+                      const selected = isDraftGrade(grade);
                       return (
                         <Pressable
                           key={grade.id ?? grade.label}
@@ -609,6 +638,26 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                     placeholderTextColor={colors.textMuted}
                   />
                 )}
+
+                {exactChoices.length > 0 ? (
+                  // Same rule as logging: a band asks which grade it really was.
+                  <View style={styles.gradeChipRow}>
+                    {exactChoices.map((value) => {
+                      const selected =
+                        climbDraft.gradeMin === climbDraft.gradeMax && Number(climbDraft.gradeMin) === value;
+                      return (
+                        <Pressable
+                          key={value}
+                          style={[styles.gradeChip, selected ? styles.gradeChipSelected : null]}
+                          onPress={() => pickExactGrade(value)}
+                          accessibilityLabel={`Exact grade V${value}`}
+                        >
+                          <Text style={[styles.gradeChipText, { color: colors.textPrimary }]}>V{value}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
 
                 {gradeOptions.length === 0 && (
                   <View style={styles.modalRow}>

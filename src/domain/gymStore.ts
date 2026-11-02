@@ -392,10 +392,50 @@ export const getGradeOptionsForGym = (gymId: string): GymGradeOptionRow[] => {
   );
 };
 
+// Updates rows in place by id so a rename or range tweak keeps the grade's id
+// (logged climbs store it as gradeId). Rows the caller dropped are deleted;
+// rows without a known id are inserted fresh.
 const doReplaceGymGradeOptions = (gymId: string, options: GymGradeOptionInput[]): void => {
-  run('DELETE FROM gym_grade_options WHERE gym_id = ?;', [gymId]);
-  insertGradeOptions(gymId, options);
-  run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [Date.now(), gymId]);
+  const existingIds = new Set(
+    getAll<{ id: string }>('SELECT id FROM gym_grade_options WHERE gym_id = ?;', [gymId]).map(
+      (row) => row.id
+    )
+  );
+  const normalized = options.map((option, index) =>
+    normalizeGradeOption(
+      { ...option, id: option.id && existingIds.has(option.id) ? option.id : undefined },
+      index
+    )
+  );
+  const keptIds = new Set(normalized.map((option) => option.id));
+  existingIds.forEach((id) => {
+    if (!keptIds.has(id)) run('DELETE FROM gym_grade_options WHERE id = ?;', [id]);
+  });
+
+  const timestamp = Date.now();
+  const toInsert: NormalizedGymGradeOption[] = [];
+  normalized.forEach((option) => {
+    if (!existingIds.has(option.id)) {
+      toInsert.push(option);
+      return;
+    }
+    run(
+      `UPDATE gym_grade_options
+        SET label = ?, grade_min = ?, grade_max = ?, color_hex = ?, sort_order = ?, updated_at = ?
+        WHERE id = ?;`,
+      [
+        option.label,
+        option.gradeMin,
+        option.gradeMax,
+        option.colorHex,
+        option.sortOrder,
+        timestamp,
+        option.id,
+      ]
+    );
+  });
+  insertGradeOptions(gymId, toInsert);
+  run('UPDATE gyms SET updated_at = ? WHERE id = ?;', [timestamp, gymId]);
 };
 
 export const replaceGymGradeOptions = (

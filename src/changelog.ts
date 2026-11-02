@@ -17,6 +17,21 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.1',
+    date: '2026-11-02',
+    changes: [
+      { kind: 'fixed', text: 'Editing a gym\'s grades no longer breaks the link to climbs you already logged there.' },
+      { kind: 'fixed', text: 'You can now add a gym\'s first branch: open the gym and tap Add a branch of this gym.' },
+      { kind: 'fixed', text: 'Editing a gym mid-session no longer switches your session or selected gym to it.' },
+      { kind: 'fixed', text: 'Closing the gym editor with unsaved changes now asks before throwing them away.' },
+      { kind: 'fixed', text: 'Re-picking a colour when editing a logged climb keeps its exact V grade, and you can change the exact grade there.' },
+      { kind: 'improved', text: 'V-scale and number gyms set each grade with one stepper, and you can type the number.' },
+      { kind: 'improved', text: 'Grade tiles use higher-contrast text, and the selected tile stays visible on yellow.' },
+      { kind: 'improved', text: 'Gyms with more than 12 grades scroll the grade grid, so the session list keeps its space.' },
+      { kind: 'improved', text: 'The gym row shows Locked once you log a climb, instead of a Change button that only opened a warning.' },
+    ],
+  },
+  {
     version: '2.6.0',
     date: '2026-10-30',
     changes: [

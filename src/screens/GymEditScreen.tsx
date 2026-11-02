@@ -45,13 +45,15 @@ type GradingType = 'v_scale' | 'numeric' | 'color';
 
 type EditableGradeRow = {
   draftId: string;
+  /** Saved grade option id; kept so edits update the row instead of replacing it. */
+  id?: string;
   label: string;
   colorHex: string;
   gradeMin: string;
   gradeMax: string;
 };
 
-type GradeRowFields = Omit<EditableGradeRow, 'draftId'>;
+type GradeRowFields = Omit<EditableGradeRow, 'draftId' | 'id'>;
 
 const TYPE_OPTIONS: { value: GradingType; label: string }[] = [
   { value: 'v_scale', label: 'V-Scale' },
@@ -106,9 +108,10 @@ const getCreatedGymId = (created: unknown): string | null => {
 
 const normalizeGradeRows = (grades: unknown[]): EditableGradeRow[] => {
   return grades
-    .map((grade) => {
+    .map((grade): EditableGradeRow | null => {
       if (!grade || typeof grade !== 'object') return null;
       const value = grade as {
+        id?: unknown;
         label?: unknown;
         gradeMin?: unknown;
         gradeMax?: unknown;
@@ -126,6 +129,7 @@ const normalizeGradeRows = (grades: unknown[]): EditableGradeRow[] => {
       }
       return {
         draftId: createDraftRowId(),
+        id: typeof value.id === 'string' ? value.id : undefined,
         label: value.label,
         colorHex: typeof color === 'string' ? color : '',
         gradeMin: `${min}`,
@@ -138,6 +142,24 @@ const normalizeGradeRows = (grades: unknown[]): EditableGradeRow[] => {
 const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+/** Compares what the user can change, ignoring draft ids, to spot unsaved edits. */
+const snapshotForm = (name: string, gradingType: GradingType, rows: EditableGradeRow[]): string =>
+  JSON.stringify({
+    name: name.trim(),
+    gradingType,
+    rows: rows.map(({ draftId: _draftId, ...fields }) => fields),
+  });
+
+const findDuplicateLabel = (labels: string[]): string | null => {
+  const seen = new Set<string>();
+  for (const label of labels) {
+    const key = label.toLowerCase();
+    if (seen.has(key)) return label;
+    seen.add(key);
+  }
+  return null;
 };
 
 const rowsMatchSeed = (rows: EditableGradeRow[], type: GradingType): boolean => {
@@ -183,14 +205,44 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   // Plain ref, not state: guards against a second tap firing before React
   // re-renders with the disabled button, since handleSave runs synchronously.
   const isSavingRef = useRef(false);
+  // Form state as loaded, so closing can warn about unsaved edits.
+  const initialSnapshotRef = useRef(snapshotForm(name, gradingType, rows));
+  // Set right before a save or delete navigates away, so the guard lets it through.
+  const allowLeaveRef = useRef(false);
+  const latestSnapshot = snapshotForm(name, gradingType, rows);
+  const latestSnapshotRef = useRef(latestSnapshot);
+  latestSnapshotRef.current = latestSnapshot;
 
   useEffect(() => {
     if (!editingGymId || !editingGym) return;
-    setName(editingGym.name);
     const existingRows = normalizeGradeRows(getGradeOptionsForGym(editingGymId));
-    setRows(existingRows.length > 0 ? existingRows : seedRowsForType(editingGym.grading_type));
+    const loadedRows =
+      existingRows.length > 0 ? existingRows : seedRowsForType(editingGym.grading_type);
+    setName(editingGym.name);
+    setRows(loadedRows);
     setGradingType(editingGym.grading_type);
+    initialSnapshotRef.current = snapshotForm(editingGym.name, editingGym.grading_type, loadedRows);
   }, [editingGym, editingGymId]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (allowLeaveRef.current) return;
+      if (latestSnapshotRef.current === initialSnapshotRef.current) return;
+      e.preventDefault();
+      showDialog('Discard changes?', 'Your edits to this gym haven’t been saved.', [
+        { text: 'Keep editing', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () => {
+            allowLeaveRef.current = true;
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const replaceTypeRows = (nextType: GradingType) => {
     setGradingType(nextType);
@@ -224,16 +276,39 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   };
 
   const addRow = () => {
-    setRows((current) => [
-      ...current,
-      {
-        draftId: createDraftRowId(),
-        label: `Grade ${current.length + 1}`,
-        colorHex: colors.gradePalette[current.length % colors.gradePalette.length],
-        gradeMin: `${current.length}`,
-        gradeMax: `${current.length}`,
-      },
-    ]);
+    setRows((current) => {
+      // Continue the scale from the last row instead of restarting at the row count.
+      const last = current[current.length - 1];
+      const lastMax = last ? toNumber(last.gradeMax, current.length - 1) : -1;
+      const nextMin = gradingType === 'color' ? Math.max(lastMax, 0) : lastMax + 1;
+      const nextMax = gradingType === 'color' ? nextMin + 1 : nextMin;
+      return [
+        ...current,
+        {
+          draftId: createDraftRowId(),
+          label: gradingType === 'v_scale' ? `V${nextMin}` : `Grade ${current.length + 1}`,
+          colorHex: colors.gradePalette[current.length % colors.gradePalette.length],
+          gradeMin: `${nextMin}`,
+          gradeMax: `${nextMax}`,
+        },
+      ];
+    });
+  };
+
+  // Typed values: keep digits only. Min/max order is fixed on save.
+  const typeGradeBound = (index: number, field: 'gradeMin' | 'gradeMax' | 'both', text: string) => {
+    const digits = text.replace(/[^0-9]/g, '');
+    updateRow(index, field === 'both' ? { gradeMin: digits, gradeMax: digits } : { [field]: digits });
+  };
+
+  const adjustBothBounds = (index: number, delta: number) => {
+    setRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+        const next = `${Math.max(0, toNumber(row.gradeMin, 0) + delta)}`;
+        return { ...row, gradeMin: next, gradeMax: next };
+      })
+    );
   };
 
   const removeRow = (index: number) => {
@@ -267,7 +342,14 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     );
   };
 
+  const leave = () => {
+    allowLeaveRef.current = true;
+    navigation.goBack();
+  };
+
+  // Only used after creating a gym: a new gym becomes the selected one.
   const navigateAfterSave = (gymId: string) => {
+    allowLeaveRef.current = true;
     setSelectedClimbGym(gymId);
     if (returnToSessionId) {
       const changed = setSessionGymId(returnToSessionId, gymId);
@@ -276,10 +358,10 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           'Gym locked for this session',
           'Finish this climbing session before switching gyms. Your changes were saved.'
         );
-        navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
+        navigation.popTo('ClimbLogger', { sessionId: returnToSessionId });
         return;
       }
-      navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
+      navigation.popTo('ClimbLogger', { sessionId: returnToSessionId, gymId });
       return;
     }
     // GymEdit is always pushed directly from GymSelect — goBack() returns to
@@ -308,7 +390,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           onPress: () => {
             try {
               deleteGym(editingGym.id);
-              navigation.goBack();
+              leave();
             } catch (e) {
               showDialog('Can’t delete this gym', e instanceof Error ? e.message : 'Something went wrong.');
             }
@@ -331,7 +413,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         if (editingGymId) {
           // Rename existing branch — updateGym skips grade changes for branches
           updateGym({ id: editingGymId, name: trimmedName, gradingType, gradeOptions: [] });
-          navigation.goBack();
+          leave();
           return;
         }
         // Create new branch
@@ -345,18 +427,34 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
       }
 
       // ── Full gym mode: validate grades ───────────────────────────────────
-      const gradeOptions = rows
-        .map((row, index) => ({
+      const gradeOptions = rows.map((row, index) => {
+        const min = toNumber(row.gradeMin === '' ? 'x' : row.gradeMin, index);
+        const max = toNumber(row.gradeMax === '' ? 'x' : row.gradeMax, min);
+        return {
+          id: row.id,
           label: row.label.trim(),
-          gradeMin: toNumber(row.gradeMin, index),
-          gradeMax: toNumber(row.gradeMax, index),
+          gradeMin: Math.min(min, max),
+          gradeMax: Math.max(min, max),
           colorHex: row.colorHex.trim() || null,
           sortOrder: index,
-        }))
-        .filter((row) => row.label.length > 0);
+        };
+      });
 
       if (gradeOptions.length === 0) {
         showDialog('Add at least one grade', 'Each gym needs at least one grade before saving.');
+        return;
+      }
+
+      // A blank label used to be dropped silently, deleting the grade.
+      if (gradeOptions.some((option) => option.label.length === 0)) {
+        showDialog('Name every grade', 'One grade has no label. Give it a name, or remove it with ×.');
+        return;
+      }
+
+      // Climbs and stats match grades by label, so two "Blue" rows would mix up.
+      const duplicate = findDuplicateLabel(gradeOptions.map((option) => option.label));
+      if (duplicate) {
+        showDialog('Two grades share a name', `“${duplicate}” is used twice. Give each grade its own label.`);
         return;
       }
 
@@ -367,7 +465,8 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           gradingType,
           gradeOptions,
         });
-        navigateAfterSave(editingGymId);
+        // Editing a gym shouldn't switch the selected gym or the live session to it.
+        leave();
         return;
       }
 
@@ -485,6 +584,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
 
         {rows.map((row, index) => {
           const swatchColor = row.colorHex || colors.border;
+          const isSingleValue = gradingType !== 'color' && row.gradeMin === row.gradeMax;
           return (
             <View key={row.draftId} style={styles.gradeRow}>
               <TextInput
@@ -494,21 +594,23 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                 placeholderTextColor={colors.textMuted}
                 style={[styles.input, styles.gradeLabelInput]}
               />
-              <View style={styles.rangeGroup}>
-                <Stepper
-                  compact
-                  value={row.gradeMin}
-                  onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
-                  onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
-                />
-                <Text style={styles.rangeDash}>–</Text>
-                <Stepper
-                  compact
-                  value={row.gradeMax}
-                  onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
-                  onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
-                />
-              </View>
+              {isSingleValue ? (
+                // One value per grade on V-scale and numeric gyms: one stepper sets both bounds.
+                <View style={styles.rangeGroup}>
+                  <Text style={styles.rangeDash}>V</Text>
+                  <Stepper
+                    compact
+                    value={row.gradeMin}
+                    editable={{
+                      text: row.gradeMin,
+                      onChangeText: (text) => typeGradeBound(index, 'both', text),
+                      keyboardType: 'numeric',
+                    }}
+                    onDecrement={() => adjustBothBounds(index, -1)}
+                    onIncrement={() => adjustBothBounds(index, 1)}
+                  />
+                </View>
+              ) : null}
               <PressableScale
                 onPress={() => setColorPickerIndex(index)}
                 scaleTo={0.9}
@@ -522,6 +624,34 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
               >
                 <Text style={styles.deleteGlyph}>×</Text>
               </IconButton>
+              {!isSingleValue ? (
+                <View style={[styles.rangeGroup, styles.rangeGroupFull]}>
+                  <Text style={styles.rangeDash}>V</Text>
+                  <Stepper
+                    compact
+                    value={row.gradeMin}
+                    editable={{
+                      text: row.gradeMin,
+                      onChangeText: (text) => typeGradeBound(index, 'gradeMin', text),
+                      keyboardType: 'numeric',
+                    }}
+                    onDecrement={() => adjustGradeBound(index, 'gradeMin', -1)}
+                    onIncrement={() => adjustGradeBound(index, 'gradeMin', 1)}
+                  />
+                  <Text style={styles.rangeDash}>–</Text>
+                  <Stepper
+                    compact
+                    value={row.gradeMax}
+                    editable={{
+                      text: row.gradeMax,
+                      onChangeText: (text) => typeGradeBound(index, 'gradeMax', text),
+                      keyboardType: 'numeric',
+                    }}
+                    onDecrement={() => adjustGradeBound(index, 'gradeMax', -1)}
+                    onIncrement={() => adjustGradeBound(index, 'gradeMax', 1)}
+                  />
+                </View>
+              ) : null}
             </View>
           );
         })}
@@ -533,10 +663,23 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           onPress={handleSave}
           disabled={!name.trim() || isSaving}
         />
-        {editingGym && !editingGym.is_default ? (
-          <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
-            <Text style={styles.deleteLinkText}>Delete gym</Text>
-          </Pressable>
+        {editingGym ? (
+          <View style={styles.footerLinks}>
+            {/* Without this, a gym's first branch could never be created: the branch
+                list (and its Add branch button) only opens once a gym has branches. */}
+            <Pressable
+              onPress={() => navigation.push('GymEdit', { parentId: editingGym.id })}
+              hitSlop={8}
+              style={styles.deleteLink}
+            >
+              <Text style={styles.addRowText}>Add a branch</Text>
+            </Pressable>
+            {!editingGym.is_default ? (
+              <Pressable onPress={handleDelete} hitSlop={8} style={styles.deleteLink}>
+                <Text style={styles.deleteLinkText}>Delete gym</Text>
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
       </View>
       </KeyboardAvoidingView>
@@ -675,6 +818,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     alignItems: 'center',
     gap: spacing.xxs,
   },
+  // Colour bands: label, swatch and delete on top, the V range on its own line below.
+  rangeGroupFull: {
+    flexBasis: '100%',
+    justifyContent: 'center',
+  },
   rangeDash: {
     color: colors.textMuted,
     fontSize: 16,
@@ -732,6 +880,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   footer: {
     paddingTop: spacing.xs,
     gap: spacing.xs,
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
   deleteLink: {
     minHeight: 40,

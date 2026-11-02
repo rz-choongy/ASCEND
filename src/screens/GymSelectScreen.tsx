@@ -81,11 +81,11 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           'Gym locked for this session',
           'Finish this climbing session before switching gyms. Logged climbs keep their original gym and grade colors.'
         );
-        navigation.navigate('ClimbLogger', { sessionId: returnToSessionId });
+        navigation.popTo('ClimbLogger', { sessionId: returnToSessionId });
         return;
       }
       setSelectedClimbGym(gymId);
-      navigation.navigate('ClimbLogger', { sessionId: returnToSessionId, gymId });
+      navigation.popTo('ClimbLogger', { sessionId: returnToSessionId, gymId });
       return;
     }
     setSelectedClimbGym(gymId);

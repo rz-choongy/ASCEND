@@ -1,15 +1,18 @@
 /**
- * Returns a readable text color for a given background hex.
- * Uses perceived luminance so dark tiles get white text and light tiles get dark text.
+ * Returns a readable text color for a given background hex: black or white, whichever has the
+ * higher WCAG contrast ratio. The old brightness cutoff put white text on mid greens at about 2.3:1.
  */
 export const getContrastText = (hex: string): string => {
   const clean = hex.replace('#', '');
   if (clean.length !== 6) return '#ffffff';
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? '#000000' : '#ffffff';
+  const channel = (start: number) => {
+    const c = parseInt(clean.slice(start, start + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+  const contrastWithBlack = (luminance + 0.05) / 0.05;
+  const contrastWithWhite = 1.05 / (luminance + 0.05);
+  return contrastWithBlack >= contrastWithWhite ? '#000000' : '#ffffff';
 };
 
 const gradePalette = [
