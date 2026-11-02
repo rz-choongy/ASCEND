@@ -5821,7 +5821,7 @@
       "file_type": "code",
       "norm_label": "createstyles()",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L729"
+      "source_location": "L767"
     },
     {
       "id": "src_screens_gymeditscreen_findduplicatelabel",
@@ -12286,7 +12286,7 @@
       "file_type": "code",
       "norm_label": "app_version",
       "source_file": "src/changelog.ts",
-      "source_location": "L277"
+      "source_location": "L284"
     },
     {
       "id": "src_changelog_changelog",
@@ -20600,7 +20600,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L757",
+      "source_location": "L795",
       "weight": 1.0
     },
     {
@@ -20756,7 +20756,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L353",
+      "source_location": "L365",
       "weight": 1.0
     },
     {
@@ -20768,7 +20768,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L355",
+      "source_location": "L367",
       "weight": 1.0
     },
     {
@@ -20780,7 +20780,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L392",
+      "source_location": "L404",
       "weight": 1.0
     },
     {
@@ -20792,7 +20792,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L415",
+      "source_location": "L427",
       "weight": 1.0
     },
     {
@@ -20804,7 +20804,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L422",
+      "source_location": "L434",
       "weight": 1.0
     },
     {
@@ -20816,7 +20816,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L423",
+      "source_location": "L435",
       "weight": 1.0
     },
     {
@@ -20828,7 +20828,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L455",
+      "source_location": "L467",
       "weight": 1.0
     },
     {
@@ -20840,7 +20840,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L489",
+      "source_location": "L501",
       "weight": 1.0
     },
     {
@@ -20852,7 +20852,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L519",
+      "source_location": "L531",
       "weight": 1.0
     },
     {
@@ -20864,19 +20864,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L564",
-      "weight": 1.0
-    },
-    {
-      "source": "src_screens_gymeditscreen_gymeditscreen",
-      "target": "src_ui_components_stepper_stepper",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L601",
+      "source_location": "L576",
       "weight": 1.0
     },
     {
@@ -20888,7 +20876,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L620",
+      "source_location": "L603",
+      "weight": 1.0
+    },
+    {
+      "source": "src_screens_gymeditscreen_gymeditscreen",
+      "target": "src_ui_components_stepper_stepper",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/screens/GymEditScreen.tsx",
+      "source_location": "L639",
       "weight": 1.0
     },
     {
@@ -49989,7 +49989,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/changelog.ts",
-      "source_location": "L277",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -55368,7 +55368,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/screens/GymEditScreen.tsx",
-      "source_location": "L729",
+      "source_location": "L767",
       "weight": 1.0
     },
     {
@@ -59106,5 +59106,5 @@
       "source_file": "Docs for reference/Architecture.md"
     }
   ],
-  "built_at_commit": "0cba1bdf925217c008705408d2396e6e14d5ea3d"
+  "built_at_commit": "f4a31a29838c1ad73454959186579de985289b77"
 }

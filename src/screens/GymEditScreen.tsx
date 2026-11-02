@@ -311,6 +311,18 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     );
   };
 
+  // Swap with the neighbour above (-1) or below (+1). Save writes sort order from list
+  // position, and ids travel with the row, so logged climbs are unaffected.
+  const moveRow = (index: number, delta: -1 | 1) => {
+    setRows((current) => {
+      const target = index + delta;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
   const removeRow = (index: number) => {
     if (rows.length <= 1) {
       showDialog('At least one grade required', 'A gym needs at least one grade — add another before removing this one.');
@@ -587,6 +599,32 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           const isSingleValue = gradingType !== 'color' && row.gradeMin === row.gradeMax;
           return (
             <View key={row.draftId} style={styles.gradeRow}>
+              <View style={styles.moveColumn}>
+                <IconButton
+                  variant="bare"
+                  size={26}
+                  hitSlop={4}
+                  disabled={index === 0}
+                  onPress={() => moveRow(index, -1)}
+                  accessibilityLabel={`Move ${row.label || 'grade'} up`}
+                >
+                  <Text style={[styles.moveGlyph, index === 0 ? styles.moveGlyphDisabled : null]}>▲</Text>
+                </IconButton>
+                <IconButton
+                  variant="bare"
+                  size={26}
+                  hitSlop={4}
+                  disabled={index === rows.length - 1}
+                  onPress={() => moveRow(index, 1)}
+                  accessibilityLabel={`Move ${row.label || 'grade'} down`}
+                >
+                  <Text
+                    style={[styles.moveGlyph, index === rows.length - 1 ? styles.moveGlyphDisabled : null]}
+                  >
+                    ▼
+                  </Text>
+                </IconButton>
+              </View>
               <TextInput
                 value={row.label}
                 onChangeText={(value) => updateRow(index, { label: value })}
@@ -834,6 +872,17 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.separator,
+  },
+  moveColumn: {
+    gap: 2,
+  },
+  moveGlyph: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    ...font('medium'),
+  },
+  moveGlyphDisabled: {
+    color: colors.border,
   },
   deleteGlyph: {
     color: colors.textMuted,

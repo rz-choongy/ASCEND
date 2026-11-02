@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.2',
+    date: '2026-11-02',
+    changes: [
+      { kind: 'new', text: 'Reorder grades in the gym editor with the up and down arrows on each row.' },
+    ],
+  },
+  {
     version: '2.6.1',
     date: '2026-11-02',
     changes: [
