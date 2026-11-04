@@ -65,8 +65,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     // shadow through on Android.
     card: {
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.accentSoft,
       backgroundColor: colors.accentMuted,
       padding: spacing.sm,
       gap: spacing.xs,
@@ -91,7 +89,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     liveLabel: {
       ...font('medium'),
       fontSize: 13,
-      color: colors.accent,
+      color: colors.accentInk,
     },
     where: {
       ...typography.meta,
@@ -99,10 +97,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flexShrink: 1,
     },
     elapsed: {
-      ...typography.mono,
-      fontSize: 40,
+      ...typography.numeric,
+      fontSize: 44,
       lineHeight: 48,
-      color: colors.textPrimary,
     },
     started: {
       ...typography.title,

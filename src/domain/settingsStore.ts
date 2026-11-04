@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { getFirst, run } from '../db/db';
-import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
+import { ACCENT_PALETTE, DEFAULT_ACCENT_ID, LEGACY_ACCENT_IDS, type AccentColorId, type ThemeMode } from '../ui/tokens/colors';
 
 const THEME_MODE_KEY = 'theme_mode';
 const SHOW_SESSION_TIMER_KEY = 'show_session_timer';
@@ -151,6 +151,7 @@ export const getAccentColorId = (): AccentColorId => {
     ACCENT_COLOR_KEY,
   ]);
   const value = setting?.value;
+  if (value && LEGACY_ACCENT_IDS[value]) return LEGACY_ACCENT_IDS[value];
   return VALID_ACCENT_IDS.includes(value as AccentColorId) ? (value as AccentColorId) : DEFAULT_ACCENT_ID;
 };
 

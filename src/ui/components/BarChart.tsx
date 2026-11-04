@@ -29,9 +29,9 @@ type BarChartProps = {
   valueFormatter?: (value: number) => string;
 };
 
-const BAR_MAX_WIDTH = 20;
+const BAR_MAX_WIDTH = 22;
 const SEGMENT_GAP = 2;
-const BAR_RADIUS = 5;
+const BAR_RADIUS = 6;
 const MIN_SEGMENT_HEIGHT = 2;
 /** Headroom for the value label over the tallest bar, so it stays inside the chart. */
 const VALUE_LABEL_SPACE = 18;
@@ -41,7 +41,7 @@ const defaultFormatter = (value: number): string => `${Math.round(value)}`;
 export const BarChart = ({
   bars,
   maxValue,
-  height = 120,
+  height = 130,
   legend,
   valueFormatter = defaultFormatter,
 }: BarChartProps) => {

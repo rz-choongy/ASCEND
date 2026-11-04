@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCEND · type options, B vs current</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400..900&family=Chivo+Mono:wght@400..800&family=Sofia+Sans+Extra+Condensed:wght@400..900&family=Sofia+Sans:wght@400..800&family=Sofia+Sans+Condensed:wght@400..900&family=Schibsted+Grotesk:wght@400..900&family=Martian+Mono:wdth,wght@75..112.5,400..800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#151515; --mute:#5f5d58; --line:#d8d6d0; --bg:#efeee9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: "Schibsted Grotesk", Arial, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; }
+  main { max-width:1240px; margin:0 auto; padding:56px 32px 96px; }
+  h1 { font-family: "Schibsted Grotesk"; font-size:44px; font-weight:800; letter-spacing:-0.02em; }
+  .lede { font-size:17px; color:var(--mute); max-width:700px; margin-top:10px; }
+  .opt { background:#fff; border-radius:6px; padding:26px; margin-top:32px; display:grid; grid-template-columns: 1.15fr 1fr; gap:28px; }
+  .num { font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; display:inline-grid; place-items:center; margin-right:8px; }
+  .head { display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--mute); }
+  .why { margin:10px 0 16px; color:var(--mute); font-size:15px; }
+  .pairing { font-size:14px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:18px; }
+  .pairing b { color:var(--ink); }
+  .word { font-size:64px; line-height:1; margin:6px 0 14px; }
+  .h { font-size:30px; line-height:1.05; margin-bottom:10px; }
+  .body { font-size:16px; max-width:470px; }
+  .digits { font-size:38px; margin:14px 0 4px; font-variant-numeric: tabular-nums; }
+  .risk { font-size:13.5px; color:var(--mute); margin-top:16px; }
+  .risk b { color:var(--ink); }
+  .phones { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .cap { font-size:12.5px; color:var(--mute); margin-top:8px; text-align:center; }
+
+  .ph { aspect-ratio: 9/20; border-radius:26px; overflow:hidden; padding:16px 13px 12px; display:flex; flex-direction:column; gap:11px; background:var(--wall); color:var(--ink2); }
+  .ph .k { font-size:11px; font-weight:600; color:var(--mute2); }
+  .ph .row { display:flex; justify-content:space-between; align-items:center; }
+  .ph .datebar { display:inline-block; background:var(--ink2); color:var(--wall); font-size:11px; font-weight:700; padding:3px 7px;  align-self:flex-start; }
+  .ph .title { font-size:36px; line-height:.9; }
+  .ph .btn { background:#f2c230; border-radius:2px;  padding:14px 13px; display:flex; justify-content:space-between; align-items:center; font-size:18px;  }
+  .ph .btn small { display:block; font-size:11px; font-weight:500; opacity:.75; }
+  .ph .rule { height:6px; background:repeating-linear-gradient(90deg,var(--ink2) 0 14px,transparent 14px 20px); }
+  .ph .panel { background:var(--panel); border-radius:2px; padding:11px; }
+  .ph .nums { display:flex; gap:16px; margin-top:4px; }
+  .ph .n { font-size:26px; line-height:1.05; font-variant-numeric:tabular-nums; }
+  .ph .n small { display:block; font-size:10.5px; color:var(--mute2); }
+  .ph .nav { margin-top:auto; display:flex; justify-content:space-around; font-size:10.5px; font-weight:600; color:var(--mute2); }
+  .ph .nav span { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .ph .nav i { width:44px; height:22px; border-radius:2px; display:block; }
+  .ph .nav i::after { content:""; display:block; width:12px; height:12px; margin:5px auto; border:2px solid currentColor; border-radius:2px; }
+  .ph .nav .on { color:var(--ink2); } .ph .nav .on i { background:#f2c230; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .tile { height:42px; display:grid; place-items:center; font-size:17px; border-radius:1px; ); box-shadow:0 1px 0 rgba(0,0,0,.15); }
+  .tile.sel { outline:3px solid var(--ink2); outline-offset:2px; }
+  .sendrow { display:grid; grid-template-columns:1.4fr 1fr; gap:6px; }
+  .sendrow div { border-radius:2px; padding:12px 0; text-align:center; font-size:16px; }
+  .sendrow .send { background:var(--ink2); color:var(--wall); } .sendrow .flash { background:#f2c230; }
+  .log li { list-style:none; display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:7px 0; border-bottom:1px solid var(--hair); }
+  .log li:last-child { border:0; }
+  .chipg { width:32px; height:17px; display:inline-grid; place-items:center; font-size:11px;  margin-right:6px; }
+
+  .light { --wall:#e4e2dd; --panel:#f6f5f2; --ink2:#151515; --mute2:#6b6964; --hair:rgba(0,0,0,.08); }
+  .dark  { --wall:#1b1c1b; --panel:#2a2b29; --ink2:#f1f0eb; --mute2:#9a9893; --hair:rgba(255,255,255,.08); }
+  .dark .ph .btn, .dark .sendrow .flash, .dark .ph .nav .on i { color:#151515; }
+  .ph, .ph .B { font-family:"Sofia Sans"; }
+  .D, .Dn { font-family:"Sofia Sans Extra Condensed"; font-weight:800; }
+  .ph .btn, .sendrow { font-family:"Sofia Sans"; font-weight:750; }
+  .ph .title { font-size:46px; } .ph .n { font-size:32px; } .tile { font-size:21px; }
+  .cmp { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:28px; background:#fff; border-radius:6px; padding:26px; }
+  .cmp h2 { font-size:15px; font-weight:700; margin-bottom:10px; }
+  .cmp h2 span { font-weight:500; color:var(--mute); }
+  .shot { aspect-ratio:9/20; border-radius:26px; overflow:hidden; background:#000; }
+  .shot img { width:100%; height:100%; object-fit:cover; display:block; }
+  .rowlabel { grid-column:1/-1; font-size:13px; font-weight:700; color:var(--mute); text-transform:none; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  .notes { margin-top:28px; background:#fff; border-radius:6px; padding:22px 26px; font-size:15px; }
+  .notes li { margin:6px 0 6px 18px; }
+</style>
+</head>
+<body><main>
+<style>
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:22px;background:#fff;border-radius:6px;padding:22px}
+.grid h2{font-size:14px;font-weight:700;margin-bottom:2px}.grid .hx{font-size:12px;color:var(--mute);margin-bottom:8px;font-weight:500}
+.grid .ph .btn{background:var(--acc);color:#151515!important;border-radius:999px}
+.grid .ph .nav .on i{background:var(--acc);border-radius:999px;color:#151515}
+.grid .ph .rule{display:none}
+.grid .ph .title{font-size:40px}
+.grid .ph .btn{font-size:14px;white-space:nowrap;padding:12px 14px}
+.grid .ph .btn small{font-size:10.5px}
+.grid .light[style*="#151515"] .ph .btn{color:#f1f0eb!important}
+h3.sub{margin-top:36px;font-size:18px}
+.new{display:inline-block;background:#151515;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;margin-left:5px;vertical-align:2px}
+</style><h1>Accent colours, round 3</h1><p class="lede">14 accents plus no colour, ordered around the colour wheel the way they would sit in Settings. Purple is back as a flat, bluer purple, plus magenta, amber and indigo. All carry black text at 4.6:1 contrast or better.</p><div style="display:flex;gap:10px;align-items:center;margin-top:18px;font-size:14px"><span style="background:#bf5af2;color:#fff;padding:8px 16px;border-radius:999px;font-weight:700">Today's purple #BF5AF2</span><span>vs</span><span style="background:#9b6bea;color:#151515;padding:8px 16px;border-radius:999px;font-weight:700">New purple #9B6BEA</span><span style="color:#5f5d58">Bluer and less bright, so it reads as solid tape, not a glow.</span></div><h3 class="sub">Dark mode (default)</h3><section class="grid"><div class="dark" style="--acc:#f2c230"><h2>Tape Yellow</h2><div class="hx">#F2C230 · default</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#f59a23"><h2>Amber<span class=new>NEW</span></h2><div class="hx">#F59A23</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#ff5a1f"><h2>Hazard Orange</h2><div class="hx">#FF5A1F</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#e8503a"><h2>Red<span class=new>NEW</span></h2><div class="hx">#E8503A</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#ee8fbd"><h2>Tape Pink</h2><div class="hx">#EE8FBD</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#d65cc0"><h2>Magenta<span class=new>NEW</span></h2><div class="hx">#D65CC0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#9b6bea"><h2>Purple<span class=new>NEW</span></h2><div class="hx">#9B6BEA · flat, not neon</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#a58be0"><h2>Lilac<span class=new>NEW</span></h2><div class="hx">#A58BE0 · soft purple</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#6f7fe8"><h2>Indigo<span class=new>NEW</span></h2><div class="hx">#6F7FE8</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#4d86e0"><h2>Tape Blue</h2><div class="hx">#4D86E0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#5fb4e8"><h2>Sky<span class=new>NEW</span></h2><div class="hx">#5FB4E8</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#22b0a0"><h2>Teal<span class=new>NEW</span></h2><div class="hx">#22B0A0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#3aa86b"><h2>Hold Green</h2><div class="hx">#3AA86B</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#b5d334"><h2>Lime<span class=new>NEW</span></h2><div class="hx">#B5D334</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="dark" style="--acc:#f1f0eb"><h2>No colour</h2><div class="hx">#F1F0EB · follows the mode</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div></section><h3 class="sub">Light mode</h3><section class="grid"><div class="light" style="--acc:#f2c230"><h2>Tape Yellow</h2><div class="hx">#F2C230 · default</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#f59a23"><h2>Amber<span class=new>NEW</span></h2><div class="hx">#F59A23</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#ff5a1f"><h2>Hazard Orange</h2><div class="hx">#FF5A1F</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#e8503a"><h2>Red<span class=new>NEW</span></h2><div class="hx">#E8503A</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#ee8fbd"><h2>Tape Pink</h2><div class="hx">#EE8FBD</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#d65cc0"><h2>Magenta<span class=new>NEW</span></h2><div class="hx">#D65CC0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#9b6bea"><h2>Purple<span class=new>NEW</span></h2><div class="hx">#9B6BEA · flat, not neon</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#a58be0"><h2>Lilac<span class=new>NEW</span></h2><div class="hx">#A58BE0 · soft purple</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#6f7fe8"><h2>Indigo<span class=new>NEW</span></h2><div class="hx">#6F7FE8</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#4d86e0"><h2>Tape Blue</h2><div class="hx">#4D86E0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#5fb4e8"><h2>Sky<span class=new>NEW</span></h2><div class="hx">#5FB4E8</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#22b0a0"><h2>Teal<span class=new>NEW</span></h2><div class="hx">#22B0A0</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#3aa86b"><h2>Hold Green</h2><div class="hx">#3AA86B</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#b5d334"><h2>Lime<span class=new>NEW</span></h2><div class="hx">#B5D334</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div><div class="light" style="--acc:#151515"><h2>No colour</h2><div class="hx">#F1F0EB · follows the mode</div><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div></section></main></body></html>

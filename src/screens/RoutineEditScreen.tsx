@@ -197,7 +197,7 @@ export const RoutineEditScreen = ({ navigation, route }: Props) => {
           {items.length > 0 ? (
             <ListGroup>
               {items.map((item, index) => (
-                <View key={item.exerciseId} style={[styles.item, index > 0 ? styles.itemDivided : null]}>
+                <View key={item.exerciseId} style={styles.item}>
                   <View style={styles.itemHeader}>
                     <Text style={styles.itemName} numberOfLines={1}>
                       {nameFor(item.exerciseId)}
@@ -290,8 +290,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       minHeight: 48,
       paddingHorizontal: spacing.sm,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       backgroundColor: colors.surface,
     },
     empty: {
@@ -302,10 +300,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       paddingHorizontal: spacing.sm,
       paddingVertical: spacing.s,
       gap: spacing.xs,
-    },
-    itemDivided: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
     },
     itemHeader: {
       flexDirection: 'row',
@@ -351,7 +345,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     targetLabel: {
       ...font('medium'),
-      fontSize: 12,
-      color: colors.textMuted,
+      fontSize: 13,
+      color: colors.textSecondary,
     },
   });

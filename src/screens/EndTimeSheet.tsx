@@ -16,7 +16,7 @@ import {
   type DialRange,
 } from '../domain/endTimeDial';
 import { getLastLogAt, getSessionById, setSessionEndedAt } from '../domain/sessionStore';
-import { Button, Chip, font, radius, spacing, useTheme } from '../ui';
+import { Button, Chip, font, fontFamily, radius, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 
@@ -203,7 +203,7 @@ export const EndTimeSheet = ({ sessionId, visible, onClose, onSaved }: Props) =>
                     x={p.x}
                     y={p.y + 5}
                     fontSize={14}
-                    fontWeight="500"
+                    fontFamily={fontFamily.medium}
                     fill={colors.textMuted}
                     textAnchor="middle"
                   >
@@ -265,8 +265,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       backgroundColor: colors.surface,
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       paddingHorizontal: spacing.sm,
       paddingTop: spacing.xs,
       gap: spacing.xs,
@@ -284,7 +282,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     hint: {
       ...typography.bodyMuted,
-      fontSize: 14,
     },
     readout: {
       alignItems: 'center',
@@ -292,13 +289,13 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     time: {
       ...typography.numeric,
-      fontSize: 40,
-      letterSpacing: -1,
+      fontSize: 44,
+      lineHeight: 46,
     },
     duration: {
       ...font('medium'),
       fontSize: 15,
-      color: colors.accent,
+      color: colors.accentInk,
     },
     dial: {
       alignSelf: 'center',

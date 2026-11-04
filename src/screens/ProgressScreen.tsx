@@ -5,17 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { firstOfMonth } from '../domain/dateUtils';
 import { getCompletedSessions, getSessionStreak } from '../domain/sessionStore';
 import type { SessionRow } from '../domain/types';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  IconButton,
-  SegmentedControl,
-  font,
-  radius,
-  spacing,
-  useTheme,
-  type Shadows,
-} from '../ui';
+import { Card, ChevronLeftIcon, ChevronRightIcon, IconButton, SegmentedControl, font, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { useTabBarClearance } from '../navigation/tabBar';
@@ -34,8 +24,8 @@ type ProgressMode = 'climbing' | 'strength';
 type ProgressView = 'all' | 'month';
 
 export function ProgressScreen() {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const tabBarClearance = useTabBarClearance();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [streak, setStreak] = useState(0);
@@ -86,13 +76,13 @@ export function ProgressScreen() {
     return (
       <SafeAreaView edges={['top']} style={[styles.root, styles.content]}>
         <Text style={styles.screenTitle}>Progress</Text>
-        <View style={styles.emptyState}>
+        <Card padded="graph" style={styles.emptyState}>
           <Text style={styles.emptyStateTitle}>Log a session to see your progress</Text>
           <Text style={styles.emptyStateCopy}>
             Charts and stats will show up here once you've finished a climbing or strength
             session.
           </Text>
-        </View>
+        </Card>
       </SafeAreaView>
     );
   }
@@ -140,7 +130,7 @@ export function ProgressScreen() {
             >
               <ChevronLeftIcon
                 size={16}
-                color={canGoPrevMonth ? colors.accent : colors.textMuted}
+                color={canGoPrevMonth ? colors.textPrimary : colors.textMuted}
                 strokeWidth={2.4}
               />
             </IconButton>
@@ -156,7 +146,7 @@ export function ProgressScreen() {
             >
               <ChevronRightIcon
                 size={16}
-                color={canGoNextMonth ? colors.accent : colors.textMuted}
+                color={canGoNextMonth ? colors.textPrimary : colors.textMuted}
                 strokeWidth={2.4}
               />
             </IconButton>
@@ -164,9 +154,9 @@ export function ProgressScreen() {
         ) : null}
 
         {view === 'month' && monthSessions.length === 0 ? (
-          <View style={styles.emptyMonth}>
+          <Card padded="compact" style={styles.emptyMonth}>
             <Text style={styles.emptyMonthText}>No sessions logged this month.</Text>
-          </View>
+          </Card>
         ) : null}
 
         {mode === 'climbing' ? (
@@ -179,7 +169,7 @@ export function ProgressScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     root: {
       flex: 1,
@@ -195,13 +185,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     screenTitle: {
       ...typography.display,
-      fontSize: 34,
-      letterSpacing: -0.8,
       marginBottom: spacing.s,
     },
 
     segmentedPrimary: {
-      marginBottom: spacing.s,
+      marginBottom: spacing.xs,
     },
     segmentedSecondary: {
       alignItems: 'center',
@@ -218,17 +206,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     monthNavLabel: {
       ...typography.body,
       ...font('semibold'),
-      color: colors.textPrimary,
       minWidth: 150,
       textAlign: 'center',
     },
     emptyMonth: {
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      padding: spacing.sm,
       alignItems: 'center',
       marginBottom: spacing.xs,
     },
@@ -237,12 +218,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
 
     emptyState: {
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      padding: spacing.md,
       alignItems: 'center',
       gap: spacing.xs,
       marginTop: spacing.md,

@@ -1,0 +1,89 @@
+{
+  "brandbookElements": [],
+  "essentialKitApproved": false,
+  "palette": {
+    "approvalSummary": "Ryan chose Gear B on Setter's Tape colours, dark mode as default, tape-colour accent set with tape yellow as default. Purple dropped.",
+    "colors": [
+      {
+        "hex": "#1b1c1b",
+        "name": "Rubber Mat",
+        "role": "background"
+      },
+      {
+        "hex": "#2a2b29",
+        "name": "Mat Panel",
+        "role": "surface"
+      },
+      {
+        "hex": "#f1f0eb",
+        "name": "Chalk",
+        "role": "text"
+      },
+      {
+        "hex": "#e4e2dd",
+        "name": "Concrete",
+        "role": "background-light"
+      },
+      {
+        "hex": "#f6f5f2",
+        "name": "Panel",
+        "role": "surface-light"
+      },
+      {
+        "hex": "#151515",
+        "name": "Marker",
+        "role": "text-light"
+      },
+      {
+        "hex": "#f2c230",
+        "name": "Tape Yellow",
+        "role": "accent"
+      },
+      {
+        "hex": "#ff5a1f",
+        "name": "Hazard Orange",
+        "role": "accent-option"
+      },
+      {
+        "hex": "#3aa86b",
+        "name": "Hold Green",
+        "role": "accent-option"
+      },
+      {
+        "hex": "#4d86e0",
+        "name": "Tape Blue",
+        "role": "accent-option"
+      },
+      {
+        "hex": "#ee8fbd",
+        "name": "Tape Pink",
+        "role": "accent-option"
+      }
+    ],
+    "gradients": [],
+    "origin": "brandkit_generated",
+    "revision": 1
+  },
+  "typography": {
+    "approvalSummary": "Ryan chose Gear B: Sofia Sans Extra Condensed for titles and numbers, Sofia Sans for buttons and body, uppercase only for the wordmark.",
+    "body": {
+      "family": "Sofia Sans",
+      "source": "google:Sofia Sans",
+      "style": "normal",
+      "weight": 400
+    },
+    "display": {
+      "family": "Sofia Sans Extra Condensed",
+      "source": "google:Sofia Sans Extra Condensed",
+      "style": "normal",
+      "weight": 800
+    },
+    "fontLinks": [
+      "https://fonts.google.com/specimen/Sofia+Sans+Extra+Condensed",
+      "https://fonts.google.com/specimen/Sofia+Sans"
+    ],
+    "origin": "brandkit_generated",
+    "revision": 1
+  },
+  "version": 2
+}

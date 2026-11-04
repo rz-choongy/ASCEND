@@ -169,8 +169,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     notice: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       ...shadows.card,
       padding: spacing.s,
       gap: spacing.xs,

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCEND brand options</title>
+<style>
+  :root { --ink:#151515; --mute:#5f5d58; --line:#d8d6d0; --bg:#efeee9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: Roboto, "Helvetica Neue", Arial, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; }
+  main { max-width:1240px; margin:0 auto; padding:56px 32px 96px; }
+  h1 { font-size:40px; letter-spacing:-0.02em; font-weight:800; }
+  .lede { font-size:18px; color:var(--mute); max-width:640px; margin-top:10px; }
+  h2 { font-size:24px; font-weight:800; margin:72px 0 6px; letter-spacing:-0.01em; }
+  h2 small { font-size:15px; color:var(--mute); font-weight:500; margin-left:10px; letter-spacing:0; }
+  .sub { color:var(--mute); max-width:680px; }
+
+  .options { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:28px; }
+  .opt { background:#fff; border-radius:6px; padding:22px 22px 26px; }
+  .opt header { display:flex; align-items:baseline; gap:10px; }
+  .num { font-weight:800; font-size:15px; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; display:inline-grid; place-items:center; }
+  .opt h3 { font-size:21px; font-weight:800; }
+  .opt p.why { margin:8px 0 18px; color:var(--mute); font-size:14.5px; min-height:84px; }
+  .chips { display:flex; gap:6px; margin-bottom:18px; }
+  .chip { flex:1 1 0; min-width:0; }
+  .chip i { display:block; height:42px; border-radius:3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .chip b { display:block; font-size:11.5px; margin-top:5px; font-weight:600; }
+  .chip span { display:block; font-size:11px; color:var(--mute); font-family: ui-monospace, Menlo, monospace; }
+  .risk { font-size:13.5px; margin-top:16px; padding-top:12px; border-top:1px solid var(--line); color:var(--mute); }
+  .risk strong { color:var(--ink); }
+
+  /* phone */
+  .phone { width:100%; aspect-ratio: 9/18.5; border-radius:28px; overflow:hidden; position:relative; padding:18px 16px; display:flex; flex-direction:column; gap:12px; }
+  .ph-date { font-size:12px; font-weight:600; }
+  .ph-title { font-size:30px; font-weight:800; letter-spacing:-0.03em; line-height:1; }
+  .ph-start { border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:17px; }
+  .ph-start em { font-style:normal; font-weight:500; font-size:12px; display:block; opacity:.75; }
+  .ph-card { border-radius:12px; padding:14px; }
+  .ph-k { font-size:12px; font-weight:600; opacity:.7; }
+  .ph-nums { display:flex; gap:18px; margin-top:6px; }
+  .ph-nums div { font-size:26px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric: tabular-nums; }
+  .ph-nums small { display:block; font-size:11px; font-weight:500; opacity:.7; letter-spacing:0; }
+  .grades { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .g { height:40px; display:grid; place-items:center; font-weight:800; font-size:14px; }
+  .ph-nav { margin-top:auto; display:flex; justify-content:space-around; font-size:11px; font-weight:600; padding-top:10px; }
+  .ph-nav span.on { border-radius:999px; padding:4px 14px; }
+
+  /* Option 1: Setter's Tape */
+  .p1 { background:#e4e2dd; color:#151515; }
+  .p1 .ph-start { background:#f2c230; color:#151515; }
+  .p1 .ph-card { background:#f6f5f2; }
+  .p1 .g { border-radius:2px; color:#151515; transform:rotate(var(--r,0deg)); font-family: "Marker Felt","Comic Sans MS",cursive; font-size:15px; }
+  .p1 .ph-nav span.on { background:#151515; color:#f2c230; }
+  .p1 .ph-date { color:#5f5d58; }
+
+  /* Option 2: Chalk & Ply */
+  .p2 { background:#dcc79f; color:#22201d; }
+  .p2 .ph-start { background:#22201d; color:#f3f1ec; box-shadow: inset 0 3px 0 rgba(0,0,0,.35); }
+  .p2 .ph-card { background:#f3f1ec; }
+  .p2 .g { border-radius:14px; background:#b8925f; color:#f3f1ec; box-shadow: inset 0 4px 0 rgba(0,0,0,.28); }
+  .p2 .g.chalked { background:#efe9df; color:#22201d; box-shadow: inset 0 4px 0 rgba(0,0,0,.12); }
+  .p2 .ph-nav span.on { background:#1c6e8c; color:#fff; }
+  .p2 .acc { color:#1c6e8c; }
+
+  /* Option 3: Granite Topo */
+  .p3 { background:#16181a; color:#eceee8;
+        background-image: repeating-radial-gradient(circle at 80% 18%, transparent 0 22px, rgba(255,255,255,.045) 22px 23px); }
+  .p3 .ph-start { background:#c5d86d; color:#16181a; }
+  .p3 .ph-card { background:#22262a; }
+  .p3 .g { border-radius:50%; width:40px; margin:0 auto; border:2px solid; background:transparent; }
+  .p3 .ph-nav span.on { background:#c5d86d; color:#16181a; }
+  .p3 .flash { color:#e2553b; }
+  .p3 .ph-date { color:#9aa09a; }
+
+  /* questions */
+  .qs { display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-top:28px; }
+  .q { background:#fff; border-radius:6px; padding:22px; }
+  .q h3 { font-size:17px; font-weight:800; margin-bottom:12px; }
+  .axis { display:grid; grid-template-columns: 120px 1fr 120px; align-items:center; gap:12px; margin:14px 0; font-size:14px; font-weight:600; }
+  .axis .r { text-align:right; }
+  .track { display:flex; justify-content:space-between; position:relative; }
+  .track::before { content:""; position:absolute; left:6px; right:6px; top:50%; height:2px; background:var(--line); }
+  .track i { width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #9a988f; position:relative; }
+  .axis-note { font-size:12.5px; color:var(--mute); grid-column: 1 / -1; margin-top:-8px; }
+  .marks { display:flex; gap:14px; margin-top:6px; }
+  .mark { flex:1; text-align:center; font-size:12.5px; color:var(--mute); }
+  .mark svg { width:100%; height:auto; background:#efeee9; border-radius:6px; margin-bottom:6px; }
+  ul.plain { list-style:none; font-size:14.5px; }
+  ul.plain li { padding:8px 0; border-bottom:1px solid var(--line); }
+  ul.plain li:last-child { border:0; }
+  .reply { margin-top:56px; background:var(--ink); color:#fff; border-radius:6px; padding:24px 26px; font-size:16px; }
+  .reply code { background:rgba(255,255,255,.12); padding:2px 6px; border-radius:3px; font-size:14px; }
+  @media (max-width: 900px) { .options, .qs { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>ASCEND brand options</h1>
+  <p class="lede">Three colour directions, each shown on the Log screen. Pick one, then answer the three questions at the bottom. The accent stays user-selectable in Settings; these set the default and everything around it.</p>
+
+  <h2>1. Colour <small>pick one</small></h2>
+  <p class="sub">Each option starts from something you see at the gym, so the app looks like climbing, not like a generic fitness dashboard.</p>
+
+  <div class="options">
+    <!-- Option 1 -->
+    <section class="opt">
+      <header><span class="num">1</span><h3>Setter's Tape</h3></header>
+      <p class="why">Light, concrete-grey ground for bright gyms. Grades look like the strips of coloured tape setters stick under start holds, numbers written in marker. Tape yellow is the action colour.</p>
+      <div class="chips">
+        <div class="chip"><i style="background:#e4e2dd"></i><b>Concrete</b><span>#E4E2DD</span></div>
+        <div class="chip"><i style="background:#f6f5f2"></i><b>Panel</b><span>#F6F5F2</span></div>
+        <div class="chip"><i style="background:#151515"></i><b>Marker</b><span>#151515</span></div>
+        <div class="chip"><i style="background:#f2c230"></i><b>Tape yellow</b><span>#F2C230</span></div>
+      </div>
+      <div class="phone p1">
+        <div class="ph-date">Monday 2 Nov</div>
+        <div class="ph-title">Today</div>
+        <div class="ph-start"><span>Start climbing<em>Default V-Scale</em></span><span>→</span></div>
+        <div class="ph-card">
+          <div class="ph-k">Last climb · Sat</div>
+          <div class="ph-nums"><div>2<small>sends</small></div><div>V4<small>best</small></div><div>0%<small>flashed</small></div></div>
+        </div>
+        <div class="grades">
+          <div class="g" style="background:#f6f5f2;--r:-1.5deg">V0</div>
+          <div class="g" style="background:#f2c230;--r:1deg">V1</div>
+          <div class="g" style="background:#3aa86b;--r:-0.5deg">V2</div>
+          <div class="g" style="background:#4d86e0;--r:1.5deg">V3</div>
+          <div class="g" style="background:#e0533f;--r:0.8deg">V4</div>
+          <div class="g" style="background:#ee8fbd;--r:-1deg">V5</div>
+          <div class="g" style="background:#9b7ad8;--r:0.4deg">V6</div>
+          <div class="g" style="background:#151515;color:#f6f5f2;--r:-1.2deg">V7</div>
+        </div>
+        <div class="ph-nav"><span class="on">Log</span><span>Calendar</span><span>Progress</span></div>
+      </div>
+      <p class="risk"><strong>Risk:</strong> the hand-drawn marker numbers can look cute if overused. Keep them to grade tiles only.</p>
+    </section>
+
+    <!-- Option 2 -->
+    <section class="opt">
+      <header><span class="num">2</span><h3>Chalk &amp; Ply</h3></header>
+      <p class="why">The wooden hangboard. Grades are routed pockets you press into, and turn chalk-white once you've sent them that session. Graphite text, one anodised-blue accent.</p>
+      <div class="chips">
+        <div class="chip"><i style="background:#dcc79f"></i><b>Beech ply</b><span>#DCC79F</span></div>
+        <div class="chip"><i style="background:#b8925f"></i><b>Pocket</b><span>#B8925F</span></div>
+        <div class="chip"><i style="background:#22201d"></i><b>Graphite</b><span>#22201D</span></div>
+        <div class="chip"><i style="background:#f3f1ec"></i><b>Chalk</b><span>#F3F1EC</span></div>
+        <div class="chip"><i style="background:#1c6e8c"></i><b>Bolt blue</b><span>#1C6E8C</span></div>
+      </div>
+      <div class="phone p2">
+        <div class="ph-date">Monday 2 Nov</div>
+        <div class="ph-title">Today</div>
+        <div class="ph-start"><span>Start climbing<em>Default V-Scale</em></span><span>→</span></div>
+        <div class="ph-card">
+          <div class="ph-k">Last climb · Sat</div>
+          <div class="ph-nums"><div>2<small>sends</small></div><div class="acc">V4<small>best</small></div><div>0%<small>flashed</small></div></div>
+        </div>
+        <div class="grades">
+          <div class="g chalked">V0</div><div class="g chalked">V1</div><div class="g chalked">V2</div><div class="g">V3</div>
+          <div class="g">V4</div><div class="g">V5</div><div class="g">V6</div><div class="g">V7</div>
+        </div>
+        <div class="ph-nav"><span class="on">Log</span><span>Calendar</span><span>Progress</span></div>
+      </div>
+      <p class="risk"><strong>Risk:</strong> wood can look kitsch. It must stay flat colour, never a photo of grain. Grade colours move to a small dot because the pockets are all wood.</p>
+    </section>
+
+    <!-- Option 3 -->
+    <section class="opt">
+      <header><span class="num">3</span><h3>Granite Topo</h3></header>
+      <p class="why">Dark, for evening sessions. Built from guidebook topos: granite ground with faint contour lines, grades as ringed circles like route numbers on a topo. Lichen green to act, rope red for flashes.</p>
+      <div class="chips">
+        <div class="chip"><i style="background:#16181a"></i><b>Granite</b><span>#16181A</span></div>
+        <div class="chip"><i style="background:#22262a"></i><b>Slab</b><span>#22262A</span></div>
+        <div class="chip"><i style="background:#eceee8"></i><b>Bone</b><span>#ECEEE8</span></div>
+        <div class="chip"><i style="background:#c5d86d"></i><b>Lichen</b><span>#C5D86D</span></div>
+        <div class="chip"><i style="background:#e2553b"></i><b>Rope red</b><span>#E2553B</span></div>
+      </div>
+      <div class="phone p3">
+        <div class="ph-date">Monday 2 Nov</div>
+        <div class="ph-title">Today</div>
+        <div class="ph-start"><span>Start climbing<em>Default V-Scale</em></span><span>→</span></div>
+        <div class="ph-card">
+          <div class="ph-k">Last climb · Sat</div>
+          <div class="ph-nums"><div>2<small>sends</small></div><div>V4<small>best</small></div><div class="flash">0%<small>flashed</small></div></div>
+        </div>
+        <div class="grades">
+          <div class="g" style="color:#eceee8">0</div><div class="g" style="color:#eceee8">1</div><div class="g" style="color:#eceee8">2</div><div class="g" style="color:#c5d86d">3</div>
+          <div class="g" style="color:#c5d86d">4</div><div class="g" style="color:#e2553b">5</div><div class="g" style="color:#e2553b">6</div><div class="g" style="color:#9aa09a">7</div>
+        </div>
+        <div class="ph-nav"><span class="on">Log</span><span>Calendar</span><span>Progress</span></div>
+      </div>
+      <p class="risk"><strong>Risk:</strong> closest to the current dark look, so it changes less. Harder to read under bright gym lights than 1 or 2.</p>
+    </section>
+  </div>
+
+  <h2>2. Three questions</h2>
+  <div class="qs">
+    <div class="q">
+      <h3>Feel: where do you lean on each?</h3>
+      <div class="axis"><span>Calm</span><div class="track"><i></i><i></i><i></i><i></i><i></i></div><span class="r">Loud</span>
+        <span class="axis-note">Calm: the numbers do the talking. Loud: big colour blocks, strong personality.</span></div>
+      <div class="axis"><span>Geometric</span><div class="track"><i></i><i></i><i></i><i></i><i></i></div><span class="r">Hand-made</span>
+        <span class="axis-note">Geometric: clean shapes, exact grid. Hand-made: marker, tape, rough edges.</span></div>
+      <div class="axis"><span>Familiar</span><div class="track"><i></i><i></i><i></i><i></i><i></i></div><span class="r">Experimental</span>
+        <span class="axis-note">Familiar: feels like a standard Android app. Experimental: looks like nothing else on your phone.</span></div>
+    </div>
+
+    <div class="q">
+      <h3>Likes and hates</h3>
+      <ul class="plain">
+        <li>Climbing brands or apps you like the look of? (Beastmaker, Lattice, Moon, Kaya, La Sportiva…)</li>
+        <li>Anything to avoid? Colours, fonts, styles.</li>
+        <li>Purple is in the current app. Keep it as an accent option or drop it?</li>
+      </ul>
+    </div>
+
+    <div class="q" style="grid-column: 1 / -1">
+      <h3>Logo: hand-drawn SVG marks (free) or top up Higgsfield for AI options?</h3>
+      <p class="sub" style="margin-bottom:14px">Recommendation: hand-drawn. An app icon needs a simple, sharp mark. Rough idea of the kind of directions I'd draw:</p>
+      <div class="marks">
+        <div class="mark"><svg viewBox="0 0 120 80"><path d="M22 62 L50 24 L64 42 L74 30 L98 62" fill="none" stroke="#151515" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/></svg>Summit line, one stroke</div>
+        <div class="mark"><svg viewBox="0 0 120 80"><path d="M60 14 C78 14 86 30 80 44 C76 54 66 62 52 64 C40 66 34 56 38 46 C42 34 46 14 60 14 Z" fill="#151515"/><circle cx="58" cy="36" r="6" fill="#efeee9"/></svg>A hold, with its bolt hole</div>
+        <div class="mark"><svg viewBox="0 0 120 80"><rect x="30" y="26" width="60" height="14" rx="2" fill="#f2c230" transform="rotate(-4 60 33)"/><text x="60" y="38" font-size="12" font-weight="800" text-anchor="middle" font-family="Arial" transform="rotate(-4 60 33)">A</text><rect x="38" y="46" width="44" height="10" rx="1" fill="#151515" transform="rotate(3 60 51)"/></svg>Taped "A", setter style</div>
+        <div class="mark"><svg viewBox="0 0 120 80"><path d="M36 64 L60 16 L84 64" fill="none" stroke="#151515" stroke-width="8" stroke-linejoin="round"/><path d="M46 46 L74 46" stroke="#151515" stroke-width="5" stroke-dasharray="4 4"/></svg>"A" as a route with tick marks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reply">Reply in chat like: <code>2, calm / geometric / familiar-ish, like Beastmaker, drop purple, hand-drawn ok</code></div>
+</main>
+</body>
+</html>

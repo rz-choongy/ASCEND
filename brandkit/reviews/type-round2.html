@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCEND · type options, round 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400..900&family=Chivo+Mono:wght@400..800&family=Sofia+Sans+Extra+Condensed:wght@400..900&family=Sofia+Sans:wght@400..800&family=Schibsted+Grotesk:wght@400..900&family=Martian+Mono:wdth,wght@75..112.5,400..800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#151515; --mute:#5f5d58; --line:#d8d6d0; --bg:#efeee9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: "Schibsted Grotesk", Arial, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; }
+  main { max-width:1240px; margin:0 auto; padding:56px 32px 96px; }
+  h1 { font-family: "Schibsted Grotesk"; font-size:44px; font-weight:800; letter-spacing:-0.02em; }
+  .lede { font-size:17px; color:var(--mute); max-width:700px; margin-top:10px; }
+  .opt { background:#fff; border-radius:6px; padding:26px; margin-top:32px; display:grid; grid-template-columns: 1.15fr 1fr; gap:28px; }
+  .num { font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; display:inline-grid; place-items:center; margin-right:8px; }
+  .head { display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--mute); }
+  .why { margin:10px 0 16px; color:var(--mute); font-size:15px; }
+  .pairing { font-size:14px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:18px; }
+  .pairing b { color:var(--ink); }
+  .word { font-size:64px; line-height:1; margin:6px 0 14px; }
+  .h { font-size:30px; line-height:1.05; margin-bottom:10px; }
+  .body { font-size:16px; max-width:470px; }
+  .digits { font-size:38px; margin:14px 0 4px; font-variant-numeric: tabular-nums; }
+  .risk { font-size:13.5px; color:var(--mute); margin-top:16px; }
+  .risk b { color:var(--ink); }
+  .phones { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .cap { font-size:12.5px; color:var(--mute); margin-top:8px; text-align:center; }
+
+  .ph { aspect-ratio: 9/19; border-radius:26px; overflow:hidden; padding:16px 13px 12px; display:flex; flex-direction:column; gap:11px; background:#e4e2dd; color:#151515; }
+  .ph .k { font-size:11px; font-weight:600; color:#6b6964; }
+  .ph .row { display:flex; justify-content:space-between; align-items:center; }
+  .ph .datebar { display:inline-block; background:#151515; color:#e4e2dd; font-size:11px; font-weight:700; padding:3px 7px;  align-self:flex-start; }
+  .ph .title { font-size:36px; line-height:.9; }
+  .ph .btn { background:#f2c230; border-radius:2px;  padding:14px 13px; display:flex; justify-content:space-between; align-items:center; font-size:18px;  }
+  .ph .btn small { display:block; font-size:11px; font-weight:500; opacity:.75; }
+  .ph .rule { height:6px; background:repeating-linear-gradient(90deg,#151515 0 14px,transparent 14px 20px); }
+  .ph .panel { background:#f6f5f2; border-radius:2px; padding:11px; }
+  .ph .nums { display:flex; gap:16px; margin-top:4px; }
+  .ph .n { font-size:26px; line-height:1.05; font-variant-numeric:tabular-nums; }
+  .ph .n small { display:block; font-size:10.5px; color:#6b6964; }
+  .ph .nav { margin-top:auto; display:flex; justify-content:space-around; font-size:10.5px; font-weight:600; color:#6b6964; }
+  .ph .nav span { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .ph .nav i { width:44px; height:22px; border-radius:2px; display:block; }
+  .ph .nav i::after { content:""; display:block; width:12px; height:12px; margin:5px auto; border:2px solid currentColor; border-radius:2px; }
+  .ph .nav .on { color:#151515; } .ph .nav .on i { background:#f2c230; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .tile { height:42px; display:grid; place-items:center; font-size:17px; border-radius:1px; ); box-shadow:0 1px 0 rgba(0,0,0,.15); }
+  .tile.sel { outline:3px solid #151515; outline-offset:2px; }
+  .sendrow { display:grid; grid-template-columns:1.4fr 1fr; gap:6px; }
+  .sendrow div { border-radius:2px; padding:12px 0; text-align:center; font-size:16px; }
+  .sendrow .send { background:#151515; color:#e4e2dd; } .sendrow .flash { background:#f2c230; }
+  .log li { list-style:none; display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:7px 0; border-bottom:1px solid rgba(0,0,0,.08); }
+  .log li:last-child { border:0; }
+  .chipg { width:32px; height:17px; display:inline-grid; place-items:center; font-size:11px;  margin-right:6px; }
+
+  /* font systems */
+  .f1 { --d:"Chivo"; --b:"Chivo"; }
+  .f1 .D { font-family:"Chivo"; font-weight:800; letter-spacing:-0.02em; }
+  .f1 .Dn { font-family:"Chivo Mono"; font-weight:700; letter-spacing:-0.02em; }
+  .f2 { --d:"Sofia Sans Extra Condensed"; --b:"Sofia Sans"; }
+  .f2 .D { font-family:"Sofia Sans Extra Condensed"; font-weight:800; text-transform:uppercase; letter-spacing:0.005em; }
+  .f2 .Dn { font-family:"Sofia Sans Extra Condensed"; font-weight:800; }
+  .f2 .ph .title { font-size:46px; } .f2 .word { font-size:88px; } .f2 .h { font-size:40px; } .f2 .ph .n { font-size:32px; } .f2 .tile { font-size:21px; }
+  .f3 { --d:"Schibsted Grotesk"; --b:"Schibsted Grotesk"; }
+  .f3 .D { font-family:"Schibsted Grotesk"; font-weight:800; letter-spacing:-0.03em; }
+  .f3 .Dn { font-family:"Martian Mono"; font-stretch:87.5%; font-weight:600; letter-spacing:-0.03em; }
+  .f3 .ph .n { font-size:22px; } .f3 .tile { font-size:15px; } .f3 .chipg { font-size:9.5px; }
+  .f1 .B, .f1 .ph, .f2 .B, .f2 .ph, .f3 .B, .f3 .ph { font-family: var(--b); }
+  .ph .datebar, .ph .k { font-family: inherit; }
+
+  .reply { margin-top:56px; background:var(--ink); color:#fff; border-radius:6px; padding:22px 24px; font-size:16px; }
+  .reply code { background:rgba(255,255,255,.12); padding:2px 6px; border-radius:3px; font-size:14px; }
+  @media (max-width: 1000px) { .opt { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Type options</h1>
+  <p class="lede">Round 2, more serious: closer to performance-gear spec sheets and training instruments. Tape is now straight, no tilt. A display face gives ASCEND its voice (titles, buttons, numbers, grade tiles); a body face keeps the small text easy to read at arm's length. None of these are the usual app defaults.</p>
+  <div id="opts"></div>
+  <div class="reply">Reply with a number, or mix them: <code>2 display with 1 body</code></div>
+</main>
+
+<template id="tpl">
+  <section class="opt">
+    <div>
+      <div class="head"><span class="num"></span><span class="name"></span></div>
+      <p class="why B"></p>
+      <div class="pairing B"></div>
+      <div class="word D">ASCEND</div>
+      <div class="h D">Start climbing</div>
+      <p class="body B">Logged 3 climbs at Default V-Scale. Hardest send V4, up one grade on last week. Tap a grade, then Send or Flash.</p>
+      <div class="digits Dn">0123456789 V4 72.4kg</div>
+      <p class="risk B"></p>
+    </div>
+    <div class="phones">
+      <div>
+        <div class="ph">
+          <span class="datebar">MON 2 NOV</span>
+          <div class="title D">Today</div>
+          <div class="btn D"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+          <div class="rule"></div>
+          <div class="panel">
+            <div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+            <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div>
+          </div>
+          <div class="panel">
+            <div class="k">This week</div>
+            <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div>
+          </div>
+          <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+        </div>
+        <div class="cap">Log</div>
+      </div>
+      <div>
+        <div class="ph">
+          <div class="row"><span style="font-weight:700;font-size:13px">✕</span><span class="datebar" style="">00:42</span></div>
+          <div class="D" style="font-size:22px">Default V-Scale</div>
+          <div class="grid4">
+            <div class="tile Dn" style="background:#f6f5f2;--r:-1.5deg">V0</div><div class="tile Dn" style="background:#f2c230;--r:1deg">V1</div><div class="tile Dn" style="background:#3aa86b;--r:-0.6deg">V2</div><div class="tile Dn" style="background:#4d86e0;--r:1.4deg">V3</div>
+            <div class="tile Dn sel" style="background:#e0533f;--r:0.8deg">V4</div><div class="tile Dn" style="background:#ee8fbd;--r:-1deg">V5</div><div class="tile Dn" style="background:#9b7ad8;--r:0.5deg">V6</div><div class="tile Dn" style="background:#151515;color:#f6f5f2;--r:-1.2deg">V7</div>
+          </div>
+          <div class="sendrow D"><div class="send">Send V4</div><div class="flash">Flash</div></div>
+          <div class="panel">
+            <div class="k">This session · 3 climbs</div>
+            <ul class="log">
+              <li><span><span class="chipg Dn" style="background:#e0533f">V4</span>Send</span><span class="k">2 min</span></li>
+              <li><span><span class="chipg Dn" style="background:#4d86e0">V3</span>Flash</span><span class="k">9 min</span></li>
+              <li><span><span class="chipg Dn" style="background:#4d86e0">V3</span>Send</span><span class="k">14 min</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="cap">Climb logger</div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script>
+const opts = [
+  { cls:'f1', name:'Spec Sheet',
+    why:'Chivo is a sturdy grotesk with a matching mono. Headings in Chivo, every number in Chivo Mono, so stats line up in columns like a gear spec sheet. Serious, with more weight and grip than the system font.',
+    pairing:'<b>Headings:</b> Chivo ExtraBold &nbsp;·&nbsp; <b>Numbers:</b> Chivo Mono &nbsp;·&nbsp; <b>Body:</b> Chivo',
+    risk:'<b>Risk:</b> mono numbers are wider, so the stat rows have less room on small phones.' },
+  { cls:'f2', name:'Performance Gear',
+    why:'Sofia Sans Extra Condensed in capitals reads like the spec tags on shoes, ropes and harnesses. Tall, narrow numbers can be big without crowding. Sofia Sans for body, so the whole app is one family.',
+    pairing:'<b>Headings + numbers:</b> Sofia Sans Extra Condensed, uppercase &nbsp;·&nbsp; <b>Body:</b> Sofia Sans',
+    risk:'<b>Risk:</b> capitals for every heading can feel shouty. Keep them to titles and buttons.' },
+  { cls:'f3', name:'Instrument',
+    why:'Schibsted Grotesk is a sober newspaper grotesk. Numbers set in Martian Mono, a wide mono that looks like a force gauge or timer readout. Most restrained, and the numbers carry the character.',
+    pairing:'<b>Headings + body:</b> Schibsted Grotesk &nbsp;·&nbsp; <b>Numbers:</b> Martian Mono',
+    risk:'<b>Risk:</b> two different families, so they need firm rules about which text gets which.' },
+];
+const tpl = document.getElementById('tpl');
+opts.forEach((o,i) => {
+  const n = tpl.content.cloneNode(true);
+  const s = n.querySelector('.opt'); s.classList.add(o.cls);
+  n.querySelector('.num').textContent = i+1;
+  n.querySelector('.name').textContent = o.name;
+  n.querySelector('.why').textContent = o.why;
+  n.querySelector('.pairing').innerHTML = o.pairing;
+  n.querySelector('.risk').innerHTML = o.risk;
+  document.getElementById('opts').appendChild(n);
+});
+</script>
+</body>
+</html>

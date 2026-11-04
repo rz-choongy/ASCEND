@@ -112,7 +112,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
           onClose={() => navigation.goBack()}
           left={
             <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
-              <ChevronLeftIcon size={14} color={colors.accent} strokeWidth={2.4} />
+              <ChevronLeftIcon size={14} color={colors.accentInk} strokeWidth={2.4} />
               <Text style={styles.backLabel}>All gyms</Text>
             </Pressable>
           }
@@ -161,7 +161,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
 
         <View style={styles.footer}>
           <Button
-            label="Add Branch"
+            label="Add branch"
             onPress={() =>
               navigation.navigate('GymEdit', {
                 returnToSessionId,
@@ -187,7 +187,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
         {rootGyms.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              No gyms yet — tap Add Gym to create your first.
+              No gyms yet — tap Add gym to create your first.
             </Text>
           </View>
         )}
@@ -256,7 +256,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
 
       <View style={styles.footer}>
         <Button
-          label="Add Gym"
+          label="Add gym"
           onPress={() => navigation.navigate('GymEdit', { returnToSessionId })}
         />
       </View>
@@ -280,10 +280,9 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     marginBottom: 8,
   },
   backLabel: {
-    color: colors.accent,
+    color: colors.accentInk,
     fontSize: 17,
     ...font('regular'),
-    letterSpacing: -0.3,
   },
   content: {
     gap: spacing.xs,
@@ -295,8 +294,6 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     gap: spacing.xs,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
@@ -315,7 +312,6 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     color: colors.textPrimary,
     fontSize: 17,
     ...font('semibold'),
-    letterSpacing: -0.3,
   },
   gymMeta: {
     color: colors.textSecondary,
@@ -323,20 +319,17 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     ...font('regular'),
     marginTop: 2,
   },
-  // Prism pill: outlined when idle, solid action fill once it's the gym in use.
+  // Pill: soft fill when idle, solid action fill once it's the gym in use.
   useButton: {
-    minHeight: 44,
+    minHeight: 40,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderSoft,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
   useButtonSelected: {
     backgroundColor: colors.action,
-    borderColor: colors.action,
   },
   useButtonText: {
     color: colors.textPrimary,
@@ -349,8 +342,6 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
   emptyCard: {
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
     padding: spacing.md,
     alignItems: 'center',

@@ -63,6 +63,7 @@ import {
   IconButton,
   PressableScale,
   StarIcon,
+  StatRow,
   font,
   radius,
   showDialog,
@@ -368,7 +369,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
   }, [navigation, sessionId, title]);
 
   const bump = () => setRefreshKey((k) => k + 1);
-  const displayTitle = title.trim() || 'Gym Session';
+  const displayTitle = title.trim() || 'Gym session';
 
   const events = useMemo(
     () => getSessionEvents(sessionId),
@@ -425,6 +426,17 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return [...favorites, ...recent].slice(0, QUICK_STARTS_SHOWN);
   }, [exerciseState.exercises, usage]);
   const hasLogs = loggedSets.length > 0;
+
+  // Session totals for the stat row: sets, distinct exercises, and volume (kg x reps).
+  const totals = useMemo(() => {
+    const exerciseKeys = new Set<string>();
+    let volume = 0;
+    loggedSets.forEach((set) => {
+      exerciseKeys.add(set.exerciseId ?? exerciseKeyFor(set));
+      volume += set.weight * set.reps;
+    });
+    return { sets: loggedSets.length, exercises: exerciseKeys.size, volume: Math.round(volume) };
+  }, [loggedSets]);
   const reference = selectedExercise ? getReference(selectedExercise) : null;
 
   // Which logged sets get the PR tag: each exercise's best set this session, if it beats history.
@@ -671,6 +683,15 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         ) : null}
       </View>
 
+      <StatRow
+        style={styles.totals}
+        items={[
+          { label: 'Sets', value: `${totals.sets}` },
+          { label: 'Exercises', value: `${totals.exercises}` },
+          { label: 'Volume', value: `${totals.volume}`, sub: 'kg × reps' },
+        ]}
+      />
+
       {/* This session's exercises only -- the full list lives in the picker sheet */}
       <Text style={styles.sectionLabel}>This session</Text>
       <ScrollView
@@ -764,7 +785,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
                           : 'Favourite'}
                       </Text>
                     </View>
-                    {exercise.favorite === 1 ? <StarIcon size={16} color={colors.accent} filled /> : null}
+                    {exercise.favorite === 1 ? <StarIcon size={16} color={colors.accentInk} filled /> : null}
                   </Pressable>
                 );
               })}
@@ -888,7 +909,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
             </Text>
             {recordEventIds.has(set.eventId) ? (
               <View style={styles.recordBadge}>
-                <StarIcon size={10} color={colors.accent} strokeWidth={2.2} filled />
+                <StarIcon size={10} color={colors.accentInk} strokeWidth={2.2} filled />
                 <Text style={styles.recordBadgeText}>PR</Text>
               </View>
             ) : null}
@@ -903,7 +924,7 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
       {/* Bottom action */}
       {hasLogs ? (
         <View style={styles.finishBar}>
-          <Button label="Done" onPress={handleDone} style={styles.finishButton} />
+          <Button label="Done" variant="secondary" onPress={handleDone} style={styles.finishButton} />
         </View>
       ) : null}
     </SafeAreaView>
@@ -915,22 +936,28 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: spacing.sm,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.s,
+    paddingTop: spacing.xs,
+    // Added to the bottom safe-area inset, so Done clears the gesture bar.
+    paddingBottom: spacing.s,
   },
   // Header row: close / editable session name / elapsed time.
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.s,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   titleInput: {
-    ...typography.title,
+    ...typography.display,
+    fontSize: 30,
+    lineHeight: 34,
     flex: 1,
     minHeight: 38,
     padding: 0,
+  },
+  totals: {
+    marginBottom: spacing.s,
   },
   timer: {
     flexDirection: 'row',
@@ -945,7 +972,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.success,
+    backgroundColor: colors.accent,
   },
   timerValue: {
     ...typography.mono,
@@ -959,12 +986,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   // Bleeds to the screen edges so chips scroll under the gutter, not clip at it.
   chipScroller: {
     flexGrow: 0,
-    marginHorizontal: -spacing.sm,
-    marginBottom: spacing.sm,
+    marginHorizontal: -spacing.s,
+    marginBottom: spacing.s,
   },
   chipRow: {
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.s,
   },
   addExerciseChip: {
     borderStyle: 'dashed',
@@ -978,13 +1005,14 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingLeft: spacing.s + 2,
     paddingRight: 6,
     borderRadius: radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: colors.surface,
   },
+  // Selected reads as ink, like Chip and the segmented control; the accent stays on Log set.
   sessionChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.textPrimary,
+    borderColor: colors.textPrimary,
   },
   sessionChipText: {
     ...font('medium'),
@@ -992,7 +1020,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     color: colors.textPrimary,
   },
   sessionChipTextSelected: {
-    color: colors.onAction,
+    color: colors.background,
   },
   sessionChipCount: {
     minWidth: 24,
@@ -1010,18 +1038,20 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     color: colors.onAction,
   },
   sessionChipCountSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.background,
   },
   sessionChipCountText: {
     ...font('semibold'),
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
   firstPick: {
-    padding: spacing.sm,
-    gap: spacing.s,
-    marginBottom: spacing.sm,
+    padding: spacing.s,
+    gap: spacing.xs,
+    marginBottom: spacing.s,
   },
   firstPickTitle: {
     ...typography.title,
@@ -1031,7 +1061,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    minHeight: 56,
+    minHeight: 52,
   },
   quickRowDivided: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1049,7 +1079,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   quickSub: {
     ...font('regular'),
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
@@ -1094,7 +1124,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   inputSection: {
     padding: spacing.s,
     gap: spacing.s,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.s,
   },
   panels: {
     flexDirection: 'row',
@@ -1110,12 +1140,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: 6,
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderSoft,
   },
   bigStepText: {
     ...font('mono'),
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   logHeaderRow: {
@@ -1142,17 +1170,15 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   logCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
   },
-  // One line per set: exercise, PR flag, weight x reps, time.
+  // One compact line per set: exercise, PR flag, weight x reps, time.
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    minHeight: 44,
-    paddingHorizontal: spacing.sm,
+    minHeight: 40,
+    paddingHorizontal: spacing.s,
   },
   logRowDivided: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1163,7 +1189,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flex: 1,
     color: colors.textPrimary,
     fontSize: 15,
-    letterSpacing: -0.15,
   },
   logDetail: {
     ...font('semibold'),
@@ -1173,7 +1198,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   logTime: {
     ...typography.mono,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
     minWidth: 40,
     textAlign: 'right',
@@ -1198,7 +1223,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   recordChipText: {
     ...font('bold'),
-    color: colors.accent,
+    color: colors.accentInk,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
   },
@@ -1215,7 +1240,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   recordBadgeText: {
     ...font('semibold'),
     color: colors.textPrimary,
-    fontSize: 11,
+    fontSize: 12,
   },
   emptyText: {
     ...font('regular'),
@@ -1258,9 +1283,8 @@ const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
     },
     value: {
       ...typography.numeric,
-      fontSize: 34,
-      lineHeight: 42,
-      letterSpacing: -0.8,
+      fontSize: 40,
+      lineHeight: 44,
       textAlign: 'center',
     },
     // Same footprint as the number it replaces, underlined so it reads as editing.
@@ -1281,8 +1305,6 @@ const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
       height: 40,
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderSoft,
     },
     stepText: {
       ...font('regular'),

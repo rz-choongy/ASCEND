@@ -129,12 +129,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       padding: spacing.s,
       borderRadius: radius.md + 4,
       backgroundColor: colors.surfaceAlt,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
     },
     tileSelected: {
       backgroundColor: colors.action,
-      borderColor: colors.action,
     },
     tileText: {
       gap: 1,
@@ -143,7 +140,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     tileTitle: {
       ...font('semibold'),
       fontSize: 17,
-      letterSpacing: -0.2,
     },
     tileSub: {
       ...font('regular'),

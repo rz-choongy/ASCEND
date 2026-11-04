@@ -2,6 +2,7 @@ import { Children, Fragment, useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../tokens/colors';
+import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
 import type { Shadows } from '../tokens/shadow';
 import { spacing } from '../tokens/spacing';
@@ -9,65 +10,99 @@ import type { Typography } from '../tokens/typography';
 import { PressableScale } from './PressableScale';
 
 type StatItem = {
-  value: string;
   label: string;
+  value: string;
+  sub?: string;
+  /** A small dot beside the value, e.g. a grade's tape colour. Never a filled block. */
+  dotColor?: string;
 };
 
 type StatRowProps = {
   items: StatItem[];
+  /** Drop the card around the row, when it already sits inside one. */
+  bare?: boolean;
   style?: ViewStyle;
 };
 
-export const StatRow = ({ items, style }: StatRowProps) => {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+/**
+ * The compact stat row: label, big condensed figure, small sub-line, in equal
+ * columns split by hairlines. Replaces a grid of separate stat cards.
+ */
+export const StatRow = ({ items, bare = false, style }: StatRowProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createRowStyles(colors, typography), [colors, typography]);
   return (
-    <View style={[styles.strip, style]}>
+    <View style={[styles.strip, bare ? styles.bare : null, style]}>
       {items.map((item, index) => (
-        <Fragment key={item.label}>
-          {index > 0 ? <View style={styles.divider} /> : null}
-          <View style={styles.cell}>
-            <Text style={styles.value} numberOfLines={1}>
+        <View key={item.label} style={[styles.cell, index > 0 ? styles.cellDivided : null]}>
+          <Text style={styles.label} numberOfLines={1}>
+            {item.label}
+          </Text>
+          <View style={styles.valueRow}>
+            <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
               {item.value}
             </Text>
-            <Text style={styles.label} numberOfLines={1}>
-              {item.label}
-            </Text>
+            {item.dotColor ? <View style={[styles.dot, { backgroundColor: item.dotColor }]} /> : null}
           </View>
-        </Fragment>
+          {item.sub ? (
+            <Text style={styles.sub} numberOfLines={1}>
+              {item.sub}
+            </Text>
+          ) : null}
+        </View>
       ))}
     </View>
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createRowStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     strip: {
       flexDirection: 'row',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      paddingVertical: spacing.sm,
-      ...shadows.card,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+    },
+    bare: {
+      backgroundColor: 'transparent',
+      paddingVertical: 0,
+      paddingHorizontal: 0,
     },
     cell: {
       flex: 1,
+      minWidth: 0,
+    },
+    cellDivided: {
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.separator,
+      paddingLeft: 10,
+      marginLeft: 10,
+    },
+    label: {
+      ...typography.meta,
+      ...font('semibold'),
+    },
+    valueRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      gap: 3,
+      gap: 6,
+      marginTop: 2,
     },
     value: {
       ...typography.numeric,
-      fontSize: 22,
+      flexShrink: 1,
     },
-    label: {
-      ...typography.section,
-      fontSize: 10,
+    dot: {
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: 'rgba(0, 0, 0, 0.2)',
     },
-    divider: {
-      width: StyleSheet.hairlineWidth,
-      backgroundColor: colors.separator,
-      marginVertical: spacing.xs,
+    sub: {
+      ...typography.meta,
+      fontSize: 13,
     },
   });
 
@@ -174,8 +209,8 @@ const createTileStyles = (colors: ThemeColors, typography: Typography, shadows: 
       flex: 1,
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderWidth: 1.5,
+      borderColor: colors.surface,
       ...shadows.card,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
@@ -188,13 +223,9 @@ const createTileStyles = (colors: ThemeColors, typography: Typography, shadows: 
     tileCompact: {
       paddingVertical: spacing.xs,
     },
+    // Selected, not shouted: an ink outline instead of a coloured fill.
     tileHighlight: {
-      backgroundColor: colors.accentMuted,
-      // A translucent tint over a shadow lets Android draw the elevation
-      // through the fill, so tinted cards sit flat.
-      elevation: 0,
-      shadowOpacity: 0,
-      borderColor: colors.accent,
+      borderColor: colors.textPrimary,
     },
     besideRow: {
       flexDirection: 'row',
@@ -206,20 +237,19 @@ const createTileStyles = (colors: ThemeColors, typography: Typography, shadows: 
       flexShrink: 1,
     },
     label: {
-      ...typography.section,
+      ...typography.meta,
+      ...font('semibold'),
     },
     value: {
       ...typography.numeric,
-      fontSize: 26,
       marginTop: 2,
     },
     valueCompact: {
-      fontSize: 20,
+      fontSize: 26,
+      lineHeight: 28,
       marginTop: 0,
     },
-    valueHighlight: {
-      color: colors.accent,
-    },
+    valueHighlight: {},
     unit: {
       ...typography.meta,
       fontSize: 13,

@@ -28,6 +28,7 @@ import {
   IconButton,
   PressableScale,
   ScreenHeader,
+  SegmentedControl,
   Stepper,
   font,
   radius,
@@ -56,9 +57,9 @@ type EditableGradeRow = {
 type GradeRowFields = Omit<EditableGradeRow, 'draftId' | 'id'>;
 
 const TYPE_OPTIONS: { value: GradingType; label: string }[] = [
-  { value: 'v_scale', label: 'V-Scale' },
+  { value: 'v_scale', label: 'V-scale' },
   { value: 'numeric', label: 'Numeric' },
-  { value: 'color', label: 'Color' },
+  { value: 'color', label: 'Colour' },
 ];
 
 const GRADE_COLOR_OPTIONS = [
@@ -569,23 +570,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         />
 
         <Text style={styles.label}>Grading type</Text>
-        <View style={styles.typeRow}>
-          {TYPE_OPTIONS.map((option) => {
-            const selected = option.value === gradingType;
-            return (
-              <PressableScale
-                key={option.value}
-                style={[styles.typeChip, selected ? styles.typeChipSelected : null]}
-                onPress={() => updateType(option.value)}
-                scaleTo={0.94}
-              >
-                <Text style={[styles.typeText, selected ? styles.typeTextSelected : null]}>
-                  {option.label}
-                </Text>
-              </PressableScale>
-            );
-          })}
-        </View>
+        <SegmentedControl options={TYPE_OPTIONS} value={gradingType} onChange={updateType} />
 
         <View style={styles.gradeHeader}>
           <Text style={styles.label}>Grades at this gym</Text>
@@ -629,12 +614,21 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   </IconButton>
                 </View>
               ) : null}
+              {/* The tape colour as a small dot beside the grade; tap it to change the colour. */}
+              <PressableScale
+                onPress={() => setColorPickerIndex(index)}
+                scaleTo={0.9}
+                style={styles.swatchTarget}
+                accessibilityLabel={`Change colour of ${row.label || 'grade'}`}
+              >
+                <View style={[styles.currentSwatch, { backgroundColor: swatchColor }]} />
+              </PressableScale>
               <TextInput
                 value={row.label}
                 onChangeText={(value) => updateRow(index, { label: value })}
                 placeholder="Label"
                 placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.gradeLabelInput]}
+                style={styles.gradeLabelInput}
               />
               {isSingleValue ? (
                 // One value per grade on V-scale and numeric gyms: one stepper sets both bounds.
@@ -653,12 +647,6 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   />
                 </View>
               ) : null}
-              <PressableScale
-                onPress={() => setColorPickerIndex(index)}
-                scaleTo={0.9}
-                style={[styles.currentSwatch, { backgroundColor: swatchColor }]}
-                hitSlop={6}
-              />
               <IconButton
                 onPress={() => removeRow(index)}
                 accessibilityLabel={`Remove ${row.label || 'grade'}`}
@@ -734,7 +722,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setColorPickerIndex(null)}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Grade color</Text>
+            <Text style={styles.modalTitle}>Grade colour</Text>
             <View style={styles.colorGrid}>
               {GRADE_COLOR_OPTIONS.map((color) => {
                 const selected =
@@ -755,7 +743,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                       { backgroundColor: color },
                       selected ? styles.colorGridSwatchSelected : null,
                     ]}
-                    accessibilityLabel={`Use color ${color}`}
+                    accessibilityLabel={`Use colour ${color}`}
                   />
                 );
               })}
@@ -798,35 +786,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 16,
     ...font('regular'),
   },
-  typeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  // Prism pill toggle: outlined when idle, solid action fill when chosen.
-  typeChip: {
-    minHeight: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  typeChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
-  },
-  typeText: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    ...font('semibold'),
-    letterSpacing: -0.2,
-  },
-  typeTextSelected: {
-    color: colors.onAction,
-  },
   gradeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -834,7 +793,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginTop: spacing.xs,
   },
   addRowText: {
-    color: colors.accent,
+    color: colors.accentInk,
     fontSize: 16,
     ...font('medium'),
   },
@@ -845,15 +804,22 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     gap: spacing.xs,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
-    padding: spacing.xs,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.xs,
   },
+  // The grade label reads as the grade itself: display type on the card, no filled field.
   gradeLabelInput: {
+    // A small basis so the stepper and delete share the line on narrow phones.
+    flexBasis: 64,
     flexGrow: 1,
-    flexShrink: 0,
-    minWidth: 76,
+    flexShrink: 1,
+    minWidth: 56,
+    minHeight: 40,
+    paddingHorizontal: spacing.xxs,
+    color: colors.textPrimary,
+    ...font('display'),
+    fontSize: 24,
   },
   rangeGroup: {
     flexDirection: 'row',
@@ -870,12 +836,18 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 16,
     ...font('medium'),
   },
-  currentSwatch: {
+  swatchTarget: {
     width: 32,
-    height: 32,
-    borderRadius: 16,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currentSwatch: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.separator,
+    borderColor: colors.borderSoft,
   },
   moveColumn: {
     gap: 2,
@@ -905,8 +877,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     width: '100%',
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.lg,
     padding: spacing.md,
     gap: spacing.sm,
@@ -953,14 +923,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     gap: spacing.xs,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
     padding: spacing.sm,
     marginTop: spacing.xs,
   },
   inheritedIcon: {
-    color: colors.accent,
+    color: colors.accentInk,
     fontSize: 18,
     ...font('bold'),
     lineHeight: 22,

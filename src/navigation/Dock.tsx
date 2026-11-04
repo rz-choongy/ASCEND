@@ -26,7 +26,7 @@ export const Dock = ({ state, descriptors, navigation, renderIcon }: DockProps) 
         const focused = state.index === index;
         const { options } = descriptors[route.key];
         const label = typeof options.tabBarLabel === 'string' ? options.tabBarLabel : options.title ?? route.name;
-        const color = focused ? colors.action : colors.textMuted;
+        const color = focused ? colors.textPrimary : colors.textSecondary;
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
@@ -62,7 +62,7 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
-      ...shadows.card,
+      ...shadows.lg,
     },
     item: {
       flex: 1,
@@ -70,10 +70,10 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       gap: 2,
     },
     itemActive: {
-      backgroundColor: colors.accentMuted,
+      backgroundColor: colors.accentSoft,
     },
     label: {
-      ...font('medium'),
-      fontSize: 10,
+      ...font('semibold'),
+      fontSize: 11,
     },
   });

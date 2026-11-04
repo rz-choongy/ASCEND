@@ -27,14 +27,14 @@ import type { SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import {
+  Card,
   ChevronLeftIcon,
   ChevronRightIcon,
   Chip,
+  GradeChip,
   IconButton,
   SegmentedControl,
   font,
-  radius,
-  type Shadows,
   useTheme,
 } from '../ui';
 import { spacing } from '../ui';
@@ -107,15 +107,13 @@ function formatWeekRangeLabel(weekStart: Date): string {
 
 export function CalendarScreen() {
   const navigation = useNavigation<CalendarNavProp>();
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(
-    () => createStyles(colors, typography, shadows),
-    [colors, typography, shadows]
-  );
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const tabBarClearance = useTabBarClearance();
   const panelContentStyle = [styles.sessionPanelContent, { paddingBottom: tabBarClearance }];
-  const DOT_CLIMB = colors.accent;
-  const DOT_STRENGTH = colors.success;
+  // Neutral ink marks; the accent is kept for today and the selected day.
+  const DOT_CLIMB = colors.textPrimary;
+  const DOT_STRENGTH = colors.textSecondary;
   const today = todayDate();
 
   const [viewMode, setViewMode] = useState<CalendarView>('month');
@@ -275,17 +273,13 @@ export function CalendarScreen() {
     return `${WEEKDAY_FULL[date.getDay()]} · ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0, 3)}`;
   }
 
-  /** A single bar-row for one session, matching Direction A's `.sess-row`/`.sess-bar`. */
+  /** One compact session row: title and time, the hardest grade as a chip, the duration. */
   function renderSessionRow(
     session: SessionRow,
     replayById: Map<string, SessionReplay>,
     isFirst: boolean
   ) {
     const replay = replayById.get(session.id);
-    // The rule down the left of each row carries the session's hardest grade color,
-    // extending the grade palette out of the chips and into the timeline.
-    const barColor =
-      session.type === 'climb' ? replay?.dotColor ?? colors.textPrimary : colors.textSecondary;
     const hardestGradeLabel = session.type === 'climb' ? replay?.hardestGradeLabel : undefined;
 
     return (
@@ -295,25 +289,26 @@ export function CalendarScreen() {
         onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
         activeOpacity={0.75}
       >
-        <View style={[styles.sessBar, { backgroundColor: barColor }]} />
         <View style={styles.sessBody}>
-          <Text style={styles.sessType}>{formatSessionTitle(session)}</Text>
+          <Text style={styles.sessType} numberOfLines={1}>
+            {formatSessionTitle(session)}
+          </Text>
           <Text style={styles.sessMeta}>
-            {hardestGradeLabel ? (
-              <Text style={styles.sessGradeChip}> {hardestGradeLabel} </Text>
-            ) : null}
-            {' '}
             {formatTime(session.started_at)}
+            {session.completed_at != null
+              ? ` · ${formatDuration(session.started_at, session.completed_at)}`
+              : ''}
           </Text>
         </View>
-        {session.completed_at != null ? (
-          <Text style={styles.sessDur}>{formatDuration(session.started_at, session.completed_at)}</Text>
+        {hardestGradeLabel && replay ? (
+          <GradeChip label={hardestGradeLabel} color={replay.dotColor} />
         ) : null}
+        <ChevronRightIcon color={colors.textMuted} size={16} />
       </TouchableOpacity>
     );
   }
 
-  /** One bordered card containing all of a day's sessions as bar-rows. */
+  /** One card containing all of a day's sessions as compact rows. */
   function renderDayCard(sessions: SessionRow[], replayById: Map<string, SessionReplay>) {
     if (sessions.length === 0) {
       return (
@@ -323,9 +318,9 @@ export function CalendarScreen() {
       );
     }
     return (
-      <View style={styles.dayCard}>
+      <Card style={styles.dayCard}>
         {sessions.map((session, i) => renderSessionRow(session, replayById, i === 0))}
-      </View>
+      </Card>
     );
   }
 
@@ -536,7 +531,7 @@ export function CalendarScreen() {
 
 const DAY_CELL_SIZE = 28;
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
   root: {
     flex: 1,
@@ -552,12 +547,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginBottom: spacing.xs,
   },
   screenTitle: {
-    ...typography.title,
-    fontSize: 22,
+    ...typography.display,
   },
   discardedBanner: {
-    ...typography.bodyMuted,
-    fontSize: 12,
+    ...typography.meta,
     paddingHorizontal: spacing.sm,
     marginBottom: spacing.xs,
   },
@@ -623,17 +616,16 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     justifyContent: 'center',
   },
   dayNumberSelected: {
-    backgroundColor: colors.action,
+    backgroundColor: colors.accent,
   },
   dayNumber: {
     fontSize: 17,
     ...font('regular'),
-    letterSpacing: -0.4,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   dayNumberTodayText: {
-    color: colors.accent,
+    color: colors.accentInk,
     ...font('semibold'),
   },
   dayNumberSelectedText: {
@@ -651,7 +643,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     justifyContent: 'center',
   },
   dayRingStrength: {
-    borderColor: colors.textPrimary,
+    borderColor: colors.textSecondary,
   },
   dayDot: {
     width: 6,
@@ -660,7 +652,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     backgroundColor: 'transparent',
   },
   dayDotClimb: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.textPrimary,
   },
 
   // Divider
@@ -694,14 +686,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   noSessions: {
     ...typography.bodyMuted,
-    fontSize: 15,
     color: colors.textMuted,
-    paddingVertical: spacing.sm,
-    textAlign: 'center',
+    paddingVertical: spacing.xs,
   },
   monthCountFooter: {
-    ...typography.bodyMuted,
-    fontSize: 12.5,
+    ...typography.meta,
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.md,
@@ -718,59 +707,31 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginLeft: 2,
   },
 
-  // Day card of bar-rows -- one inset-grouped panel per day.
-  // No overflow clip: the rows are transparent, and it would clip the shadow.
+  // One card per day, rows split by hairlines.
   dayCard: {
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    ...shadows.card,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 12,
   },
   sessRow: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    alignItems: 'center',
     gap: 10,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   sessRowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.separator,
   },
-  sessBar: {
-    width: 3,
-    borderRadius: 1.5,
-    flexShrink: 0,
-  },
   sessBody: {
     flex: 1,
+    minWidth: 0,
   },
   sessType: {
     ...typography.body,
-    fontSize: 16,
     ...font('semibold'),
   },
   sessMeta: {
-    ...typography.bodyMuted,
-    fontSize: 13,
-    marginTop: 3,
-    fontVariant: ['tabular-nums'],
-  },
-  sessGradeChip: {
     ...typography.meta,
-    fontSize: 11,
-    ...font('semibold'),
-    color: colors.textPrimary,
-    backgroundColor: colors.fill,
-  },
-  sessDur: {
-    ...typography.numeric,
-    fontSize: 15,
-    ...font('medium'),
-    color: colors.textSecondary,
-    marginLeft: 'auto',
-    flexShrink: 0,
-    alignSelf: 'center',
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
 });

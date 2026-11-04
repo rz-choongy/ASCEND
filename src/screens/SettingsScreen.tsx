@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { LayoutAnimation, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Updates from 'expo-updates';
@@ -39,6 +39,7 @@ import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
   ChevronLeftIcon,
+  ChevronRightIcon,
   IconButton,
   ListGroup,
   ListRow,
@@ -74,6 +75,11 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const { colors, typography, mode, setMode, accentId, setAccentId } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
+  const [accentOpen, setAccentOpen] = useState(false);
+  const toggleAccent = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setAccentOpen((open) => !open);
+  };
   const [gymName, setGymName] = useState('Default V-Scale');
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [loggedVGradeEnabled, setLoggedVGradeEnabled] = useState(true);
@@ -328,34 +334,48 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
               </View>
             }
           />
-          <ListRow
-            title="Accent color"
-            subtitle="Used for buttons, selection, and highlights"
-            right={
-              <View style={styles.accentSwatchRow}>
-                {ACCENT_OPTIONS.map(([id, option]) => {
-                  const selected = id === accentId;
-                  const swatchColor = option[mode].accent;
-                  return (
-                    // The whole 36px cell is the tap target; the colour is drawn inside it.
-                    // A bare 24px swatch with hitSlop missed taps on Android.
-                    <PressableScale
-                      key={id}
-                      onPress={() => setAccentId(id)}
-                      scaleTo={0.9}
-                      accessibilityLabel={option.label}
-                      accessibilityState={{ selected }}
-                      style={styles.accentTarget}
-                    >
-                      <View style={[styles.accentRing, selected ? styles.accentRingSelected : null]}>
-                        <View style={[styles.accentSwatch, { backgroundColor: swatchColor }]} />
-                      </View>
-                    </PressableScale>
-                  );
-                })}
+          <View style={styles.accentBlock}>
+            {/* Collapsed: one row showing the current colour. Tap to open the grid;
+                picks apply live and the grid stays open until the row is tapped again. */}
+            <PressableScale
+              onPress={toggleAccent}
+              scaleTo={0.98}
+              accessibilityLabel={`Accent colour, ${ACCENT_PALETTE[accentId].label}`}
+              style={styles.accentHeader}
+            >
+              <View style={styles.accentHeaderText}>
+                <Text style={styles.accentTitle}>Accent colour</Text>
+                <Text style={styles.accentSubtitle}>{ACCENT_PALETTE[accentId].label}</Text>
               </View>
-            }
-          />
+              <View style={[styles.accentCurrent, { backgroundColor: ACCENT_PALETTE[accentId].hex }]} />
+              <View style={{ transform: [{ rotate: accentOpen ? '90deg' : '0deg' }] }}>
+                <ChevronRightIcon size={18} color={colors.textMuted} />
+              </View>
+            </PressableScale>
+            {accentOpen ? (
+            <View style={styles.accentGrid}>
+              {ACCENT_OPTIONS.map(([id, option]) => {
+                const selected = id === accentId;
+                return (
+                  // The whole cell is the tap target; the colour is drawn inside it.
+                  // A bare small swatch with hitSlop missed taps on Android.
+                  <PressableScale
+                    key={id}
+                    onPress={() => setAccentId(id)}
+                    scaleTo={0.9}
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ selected }}
+                    style={styles.accentTarget}
+                  >
+                    <View style={[styles.accentRing, selected ? styles.accentRingSelected : null]}>
+                      <View style={[styles.accentSwatch, { backgroundColor: option.hex }]} />
+                    </View>
+                  </PressableScale>
+                );
+              })}
+            </View>
+            ) : null}
+          </View>
         </ListGroup>
 
         <Text style={styles.sectionLabel}>Session</Text>
@@ -525,7 +545,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
         </ListGroup>
 
         <View style={styles.footer}>
-          <MountainMarkIcon size={18} color={colors.accent} strokeWidth={2} />
+          <MountainMarkIcon size={18} color={colors.accentInk} strokeWidth={2} />
           <Text style={styles.footerWord}>ASCEND</Text>
         </View>
       </ScrollView>
@@ -569,20 +589,51 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginTop: spacing.xxs,
     },
 
-    accentSwatchRow: {
+    // Accent picker: a row with the current colour; tap opens a 6 x 2 grid of swatches.
+    accentBlock: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.s,
+      backgroundColor: colors.surface,
+    },
+    accentHeader: {
       flexDirection: 'row',
-      marginTop: 4,
-      marginRight: -6,
+      alignItems: 'center',
+      gap: spacing.s,
+      minHeight: 44,
+    },
+    accentHeaderText: { flex: 1 },
+    accentCurrent: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+    },
+    accentTitle: {
+      ...font('medium'),
+      fontSize: 16,
+      color: colors.textPrimary,
+    },
+    accentSubtitle: {
+      ...font('regular'),
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    accentGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: spacing.s,
+      marginTop: spacing.s,
     },
     accentTarget: {
-      width: 36,
-      height: 36,
+      width: '16.66%',
+      alignItems: 'center',
     },
-    // Round swatches, the way iOS presents a colour choice; the selected one gets a ring.
+    // Selected swatch: a textPrimary ring with a gap of surface between ring and colour.
     accentRing: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       borderWidth: 2,
       borderColor: 'transparent',
       alignItems: 'center',
@@ -592,9 +643,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       borderColor: colors.textPrimary,
     },
     accentSwatch: {
-      width: 22,
-      height: 22,
-      borderRadius: 11,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
     },
 
     footer: {
@@ -607,7 +658,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.meta,
       fontSize: 13,
       ...font('semibold'),
-      letterSpacing: 0.6,
       color: colors.textSecondary,
     },
   });

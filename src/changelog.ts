@@ -17,6 +17,18 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.0',
+    date: '2026-11-04',
+    changes: [
+      { kind: 'new', text: 'A new look: new type, softer cards, and stats grouped in compact rows.' },
+      { kind: 'new', text: 'Pick from 12 accent colours in Settings, including teal and purple. Teal is the new default.' },
+      { kind: 'improved', text: 'Grades show as plain text with a tape-colour dot instead of big coloured blocks.' },
+      { kind: 'improved', text: 'Graphs get more room, with a shaded line and the latest point highlighted.' },
+      { kind: 'improved', text: 'The grade pyramid shows flashes in dark and sends in grey, so the split is easy to read.' },
+      { kind: 'fixed', text: 'Report a bug shows how your report will be sent, and the email fallback keeps the reason.' },
+    ],
+  },
+  {
     version: '2.6.3',
     date: '2026-11-04',
     changes: [

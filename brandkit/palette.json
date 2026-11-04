@@ -1,0 +1,13 @@
+{"approval_summary":"Ryan chose Gear B on Setter's Tape colours, dark mode as default, tape-colour accent set with tape yellow as default. Purple dropped.",
+"palette":{"colors":[
+{"hex":"#1B1C1B","name":"Rubber Mat","role":"background"},
+{"hex":"#2A2B29","name":"Mat Panel","role":"surface"},
+{"hex":"#F1F0EB","name":"Chalk","role":"text"},
+{"hex":"#E4E2DD","name":"Concrete","role":"background-light"},
+{"hex":"#F6F5F2","name":"Panel","role":"surface-light"},
+{"hex":"#151515","name":"Marker","role":"text-light"},
+{"hex":"#F2C230","name":"Tape Yellow","role":"accent"},
+{"hex":"#FF5A1F","name":"Hazard Orange","role":"accent-option"},
+{"hex":"#3AA86B","name":"Hold Green","role":"accent-option"},
+{"hex":"#4D86E0","name":"Tape Blue","role":"accent-option"},
+{"hex":"#EE8FBD","name":"Tape Pink","role":"accent-option"}],"gradients":[]}}

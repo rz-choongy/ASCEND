@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCEND · Setter's Tape, round 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist:wght@400..800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#151515; --mute:#5f5d58; --line:#d8d6d0; --bg:#efeee9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: Geist, Roboto, Arial, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; }
+  main { max-width:1240px; margin:0 auto; padding:56px 32px 96px; }
+  h1 { font-family: Archivo; font-stretch:112%; font-size:42px; font-weight:900; letter-spacing:-0.02em; }
+  .lede { font-size:17px; color:var(--mute); max-width:680px; margin-top:10px; }
+  h2 { font-family: Archivo; font-stretch:112%; font-size:24px; font-weight:800; margin:72px 0 6px; }
+  .sub { color:var(--mute); max-width:720px; }
+
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:28px; }
+  .card { background:#fff; border-radius:6px; padding:24px; }
+  .card h3 { font-family: Archivo; font-stretch:112%; font-size:22px; font-weight:800; }
+  .card .tag { font-size:13px; font-weight:600; color:var(--mute); }
+  .card p.why { margin:8px 0 20px; color:var(--mute); font-size:14.5px; }
+  .phones { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .cap { font-size:12.5px; color:var(--mute); margin-top:8px; text-align:center; }
+  ul.notes { margin-top:18px; padding-top:14px; border-top:1px solid var(--line); list-style:none; font-size:13.5px; color:var(--mute); }
+  ul.notes li { padding:3px 0; }
+  ul.notes b { color:var(--ink); }
+
+  /* ---------- phone base ---------- */
+  .ph { aspect-ratio: 9/19; border-radius:26px; overflow:hidden; position:relative; padding:16px 13px 12px; display:flex; flex-direction:column; gap:10px;
+        --ground:#e4e2dd; --panel:#f6f5f2; --text:#151515; --mute2:#6b6964; --acc:#f2c230; --on-acc:#151515;
+        background:var(--ground); color:var(--text); font-family: Geist, Roboto, sans-serif; }
+  .ph .row { display:flex; justify-content:space-between; align-items:center; }
+  .ph .k { font-size:10.5px; font-weight:600; color:var(--mute2); }
+  .ph .n { font-size:22px; font-weight:800; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; line-height:1.05; }
+  .ph .n small { display:block; font-size:10px; font-weight:500; color:var(--mute2); letter-spacing:0; }
+  .ph .nums { display:flex; gap:16px; margin-top:4px; }
+  .ph .panel { background:var(--panel); border-radius:10px; padding:11px; }
+  .ph .btn { background:var(--acc); color:var(--on-acc); border-radius:12px; padding:13px; font-weight:700; font-size:14px; display:flex; justify-content:space-between; align-items:center; }
+  .ph .btn small { display:block; font-weight:500; font-size:10.5px; opacity:.7; }
+  .ph .nav { margin-top:auto; display:flex; justify-content:space-around; font-size:10px; font-weight:600; color:var(--mute2); padding-top:6px; }
+  .ph .nav span { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .ph .nav i { width:44px; height:22px; border-radius:11px; display:block; }
+  .ph .nav .on i { background:var(--acc); }
+  .ph .nav .on { color:var(--text); }
+  .ph .nav i::after { content:""; display:block; width:12px; height:12px; margin:5px auto; border:2px solid currentColor; border-radius:3px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .tile { height:40px; display:grid; place-items:center; font-weight:800; font-size:14px; }
+  .sendrow { display:grid; grid-template-columns:1.4fr 1fr; gap:6px; }
+  .sendrow div { border-radius:12px; padding:12px 0; text-align:center; font-weight:700; font-size:13px; }
+  .log li { list-style:none; display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:7px 0; border-bottom:1px solid rgba(0,0,0,.08); }
+  .log li:last-child { border:0; }
+  .chipg { width:30px; height:16px; display:inline-grid; place-items:center; font-size:10px; font-weight:800; }
+
+  /* ---------- A: familiar (Material 3, straight tape) ---------- */
+  .A .title { font-size:26px; font-weight:800; letter-spacing:-0.03em; }
+  .A .tile { border-radius:3px; }
+  .A .chipg { border-radius:2px; }
+  .A .sendrow .send { background:var(--acc); color:var(--on-acc); }
+  .A .sendrow .flash { background:var(--panel); }
+
+  /* ---------- B: experimental (tape strips, wide display type) ---------- */
+  .B { gap:12px; }
+  .B .title { font-family: Archivo; font-stretch:125%; font-size:34px; font-weight:900; letter-spacing:-0.03em; line-height:.9; text-transform:none; }
+  .B .datebar { display:inline-block; background:var(--text); color:var(--ground); font-size:10.5px; font-weight:700; padding:3px 7px; transform:rotate(-1.5deg); align-self:flex-start; }
+  .B .btn { border-radius:2px; transform:rotate(-1deg); font-family: Archivo; font-stretch:115%; font-size:17px; font-weight:900; padding:15px 13px; box-shadow: 0 2px 0 rgba(0,0,0,.18); }
+  .B .panel { border-radius:2px; }
+  .B .n { font-family: Archivo; font-stretch:115%; font-size:25px; font-weight:900; }
+  .B .tile { border-radius:1px; font-family: Archivo; font-stretch:118%; font-weight:900; font-size:15px; transform:rotate(var(--r,0deg)); box-shadow: 0 1px 0 rgba(0,0,0,.15); }
+  .B .tile.sel { outline:3px solid var(--text); outline-offset:2px; }
+  .B .sendrow div { border-radius:2px; font-family: Archivo; font-stretch:115%; font-weight:900; font-size:14px; }
+  .B .sendrow .send { background:var(--text); color:var(--ground); }
+  .B .sendrow .flash { background:var(--acc); color:var(--on-acc); }
+  .B .chipg { transform:rotate(-3deg); font-family: Archivo; font-stretch:115%; }
+  .B .nav i { border-radius:2px; }
+  .B .rule { height:6px; background:repeating-linear-gradient(90deg,var(--text) 0 14px,transparent 14px 20px); opacity:.85; }
+
+  /* ---------- colour styles ---------- */
+  .styles { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:28px; }
+  .style { background:#fff; border-radius:6px; padding:18px; }
+  .style h4 { font-family: Archivo; font-stretch:112%; font-size:17px; font-weight:800; }
+  .style p { font-size:13px; color:var(--mute); margin:4px 0 12px; min-height:58px; }
+  .sw { display:flex; gap:4px; margin-bottom:12px; }
+  .sw i { flex:1; height:26px; border-radius:3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .mini { border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .mini .t { font-weight:800; font-size:18px; letter-spacing:-0.02em; }
+  .mini .b { border-radius:8px; padding:9px; font-weight:700; font-size:12px; }
+  .mini .p { border-radius:7px; padding:8px; font-size:11px; }
+  .mini .g { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
+  .mini .g span { height:20px; border-radius:2px; }
+
+  /* accent row */
+  .accents { display:flex; gap:16px; margin-top:20px; flex-wrap:wrap; }
+  .acc { background:#fff; border-radius:6px; padding:12px; width:150px; }
+  .acc .b { border-radius:8px; padding:10px; font-weight:700; font-size:12.5px; margin-bottom:6px; }
+  .acc span { font-size:12px; color:var(--mute); }
+
+  /* numbers compare */
+  .cmp { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:24px; }
+  .cmp .card { padding:18px; }
+  .cmp .grid4 { margin-top:12px; }
+  .cmp .tile { height:44px; border-radius:2px; transform:rotate(var(--r,0deg)); }
+  .reply { margin-top:56px; background:var(--ink); color:#fff; border-radius:6px; padding:22px 24px; font-size:16px; }
+  .reply code { background:rgba(255,255,255,.12); padding:2px 6px; border-radius:3px; font-size:14px; }
+  @media (max-width: 1000px) { .pair, .styles, .cmp { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Setter's Tape, round 2</h1>
+  <p class="lede">You picked option 1, more geometric. Below: the same brand as a familiar version and an experimental version, the tile numbers three ways, and four colour styles. The accent stays user-selectable.</p>
+
+  <h2>1. Familiar vs experimental</h2>
+  <p class="sub">Both use the same palette. Left phone is Log, right phone is the climb logger, where you spend most of your time.</p>
+
+  <div class="pair">
+    <!-- A -->
+    <section class="card">
+      <span class="tag">A · Familiar</span>
+      <h3>Tape on a clean Android app</h3>
+      <p class="why">Standard Material 3 layout: rounded buttons, a normal navigation bar, Geist type. The tape shows up only where grades appear, as straight coloured strips.</p>
+      <div class="phones">
+        <div>
+          <div class="ph A">
+            <div class="k">Monday 2 Nov</div>
+            <div class="title">Today</div>
+            <div class="btn"><span>Start climbing<small>Default V-Scale</small></span><span>→</span></div>
+            <div class="panel">
+              <div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+              <div class="nums"><div class="n">2<small>sends</small></div><div class="n">V4<small>best</small></div><div class="n">0%<small>flashed</small></div></div>
+            </div>
+            <div class="panel">
+              <div class="k">This week</div>
+              <div class="nums"><div class="n">1<small>session</small></div><div class="n">2<small>sends</small></div><div class="n">0<small>sets</small></div></div>
+            </div>
+            <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+          </div>
+          <div class="cap">Log</div>
+        </div>
+        <div>
+          <div class="ph A">
+            <div class="row"><span style="font-weight:700;font-size:13px">✕</span><span class="k">00:42</span></div>
+            <div style="font-weight:800;font-size:17px">Default V-Scale</div>
+            <div class="grid4">
+              <div class="tile" style="background:#f6f5f2">V0</div><div class="tile" style="background:#f2c230">V1</div><div class="tile" style="background:#3aa86b">V2</div><div class="tile" style="background:#4d86e0">V3</div>
+              <div class="tile" style="background:#e0533f;outline:3px solid #151515;outline-offset:2px">V4</div><div class="tile" style="background:#ee8fbd">V5</div><div class="tile" style="background:#9b7ad8">V6</div><div class="tile" style="background:#151515;color:#f6f5f2">V7</div>
+            </div>
+            <div class="sendrow"><div class="send">Send V4</div><div class="flash">Flash</div></div>
+            <div class="panel">
+              <div class="k">This session · 3 climbs</div>
+              <ul class="log">
+                <li><span><span class="chipg" style="background:#e0533f">V4</span> Send</span><span class="k">2 min</span></li>
+                <li><span><span class="chipg" style="background:#4d86e0">V3</span> Flash</span><span class="k">9 min</span></li>
+                <li><span><span class="chipg" style="background:#4d86e0">V3</span> Send</span><span class="k">14 min</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="cap">Climb logger</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><b>Good:</b> instantly readable, nothing to learn, ages well.</li>
+        <li><b>Risk:</b> could drift back toward "any fitness app" if the tape gets toned down.</li>
+      </ul>
+    </section>
+
+    <!-- B -->
+    <section class="card">
+      <span class="tag">B · Experimental</span>
+      <h3>The whole app is taped up</h3>
+      <p class="why">Wide, heavy Archivo type like a setting board. Buttons and labels are tape strips, slightly off-angle like real tape. Square corners throughout. Same navigation, same flow.</p>
+      <div class="phones">
+        <div>
+          <div class="ph B">
+            <span class="datebar">MON 2 NOV</span>
+            <div class="title">Today</div>
+            <div class="btn"><span>Start climbing<small style="font-family:Geist;font-stretch:100%">Default V-Scale</small></span><span>→</span></div>
+            <div class="rule"></div>
+            <div class="panel">
+              <div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+              <div class="nums"><div class="n">2<small>sends</small></div><div class="n">V4<small>best</small></div><div class="n">0%<small>flashed</small></div></div>
+            </div>
+            <div class="panel">
+              <div class="k">This week</div>
+              <div class="nums"><div class="n">1<small>session</small></div><div class="n">2<small>sends</small></div><div class="n">0<small>sets</small></div></div>
+            </div>
+            <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+          </div>
+          <div class="cap">Log</div>
+        </div>
+        <div>
+          <div class="ph B">
+            <div class="row"><span style="font-weight:700;font-size:13px">✕</span><span class="datebar" style="transform:rotate(1deg)">00:42</span></div>
+            <div style="font-family:Archivo;font-stretch:118%;font-weight:900;font-size:19px">Default V-Scale</div>
+            <div class="grid4">
+              <div class="tile" style="background:#f6f5f2;--r:-1.5deg">V0</div><div class="tile" style="background:#f2c230;--r:1deg">V1</div><div class="tile" style="background:#3aa86b;--r:-0.6deg">V2</div><div class="tile" style="background:#4d86e0;--r:1.4deg">V3</div>
+              <div class="tile sel" style="background:#e0533f;--r:0.8deg">V4</div><div class="tile" style="background:#ee8fbd;--r:-1deg">V5</div><div class="tile" style="background:#9b7ad8;--r:0.5deg">V6</div><div class="tile" style="background:#151515;color:#f6f5f2;--r:-1.2deg">V7</div>
+            </div>
+            <div class="sendrow"><div class="send">SEND V4</div><div class="flash">FLASH</div></div>
+            <div class="panel">
+              <div class="k">This session · 3 climbs</div>
+              <ul class="log">
+                <li><span><span class="chipg" style="background:#e0533f">V4</span> Send</span><span class="k">2 min</span></li>
+                <li><span><span class="chipg" style="background:#4d86e0">V3</span> Flash</span><span class="k">9 min</span></li>
+                <li><span><span class="chipg" style="background:#4d86e0">V3</span> Send</span><span class="k">14 min</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="cap">Climb logger</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><b>Good:</b> looks like nothing else on your phone, and clearly about climbing.</li>
+        <li><b>Risk:</b> the tilt has to stay small and rare. Too much and it reads as messy.</li>
+      </ul>
+    </section>
+  </div>
+
+  <h2>2. The numbers on the tiles</h2>
+  <p class="sub">You're undecided on hand-drawn. Here are three levels, from clean to marker. All other text stays clean either way.</p>
+  <div class="cmp">
+    <div class="card"><span class="tag">Clean</span><h3>Geist bold</h3>
+      <div class="grid4">
+        <div class="tile" style="background:#f2c230;font-family:Geist;font-weight:800">V1</div><div class="tile" style="background:#3aa86b;font-family:Geist;font-weight:800">V2</div><div class="tile" style="background:#4d86e0;font-family:Geist;font-weight:800">V3</div><div class="tile" style="background:#e0533f;font-family:Geist;font-weight:800">V4</div>
+      </div></div>
+    <div class="card"><span class="tag">Stencil-wide (geometric)</span><h3>Archivo wide black</h3>
+      <div class="grid4">
+        <div class="tile" style="background:#f2c230;font-family:Archivo;font-stretch:125%;font-weight:900;--r:-1deg">V1</div><div class="tile" style="background:#3aa86b;font-family:Archivo;font-stretch:125%;font-weight:900;--r:.8deg">V2</div><div class="tile" style="background:#4d86e0;font-family:Archivo;font-stretch:125%;font-weight:900;--r:-.5deg">V3</div><div class="tile" style="background:#e0533f;font-family:Archivo;font-stretch:125%;font-weight:900;--r:1.2deg">V4</div>
+      </div></div>
+    <div class="card"><span class="tag">Hand-drawn</span><h3>Marker</h3>
+      <div class="grid4">
+        <div class="tile" style="background:#f2c230;font-family:'Marker Felt','Comic Sans MS',cursive;--r:-1deg">V1</div><div class="tile" style="background:#3aa86b;font-family:'Marker Felt','Comic Sans MS',cursive;--r:.8deg">V2</div><div class="tile" style="background:#4d86e0;font-family:'Marker Felt','Comic Sans MS',cursive;--r:-.5deg">V3</div><div class="tile" style="background:#e0533f;font-family:'Marker Felt','Comic Sans MS',cursive;--r:1.2deg">V4</div>
+      </div></div>
+  </div>
+
+  <h2>3. Colour style</h2>
+  <p class="sub">Same tape grades, different ground and default accent. A light and a dark theme come from one style, so this is about the brand's main look.</p>
+  <div class="styles">
+    <div class="style">
+      <h4>Concrete + Yellow</h4>
+      <p>Round 1. Warm grey like a gym floor, safety-tape yellow.</p>
+      <div class="sw"><i style="background:#e4e2dd"></i><i style="background:#f6f5f2"></i><i style="background:#151515"></i><i style="background:#f2c230"></i></div>
+      <div class="mini" style="background:#e4e2dd;color:#151515"><div class="t">Today</div><div class="b" style="background:#f2c230">Start climbing</div><div class="p" style="background:#f6f5f2">Last climb · V4</div><div class="g"><span style="background:#f2c230"></span><span style="background:#3aa86b"></span><span style="background:#4d86e0"></span><span style="background:#e0533f"></span></div></div>
+    </div>
+    <div class="style">
+      <h4>Fresh Wall + Orange</h4>
+      <p>Bright white like a newly painted wall. Black type, hazard orange. Sharper, higher contrast.</p>
+      <div class="sw"><i style="background:#fafaf8"></i><i style="background:#ededea"></i><i style="background:#0f0f0f"></i><i style="background:#ff5a1f"></i></div>
+      <div class="mini" style="background:#fafaf8;color:#0f0f0f;box-shadow:inset 0 0 0 1px #e2e2de"><div class="t">Today</div><div class="b" style="background:#ff5a1f;color:#fff">Start climbing</div><div class="p" style="background:#ededea">Last climb · V4</div><div class="g"><span style="background:#f2c230"></span><span style="background:#3aa86b"></span><span style="background:#4d86e0"></span><span style="background:#e0533f"></span></div></div>
+    </div>
+    <div class="style">
+      <h4>Plywood Wall + Black</h4>
+      <p>Wall panels before they're painted. Black is the action colour, so the tape grades are the only colour on screen.</p>
+      <div class="sw"><i style="background:#d9cdb8"></i><i style="background:#ece5d8"></i><i style="background:#141414"></i><i style="background:#141414"></i></div>
+      <div class="mini" style="background:#d9cdb8;color:#141414"><div class="t">Today</div><div class="b" style="background:#141414;color:#ece5d8">Start climbing</div><div class="p" style="background:#ece5d8">Last climb · V4</div><div class="g"><span style="background:#f2c230"></span><span style="background:#3aa86b"></span><span style="background:#4d86e0"></span><span style="background:#e0533f"></span></div></div>
+    </div>
+    <div class="style">
+      <h4>Rubber Mat (dark)</h4>
+      <p>The dark theme: black rubber floor matting with tape yellow. For evening sessions or if you prefer dark.</p>
+      <div class="sw"><i style="background:#1b1c1b"></i><i style="background:#2a2b29"></i><i style="background:#f1f0eb"></i><i style="background:#f2c230"></i></div>
+      <div class="mini" style="background:#1b1c1b;color:#f1f0eb"><div class="t">Today</div><div class="b" style="background:#f2c230;color:#151515">Start climbing</div><div class="p" style="background:#2a2b29">Last climb · V4</div><div class="g"><span style="background:#f2c230"></span><span style="background:#3aa86b"></span><span style="background:#4d86e0"></span><span style="background:#e0533f"></span></div></div>
+    </div>
+  </div>
+
+  <h2>4. Accent options in Settings</h2>
+  <p class="sub">Every accent is a tape colour, so any choice still looks like the brand. Purple is dropped unless you want it back.</p>
+  <div class="accents">
+    <div class="acc"><div class="b" style="background:#f2c230">Start climbing</div><span>Tape yellow (default)</span></div>
+    <div class="acc"><div class="b" style="background:#ff5a1f;color:#fff">Start climbing</div><span>Hazard orange</span></div>
+    <div class="acc"><div class="b" style="background:#3aa86b;color:#fff">Start climbing</div><span>Hold green</span></div>
+    <div class="acc"><div class="b" style="background:#4d86e0;color:#fff">Start climbing</div><span>Tape blue</span></div>
+    <div class="acc"><div class="b" style="background:#ee8fbd">Start climbing</div><span>Tape pink</span></div>
+    <div class="acc"><div class="b" style="background:#151515;color:#fff">Start climbing</div><span>Black</span></div>
+  </div>
+
+  <div class="reply">Reply like: <code>B, wide numbers, Concrete + Yellow, and Rubber Mat for dark</code> (and finish "but i want…")</div>
+</main>
+</body>
+</html>

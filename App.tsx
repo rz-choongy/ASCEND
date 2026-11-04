@@ -5,6 +5,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AppState, Text, View } from 'react-native';
+import { applyDevUrlOptions } from './src/dev/seedDemo';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
@@ -153,7 +154,7 @@ function AppContent() {
 
 // Matches darkColors.background — used only before the DB (and therefore ThemeProvider,
 // which reads the persisted theme preference from it) is confirmed ready.
-const FALLBACK_BACKGROUND = '#0a0a0a';
+const FALLBACK_BACKGROUND = '#000000';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -164,6 +165,7 @@ export default function App() {
   useEffect(() => {
     try {
       migrate();
+      applyDevUrlOptions();
       setIsReady(true);
     } catch (e) {
       setInitError(e instanceof Error ? e.message : 'Failed to initialise database.');

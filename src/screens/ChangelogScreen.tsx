@@ -25,7 +25,7 @@ export const ChangelogScreen = ({ navigation }: RootStackScreenProps<'Changelog'
   const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
   const kindColor = (kind: ChangeKind): string =>
-    kind === 'fixed' ? colors.success : kind === 'new' ? colors.accent : colors.textSecondary;
+    kind === 'fixed' ? colors.success : kind === 'new' ? colors.accentInk : colors.textSecondary;
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
@@ -87,8 +87,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       paddingBottom: spacing.xs,
     },
     title: {
-      ...typography.title,
-      fontSize: 20,
+      ...typography.display,
     },
     content: {
       paddingHorizontal: spacing.sm,
@@ -107,7 +106,8 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     version: {
       ...typography.numeric,
-      fontSize: 22,
+      fontSize: 24,
+      lineHeight: 26,
     },
     currentBadge: {
       backgroundColor: colors.accentMuted,
@@ -117,9 +117,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       alignSelf: 'center',
     },
     currentBadgeText: {
-      color: colors.accent,
-      fontSize: 11,
-      ...font('bold'),
+      color: colors.accentInk,
+      fontSize: 13,
+      ...font('semibold'),
     },
     date: {
       ...typography.meta,
@@ -129,13 +129,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       ...shadows.card,
-      paddingHorizontal: spacing.s,
+      paddingHorizontal: 12,
     },
     row: {
-      paddingVertical: spacing.s,
+      paddingVertical: 10,
       gap: 3,
     },
     rowBordered: {

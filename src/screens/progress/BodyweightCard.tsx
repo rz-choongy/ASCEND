@@ -4,15 +4,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getBodyweightLogs } from '../../domain/bodyweightStore';
 import { formatDaysAgo, formatWeight } from '../../domain/strengthProgress';
 import type { BodyweightLogRow } from '../../domain/types';
-import { LineChart, font, radius, spacing, useTheme, type Shadows } from '../../ui';
+import { Card, LineChart, font, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
 const TREND_ENTRIES_SHOWN = 30;
 
 export function BodyweightCard() {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const [logs, setLogs] = useState<BodyweightLogRow[]>([]);
 
   useFocusEffect(
@@ -32,7 +32,7 @@ export function BodyweightCard() {
     .map((log) => ({ value: log.weight_kg, label: formatDaysAgo(log.logged_at) }));
 
   return (
-    <View style={styles.card}>
+    <Card padded="compact" style={styles.card}>
       {/* One row: the number that matters, with the trend as a glance, not a chart to read. */}
       <View style={styles.text}>
         <Text style={styles.label}>Bodyweight</Text>
@@ -50,23 +50,16 @@ export function BodyweightCard() {
           <LineChart points={points} height={44} compact />
         </View>
       ) : null}
-    </View>
+    </Card>
   );
 }
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     card: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.sm,
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      paddingHorizontal: spacing.s,
-      paddingVertical: spacing.s,
       marginBottom: spacing.xs,
     },
     text: {
@@ -74,21 +67,19 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       gap: 1,
     },
     label: {
-      ...typography.section,
+      ...typography.meta,
+      ...font('semibold'),
     },
     latestValue: {
       ...typography.numeric,
-      fontSize: 22,
+      fontSize: 28,
+      lineHeight: 30,
     },
     latestUnit: {
-      ...font('medium'),
-      fontSize: 13,
-      color: colors.textSecondary,
+      ...typography.meta,
     },
     latestMeta: {
-      ...font('regular'),
-      fontSize: 12,
-      color: colors.textSecondary,
+      ...typography.meta,
       fontVariant: ['tabular-nums'],
     },
     chart: {

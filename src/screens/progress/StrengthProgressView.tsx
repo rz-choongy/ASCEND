@@ -16,18 +16,7 @@ import {
 } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
 import type { RootStackParamList, TabParamList } from '../../navigation/types';
-import {
-  BarChart,
-  ChevronRightIcon,
-  PressableScale,
-  StatGrid,
-  StatTile,
-  font,
-  radius,
-  spacing,
-  useTheme,
-  type Shadows,
-} from '../../ui';
+import { BarChart, Card, ChevronRightIcon, PressableScale, StatRow, font, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
@@ -46,8 +35,8 @@ type Props = {
 };
 
 export function StrengthProgressView({ sessions, scopedSessions }: Props) {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const navigation = useNavigation<NavProp>();
 
   const strengthSessions = useMemo(() => scopedSessions.filter((s) => s.type === 'strength'), [scopedSessions]);
@@ -62,28 +51,25 @@ export function StrengthProgressView({ sessions, scopedSessions }: Props) {
 
   if (strengthSessions.length === 0) {
     return (
-      <View style={styles.empty}>
+      <Card padded="graph" style={styles.empty}>
         <Text style={styles.emptyTitle}>No strength sessions yet</Text>
         <Text style={styles.emptyCopy}>
           Log a strength session and each exercise's trend will show up here.
         </Text>
-      </View>
+      </Card>
     );
   }
 
   return (
     <View style={styles.stack}>
-      <StatGrid>
-        <StatTile
-          highlight
-          label="Sessions"
-          value={String(strengthSessions.length)}
-          sub={`${thisWeek} this week`}
-        />
-        <StatTile label="Total volume" value={volume.value} unit={volume.unit} />
-      </StatGrid>
+      <StatRow
+        items={[
+          { label: 'Sessions', value: String(strengthSessions.length), sub: `${thisWeek} this week` },
+          { label: 'Total volume', value: `${volume.value} ${volume.unit}`, sub: 'all sets' },
+        ]}
+      />
 
-      <View style={styles.card}>
+      <Card padded="compact">
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Exercises</Text>
           <Text style={styles.cardMeta}>most recent first</Text>
@@ -98,17 +84,17 @@ export function StrengthProgressView({ sessions, scopedSessions }: Props) {
             }
           />
         ))}
-      </View>
+      </Card>
 
       {volumeTrend.length > 0 ? (
-        <View style={styles.card}>
+        <Card padded="graph">
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Strength volume</Text>
             <Text style={styles.cardMeta}>last {STRENGTH_SESSIONS_SHOWN} sessions</Text>
           </View>
           <View style={styles.chart}>
             <BarChart
-              height={80}
+              height={110}
               valueFormatter={(value) => `${Math.round(value)}kg`}
               bars={volumeTrend.map((bar) => ({
                 label: bar.label,
@@ -116,7 +102,7 @@ export function StrengthProgressView({ sessions, scopedSessions }: Props) {
               }))}
             />
           </View>
-        </View>
+        </Card>
       ) : null}
     </View>
   );
@@ -129,11 +115,11 @@ type ExerciseRowProps = {
 };
 
 const ExerciseRow = ({ exercise, bordered, onPress }: ExerciseRowProps) => {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { changePct, lastSet } = exercise;
   const changeColor =
-    changePct === null || changePct === 0 ? colors.textMuted : changePct > 0 ? colors.success : colors.danger;
+    changePct === null || changePct === 0 ? colors.textMuted : changePct > 0 ? colors.accentInk : colors.danger;
 
   return (
     <PressableScale onPress={onPress} scaleTo={0.985} style={[styles.row, bordered ? styles.rowBordered : null]}>
@@ -145,7 +131,7 @@ const ExerciseRow = ({ exercise, bordered, onPress }: ExerciseRowProps) => {
           {lastSet.weight === 0 ? 'BW' : `${formatWeight(lastSet.weight)} kg`} × {lastSet.reps} · {formatDaysAgo(exercise.lastAt)}
         </Text>
       </View>
-      <Sparkline values={exercise.trend} color={colors.accent} />
+      <Sparkline values={exercise.trend} color={colors.chartStrong} />
       <Text style={[styles.rowChange, { color: changeColor }]}>
         {changePct === null ? '—' : `${changePct > 0 ? '+' : ''}${changePct}%`}
       </Text>
@@ -180,18 +166,9 @@ const Sparkline = ({ values, color }: { values: number[]; color: string }) => {
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     stack: { gap: spacing.xs },
-    card: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      paddingHorizontal: spacing.s,
-      paddingVertical: spacing.s,
-    },
     cardHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -199,9 +176,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       gap: spacing.xs,
       marginBottom: spacing.xxs,
     },
-    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
-    cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
-    chart: { marginTop: spacing.xs },
+    cardTitle: { ...typography.title },
+    cardMeta: { ...typography.meta, flexShrink: 1, textAlign: 'right' },
+    chart: { marginTop: spacing.s },
 
     // PressableScale centres its children; the row lays them out left to right itself.
     row: {
@@ -209,38 +186,28 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       alignItems: 'center',
       justifyContent: 'flex-start',
       gap: spacing.xs,
-      paddingVertical: spacing.s,
+      paddingVertical: 10,
     },
     rowBordered: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.separator,
     },
     rowText: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-    rowName: { ...typography.body, ...font('semibold'), fontSize: 16 },
+    rowName: { ...typography.body, ...font('semibold') },
     rowSub: {
       ...typography.meta,
-      fontSize: 13,
-      color: colors.textSecondary,
       marginTop: 2,
       fontVariant: ['tabular-nums'],
     },
     rowChange: {
-      ...typography.numeric,
-      width: 42,
-      fontSize: 13,
+      ...font('bold'),
+      width: 48,
+      fontSize: 14,
       textAlign: 'right',
+      fontVariant: ['tabular-nums'],
     },
 
-    empty: {
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      padding: spacing.md,
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
+    empty: { alignItems: 'center', gap: spacing.xs },
     emptyTitle: { ...typography.body, ...font('semibold'), textAlign: 'center' },
     emptyCopy: { ...typography.bodyMuted, textAlign: 'center', lineHeight: 20 },
   });

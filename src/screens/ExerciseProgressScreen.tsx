@@ -16,18 +16,16 @@ import { getExerciseNames } from '../domain/exerciseStore';
 import { getCompletedSessions } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
+  Card,
   ChevronLeftIcon,
   ChevronRightIcon,
   LineChart,
   PressableScale,
   SegmentedControl,
-  StatGrid,
-  StatTile,
   font,
   radius,
   spacing,
   useTheme,
-  type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
@@ -60,8 +58,8 @@ const deltaSub = (delta: number | null, format: (d: number) => string) => {
 
 export function ExerciseProgressScreen({ navigation, route }: RootStackScreenProps<'ExerciseProgress'>) {
   const { exerciseKey, exerciseName } = route.params;
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
   const [detail, setDetail] = useState<ExerciseDetail | null>(null);
   const [metric, setMetric] = useState<StrengthMetric>('e1rm');
@@ -106,7 +104,7 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
         accessibilityLabel="Back to strength progress"
         style={styles.back}
       >
-        <ChevronLeftIcon size={18} color={colors.accent} strokeWidth={2.4} />
+        <ChevronLeftIcon size={18} color={colors.accentInk} strokeWidth={2.4} />
         <Text style={styles.backText}>Strength</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={2}>
@@ -120,9 +118,9 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
       <SafeAreaView edges={['top']} style={styles.root}>
         <View style={styles.content}>
           {header}
-          <View style={styles.card}>
+          <Card padded="compact">
             <Text style={styles.emptyText}>No sets logged for this exercise yet.</Text>
-          </View>
+          </Card>
         </View>
       </SafeAreaView>
     );
@@ -141,49 +139,53 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
         {header}
 
         <View style={styles.stack}>
-          <StatGrid>
-            <StatTile
-              label="Est. 1RM"
-              value={formatWeight(tiles.e1rm.value)}
-              unit="kg"
-              sub={e1rmSub.text}
-              subTone={e1rmSub.tone}
-              highlight={metric === 'e1rm'}
-              onPress={() => setMetric('e1rm')}
-            />
-            <StatTile
-              label="Top weight"
-              value={formatWeight(tiles.topWeight.value)}
-              unit="kg"
-              sub={topSub.text}
-              subTone={topSub.tone}
-              highlight={metric === 'topWeight'}
-              onPress={() => setMetric('topWeight')}
-            />
-            <StatTile
-              label="Volume"
-              value={lastVolume.value}
-              unit={lastVolume.unit}
-              sub={volumeSub.text}
-              subTone={volumeSub.tone}
-              highlight={metric === 'volume'}
-              onPress={() => setMetric('volume')}
-            />
-            <StatTile
-              label="Sessions"
-              value={String(detail.sessionCount)}
-              sub={`${detail.sessionsThisMonth} this month`}
-            />
-          </StatGrid>
+          {/* One card of stats; the three metric cells pick what the chart below plots. */}
+          <Card padded="compact">
+            <View style={styles.metricRow}>
+              <MetricCell
+                label="Est. 1RM"
+                value={formatWeight(tiles.e1rm.value)}
+                unit="kg"
+                sub={e1rmSub}
+                selected={metric === 'e1rm'}
+                onPress={() => setMetric('e1rm')}
+              />
+              <MetricCell
+                label="Top weight"
+                value={formatWeight(tiles.topWeight.value)}
+                unit="kg"
+                sub={topSub}
+                selected={metric === 'topWeight'}
+                onPress={() => setMetric('topWeight')}
+                divided
+              />
+            </View>
+            <View style={[styles.metricRow, styles.metricRowDivided]}>
+              <MetricCell
+                label="Volume"
+                value={lastVolume.value}
+                unit={lastVolume.unit}
+                sub={volumeSub}
+                selected={metric === 'volume'}
+                onPress={() => setMetric('volume')}
+              />
+              <MetricCell
+                label="Sessions"
+                value={String(detail.sessionCount)}
+                sub={{ text: `${detail.sessionsThisMonth} this month`, tone: 'muted' }}
+                divided
+              />
+            </View>
+          </Card>
 
-          <View style={styles.card}>
+          <Card padded="graph">
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>{METRIC_TITLE[metric]}</Text>
               <Text style={styles.cardMeta}>{metric === 'volume' ? 'per session' : 'kg'}</Text>
             </View>
             <View style={styles.chart}>
               {chartPoints.length > 0 ? (
-                <LineChart points={chartPoints} height={120} valueFormatter={formatAxis} />
+                <LineChart points={chartPoints} height={150} valueFormatter={formatAxis} />
               ) : (
                 <Text style={styles.emptyText}>No sessions in this range.</Text>
               )}
@@ -195,9 +197,9 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
                 onChange={setRange}
               />
             </View>
-          </View>
+          </Card>
 
-          <View style={styles.card}>
+          <Card padded="compact">
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Sessions</Text>
               <Text style={styles.cardMeta}>tap to expand</Text>
@@ -219,7 +221,7 @@ export function ExerciseProgressScreen({ navigation, route }: RootStackScreenPro
                 </Text>
               </Pressable>
             ) : null}
-          </View>
+          </Card>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -234,9 +236,59 @@ type SessionRowProps = {
   onToggle: () => void;
 };
 
+type MetricCellProps = {
+  label: string;
+  value: string;
+  unit?: string;
+  sub: { text: string; tone: 'muted' | 'positive' | 'negative' };
+  /** The metric the chart is plotting. Omit `onPress` for a plain stat. */
+  selected?: boolean;
+  onPress?: () => void;
+  divided?: boolean;
+};
+
+/** A StatRow-style cell that can also be tapped to choose the chart's metric. */
+const MetricCell = ({ label, value, unit, sub, selected = false, onPress, divided = false }: MetricCellProps) => {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
+  const subColor =
+    sub.tone === 'positive' ? colors.accentInk : sub.tone === 'negative' ? colors.danger : colors.textSecondary;
+  const body = (
+    <>
+      <View style={styles.metricLabelRow}>
+        <Text style={[styles.metricLabel, selected ? styles.metricLabelSelected : null]} numberOfLines={1}>
+          {label}
+        </Text>
+        {selected ? <View style={styles.metricSelectedDot} /> : null}
+      </View>
+      <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+        {unit ? <Text style={styles.metricUnit}> {unit}</Text> : null}
+      </Text>
+      <Text style={[styles.metricSub, { color: subColor }]} numberOfLines={1}>
+        {sub.text}
+      </Text>
+    </>
+  );
+  const cellStyle = [styles.metricCell, divided ? styles.metricCellDivided : null];
+  return onPress ? (
+    <PressableScale
+      onPress={onPress}
+      scaleTo={0.97}
+      style={[...cellStyle, styles.metricPressable]}
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${label} ${value}${unit ? ` ${unit}` : ''}, ${sub.text}`}
+    >
+      {body}
+    </PressableScale>
+  ) : (
+    <View style={cellStyle}>{body}</View>
+  );
+};
+
 const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: SessionRowProps) => {
-  const { colors, typography, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const { topSet, sets } = session;
 
   return (
@@ -277,7 +329,7 @@ const SessionRow = ({ session, isRecord, expanded, bordered, onToggle }: Session
   );
 };
 
-const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
     content: {
@@ -293,32 +345,45 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       marginLeft: -4,
       paddingVertical: spacing.xxs,
     },
-    backText: { ...font('regular'), fontSize: 17, color: colors.accent, letterSpacing: -0.4 },
+    backText: { ...font('medium'), fontSize: 16, color: colors.accentInk },
     title: {
       ...typography.display,
-      fontSize: 30,
-      letterSpacing: -0.6,
       marginTop: 2,
     },
 
     stack: { gap: spacing.xs },
-    card: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      ...shadows.card,
-      paddingHorizontal: spacing.s,
-      paddingVertical: spacing.s,
+    metricRow: { flexDirection: 'row' },
+    metricRowDivided: {
+      marginTop: 10,
+      paddingTop: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.separator,
     },
+    metricCell: { flex: 1, minWidth: 0 },
+    // PressableScale centres its children by default; the cell's text is left-aligned.
+    metricPressable: { alignItems: 'stretch', justifyContent: 'flex-start' },
+    metricCellDivided: {
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.separator,
+      paddingLeft: 10,
+      marginLeft: 10,
+    },
+    metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    metricLabel: { ...typography.meta, ...font('semibold'), flexShrink: 1 },
+    metricLabelSelected: { color: colors.textPrimary },
+    metricSelectedDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.accent },
+    metricValue: { ...typography.numeric, marginTop: 2 },
+    metricUnit: { ...typography.meta },
+    metricSub: { ...typography.meta },
+
     cardHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',
       justifyContent: 'space-between',
       gap: spacing.xs,
     },
-    cardTitle: { ...typography.body, ...font('semibold'), fontSize: 17 },
-    cardMeta: { ...typography.meta, fontSize: 13, color: colors.textSecondary },
+    cardTitle: { ...typography.title },
+    cardMeta: { ...typography.meta, flexShrink: 1, textAlign: 'right' },
     chart: { marginTop: spacing.s },
     range: { marginTop: spacing.s },
     emptyText: { ...typography.bodyMuted, textAlign: 'center', paddingVertical: spacing.sm },
@@ -336,7 +401,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       paddingVertical: spacing.s,
     },
     sessionDateCol: {
-      width: 74,
+      width: 96,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
@@ -348,7 +413,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       paddingHorizontal: 6,
       paddingVertical: 1,
     },
-    badgeText: { ...font('bold'), fontSize: 11, color: colors.accent },
+    badgeText: { ...font('bold'), fontSize: 11, color: colors.accentInk },
     sessionSummary: {
       flex: 1,
       ...typography.meta,
@@ -369,5 +434,5 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     setValue: { ...typography.numeric, ...font('medium'), fontSize: 14 },
 
     showAll: { alignItems: 'center', paddingTop: spacing.s },
-    showAllText: { ...font('medium'), fontSize: 15, color: colors.accent },
+    showAllText: { ...font('semibold'), fontSize: 15, color: colors.accentInk },
   });

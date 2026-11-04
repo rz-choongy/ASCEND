@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { WeekActivity } from '../../domain/dashboard';
-import { Card, font, radius, spacing, useTheme } from '../../ui';
+import { Card, StatRow, font, radius, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 import { countDelta, type Delta } from './deltas';
@@ -18,21 +18,11 @@ export const WeekCard = ({ week, lastWeek, streak }: Props) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
-  // Laid out exactly like the Last session card's stats, so the two read as one system.
-  const total = (value: number, label: string, delta: Delta | null) => (
-    <View style={styles.total} key={label}>
-      <Text style={styles.totalValue}>{value}</Text>
-      <Text style={styles.totalLabel}>{label}</Text>
-      {delta ? (
-        <Text style={[styles.delta, delta.tone === 'up' ? styles.deltaUp : null]} numberOfLines={1}>
-          {delta.text}
-        </Text>
-      ) : null}
-    </View>
-  );
+  // The same compact stat row as the Last session card, so the two read as one system.
+  const total = (label: string, value: number, delta: Delta | null) => ({ label, value: `${value}`, sub: delta?.text });
 
   return (
-    <Card style={styles.card}>
+    <Card padded="compact" style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>This week</Text>
         <Text style={styles.streak}>
@@ -53,11 +43,14 @@ export const WeekCard = ({ week, lastWeek, streak }: Props) => {
           ))}
         </View>
       </View>
-      <View style={styles.totals}>
-        {total(week.sessions, week.sessions === 1 ? 'session' : 'sessions', countDelta(week.sessions, lastWeek.sessions, 'vs last wk'))}
-        {total(week.sends, week.sends === 1 ? 'send' : 'sends', countDelta(week.sends, lastWeek.sends, 'vs last wk'))}
-        {total(week.sets, week.sets === 1 ? 'set' : 'sets', countDelta(week.sets, lastWeek.sets, 'vs last wk'))}
-      </View>
+      <StatRow
+        bare
+        items={[
+          total(week.sessions === 1 ? 'Session' : 'Sessions', week.sessions, countDelta(week.sessions, lastWeek.sessions, 'vs last wk')),
+          total(week.sends === 1 ? 'Send' : 'Sends', week.sends, countDelta(week.sends, lastWeek.sends, 'vs last wk')),
+          total(week.sets === 1 ? 'Set' : 'Sets', week.sets, countDelta(week.sets, lastWeek.sets, 'vs last wk')),
+        ]}
+      />
     </Card>
   );
 };
@@ -65,7 +58,6 @@ export const WeekCard = ({ week, lastWeek, streak }: Props) => {
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     card: {
-      padding: spacing.sm,
       gap: spacing.s,
     },
     headerRow: {
@@ -124,31 +116,5 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     dayLabelToday: {
       ...font('semibold'),
       color: colors.textPrimary,
-    },
-    totals: {
-      flexDirection: 'row',
-      gap: spacing.xs,
-    },
-    total: {
-      flex: 1,
-      gap: 1,
-    },
-    totalValue: {
-      ...typography.numeric,
-      fontSize: 22,
-    },
-    delta: {
-      ...font('medium'),
-      fontSize: 11,
-      color: colors.textMuted,
-      fontVariant: ['tabular-nums'],
-    },
-    deltaUp: {
-      color: colors.success,
-    },
-    totalLabel: {
-      ...font('regular'),
-      fontSize: 12,
-      color: colors.textSecondary,
     },
   });

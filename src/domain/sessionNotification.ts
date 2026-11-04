@@ -168,7 +168,7 @@ export const syncActiveSessionNotification = async (): Promise<void> => {
 
     await ensureChannel(Notifications);
 
-    const accent = ACCENT_PALETTE[getAccentColorId()]?.dark.accent ?? ACCENT_PALETTE.amber.dark.accent;
+    const accent = ACCENT_PALETTE[getAccentColorId()]?.hex ?? ACCENT_PALETTE.teal.hex;
     const where = describeWhere(session);
     const title = session.type === 'climb' ? 'Climbing now' : 'Strength session';
     const started = `Started ${formatClock(session.started_at)}`;

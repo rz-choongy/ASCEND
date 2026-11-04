@@ -204,7 +204,7 @@ export const ExercisePickerSheet = ({
           accessibilityRole="button"
           accessibilityLabel={favorite ? `Remove ${e.name} from favourites` : `Add ${e.name} to favourites`}
         >
-          <StarIcon size={19} color={favorite ? colors.accent : colors.textMuted} filled={favorite} />
+          <StarIcon size={19} color={favorite ? colors.accentInk : colors.textMuted} filled={favorite} />
         </Pressable>
         <Pressable
           onPress={() => setEditingId(e.id)}
@@ -287,7 +287,7 @@ export const ExercisePickerSheet = ({
                   value={editing.favorite === 1}
                   onValueChange={() => onToggleFavorite(editing.id)}
                   trackColor={{ false: colors.fill, true: colors.accent }}
-                  thumbColor="#ffffff"
+                  thumbColor={colors.surfaceRaised}
                   accessibilityLabel="Favourite"
                 />
               </View>
@@ -389,8 +389,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       backgroundColor: colors.surface,
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       paddingHorizontal: spacing.sm,
       paddingTop: spacing.xs,
       gap: spacing.s,
@@ -461,7 +459,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      minHeight: 56,
+      minHeight: 52,
       paddingHorizontal: spacing.xxs,
     },
     rowDivided: {
@@ -480,7 +478,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     rowSub: {
       ...font('regular'),
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
       fontVariant: ['tabular-nums'],
     },
@@ -497,9 +495,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       backgroundColor: colors.accentMuted,
     },
     todayTagText: {
-      ...font('medium'),
-      fontSize: 11,
-      color: colors.accent,
+      ...font('semibold'),
+      fontSize: 12,
+      color: colors.accentInk,
       fontVariant: ['tabular-nums'],
     },
     addRow: {
@@ -513,9 +511,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       backgroundColor: colors.accentMuted,
     },
     addText: {
-      ...font('medium'),
+      ...font('semibold'),
       fontSize: 16,
-      color: colors.accent,
+      color: colors.accentInk,
     },
     empty: {
       ...typography.bodyMuted,
@@ -564,7 +562,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     deleteHint: {
       ...font('regular'),
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
     },
     categoryWrap: {

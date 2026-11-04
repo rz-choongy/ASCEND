@@ -1,5 +1,6 @@
 export {
   ACCENT_PALETTE,
+  DEFAULT_ACCENT_ID,
   getContrastText,
   type AccentColorId,
   type ThemeColors,
@@ -17,6 +18,7 @@ export { Button } from './components/Button';
 export { Card } from './components/Card';
 export { Chip } from './components/Chip';
 export { Divider } from './components/Divider';
+export { GradeChip } from './components/GradeChip';
 export { DialogHost, showDialog, type DialogButton } from './components/Dialog';
 export {
   ArrowRightIcon,
@@ -41,6 +43,7 @@ export { IconButton } from './components/IconButton';
 export { ListGroup, ListRow, ListSectionHeader } from './components/ListRow';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';
+export { SessionStrip } from './components/SessionStrip';
 export { SegmentedControl } from './components/SegmentedControl';
 export { StatGrid, StatRow, StatTile } from './components/StatTile';
 export { LineChart } from './components/LineChart';

@@ -209,7 +209,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
         </View>
 
         <Button
-          label={sending ? 'Sending…' : 'Send Report'}
+          label={sending ? 'Sending…' : 'Send report'}
           variant="primary"
           onPress={handleSend}
           disabled={!canSend}
@@ -265,8 +265,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     notice: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       ...shadows.card,
       padding: spacing.s,
       gap: spacing.xxs,

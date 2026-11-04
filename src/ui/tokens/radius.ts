@@ -1,8 +1,8 @@
-// Prism's radius scale: inputs and swatches (sm), menus and rows (md), cards
-// (lg, Prism's --radius), sheets (xl). Buttons, chips and the tab bar are pills.
+// Swatches and grade chips (sm), rows and inputs (md), compact cards (lg),
+// graph cards and sheets (xl). Buttons, chips, switches and the tab bar are pills.
 export const radius = {
-  sm: 8,
-  md: 10,
+  sm: 7,
+  md: 12,
   lg: 16,
   xl: 20,
   pill: 999,

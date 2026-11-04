@@ -31,11 +31,12 @@ import {
   Button,
   ChevronLeftIcon,
   DialogHost,
+  GradeChip,
   ListGroup,
   ListRow,
+  SessionStrip,
   StatRow,
   font,
-  getContrastText,
   radius,
   showDialog,
   spacing,
@@ -79,7 +80,7 @@ type SetDraft = {
 // Helpers
 
 const formatSessionType = (type: string): string =>
-  type === 'climb' ? 'Climbing Session' : 'Strength Session';
+  type === 'climb' ? 'Climbing session' : 'Strength session';
 
 const formatDateLine = (ms: number): string => {
   const date = new Date(ms);
@@ -188,8 +189,17 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
     const sends = climbs.filter((c) => c.result === 'SEND').length;
     const flashes = climbs.filter((c) => c.result === 'FLASH').length;
     const flashRate = climbs.length > 0 ? Math.round((flashes / climbs.length) * 100) : 0;
-    return { total: climbs.length, sends, flashes, flashRate };
-  }, [climbs, session?.type]);
+    const hardest = climbs.reduce<ClimbLog | null>(
+      (best, c) => (best === null || c.gradeMax > best.gradeMax ? c : best),
+      null
+    );
+    // Oldest first, the order they were climbed.
+    const tape = climbs
+      .slice()
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((c) => c.gradeColor || colors.chartQuiet);
+    return { total: climbs.length, sends, flashes, flashRate, hardest, tape };
+  }, [climbs, session?.type, colors.chartQuiet]);
 
   // Sets keep the name they were logged under; show the exercise's current name.
   const exerciseNames = useMemo(() => getExerciseNames(), []);
@@ -445,33 +455,52 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
         {/* Stats strip */}
         {climbStats ? (
-          <StatRow
-            style={styles.statsRow}
-            items={[
-              { value: `${climbStats.total}`, label: 'Climbs' },
-              { value: `${climbStats.sends}`, label: 'Sends' },
-              { value: `${climbStats.flashes}`, label: 'Flashes' },
-              { value: `${climbStats.flashRate}%`, label: 'Flash rate' },
-            ]}
-          />
+          <View style={styles.statsBlock}>
+            <StatRow
+              items={[
+                {
+                  label: 'Climbs',
+                  value: `${climbStats.total}`,
+                  sub: `${climbStats.sends} send${climbStats.sends === 1 ? '' : 's'}`,
+                },
+                {
+                  label: 'Flashes',
+                  value: `${climbStats.flashes}`,
+                  sub: `${climbStats.flashRate}% flash rate`,
+                },
+                ...(climbStats.hardest
+                  ? [
+                      {
+                        label: 'Hardest',
+                        value: climbStats.hardest.gradeLabel,
+                        sub: climbStats.hardest.result === 'FLASH' ? 'Flash' : 'Send',
+                        dotColor: climbStats.hardest.gradeColor ?? undefined,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            <SessionStrip colors={climbStats.tape} style={styles.sessionStrip} />
+          </View>
         ) : null}
 
         {strengthStats ? (
           <StatRow
-            style={styles.statsRow}
+            style={styles.statsBlock}
             items={[
-              { value: `${strengthStats.totalSets}`, label: 'Sets' },
+              { label: 'Sets', value: `${strengthStats.totalSets}` },
               {
-                value: strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}kg` : 'bw',
                 label: 'Volume',
+                value: strengthStats.totalVolume > 0 ? `${strengthStats.totalVolume}` : 'bw',
+                sub: strengthStats.totalVolume > 0 ? 'kg' : 'Bodyweight',
               },
-              { value: `${Object.keys(strengthStats.exerciseCounts).length}`, label: 'Exercises' },
+              { label: 'Exercises', value: `${Object.keys(strengthStats.exerciseCounts).length}` },
             ]}
           />
         ) : null}
 
         {/* Log list */}
-        <Text style={styles.sectionLabel}>{isClimb ? 'Sends' : 'Sets'}</Text>
+        <Text style={styles.sectionLabel}>{isClimb ? 'Climbs' : 'Sets'}</Text>
 
         {isClimb ? (
           climbs.length === 0 ? (
@@ -481,19 +510,15 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               {climbs.map((climb) => (
                 <ListRow
                   key={climb.eventId}
-                  title={climb.climbName || climb.gradeLabel}
-                  subtitle={
-                    climb.climbName
-                      ? `${climb.gradeLabel} · ${climb.result === 'FLASH' ? 'Flash' : 'Send'}`
-                      : climb.result === 'FLASH'
-                        ? 'Flash'
-                        : 'Send'
-                  }
+                  title={climb.climbName || (climb.result === 'FLASH' ? 'Flash' : 'Send')}
+                  subtitle={climb.climbName ? (climb.result === 'FLASH' ? 'Flash' : 'Send') : undefined}
                   meta={formatLogTime(climb.createdAt)}
                   left={
-                    climb.gradeColor ? (
-                      <View style={[styles.gradeSwatch, { backgroundColor: climb.gradeColor }]} />
-                    ) : undefined
+                    <GradeChip
+                      label={climb.gradeLabel}
+                      color={climb.gradeColor || colors.surfaceAlt}
+                      style={styles.gradeChipLead}
+                    />
                   }
                   onPress={() => openClimbEdit(climb)}
                 />
@@ -556,7 +581,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               style={styles.restoreButton}
             />
             <Button
-              label="Delete Session"
+              label="Delete session"
               variant="ghost"
               onPress={handleRemoveSession}
               style={styles.removeButton}
@@ -572,7 +597,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
               Delete this session from history.
             </Text>
             <Button
-              label="Delete Session"
+              label="Delete session"
               variant="ghost"
               onPress={handleRemoveSession}
               style={styles.removeButton}
@@ -608,19 +633,13 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                       return (
                         <Pressable
                           key={grade.id ?? grade.label}
-                          style={[
-                            styles.gradeChip,
-                            grade.colorHex ? { backgroundColor: grade.colorHex } : null,
-                            selected ? styles.gradeChipSelected : null,
-                          ]}
+                          style={[styles.gradeChip, selected ? styles.gradeChipSelected : null]}
                           onPress={() => selectGrade(grade)}
                         >
-                          <Text
-                            style={[
-                              styles.gradeChipText,
-                              { color: grade.colorHex ? getContrastText(grade.colorHex) : colors.textPrimary },
-                            ]}
-                          >
+                          {grade.colorHex ? (
+                            <View style={[styles.gradeDot, { backgroundColor: grade.colorHex }]} />
+                          ) : null}
+                          <Text style={[styles.gradeChipText, selected ? styles.gradeChipTextSelected : null]}>
                             {grade.label}
                           </Text>
                         </Pressable>
@@ -652,7 +671,9 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                           onPress={() => pickExactGrade(value)}
                           accessibilityLabel={`Exact grade V${value}`}
                         >
-                          <Text style={[styles.gradeChipText, { color: colors.textPrimary }]}>V{value}</Text>
+                          <Text style={[styles.gradeChipText, selected ? styles.gradeChipTextSelected : null]}>
+                            V{value}
+                          </Text>
                         </Pressable>
                       );
                     })}
@@ -694,7 +715,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                         onPress={() => setClimbDraft((draft) => ({ ...draft, result }))}
                       >
                         <Text style={[styles.resultText, selected ? styles.resultTextSelected : null]}>
-                          {result}
+                          {result === 'FLASH' ? 'Flash' : 'Send'}
                         </Text>
                       </Pressable>
                     );
@@ -782,22 +803,22 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginBottom: spacing.xs,
   },
   backLabel: {
-    ...font('regular'),
-    color: colors.accent,
-    fontSize: 17,
-    letterSpacing: -0.3,
+    ...font('medium'),
+    color: colors.textSecondary,
+    fontSize: 16,
   },
   metaBlock: {
     marginBottom: spacing.md,
     gap: 4,
   },
   titleLabel: {
-    ...typography.section,
+    ...typography.meta,
   },
   titleInput: {
-    ...typography.title,
-    fontSize: 20,
-    minHeight: 44,
+    ...typography.display,
+    fontSize: 30,
+    lineHeight: 34,
+    minHeight: 48,
     borderRadius: radius.md,
     backgroundColor: colors.fill,
     color: colors.textPrimary,
@@ -807,14 +828,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginBottom: 2,
   },
   metaLine: {
-    ...font('regular'),
-    color: colors.textSecondary,
-    fontSize: 15,
+    ...typography.bodyMuted,
     fontVariant: ['tabular-nums'],
   },
   editLink: {
-    ...font('medium'),
-    color: colors.accent,
+    ...font('semibold'),
+    color: colors.accentInk,
   },
   sectionLabel: {
     ...typography.section,
@@ -830,43 +849,33 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 14,
     paddingVertical: spacing.xs,
   },
-  gradeSwatch: {
-    width: 10,
-    height: 36,
-    borderRadius: 5,
+  gradeChipLead: {
+    minWidth: 40,
   },
   notesInput: {
     ...font('regular'),
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
     color: colors.textPrimary,
     fontSize: 16,
-    padding: spacing.sm,
+    padding: 12,
     minHeight: 100,
   },
   dangerBlock: {
     marginTop: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.card,
-    padding: spacing.sm,
+    padding: 12,
     gap: spacing.xs,
   },
   dangerLabel: {
-    ...typography.meta,
-    ...font('semibold'),
-    fontSize: 13,
+    ...typography.section,
     color: colors.danger,
   },
   dangerCopy: {
-    ...font('regular'),
-    color: colors.textSecondary,
-    fontSize: 14,
+    ...typography.bodyMuted,
     lineHeight: 19,
   },
   restoreButton: {
@@ -892,8 +901,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     width: '100%',
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     ...shadows.lg,
     padding: spacing.md,
     gap: spacing.sm,
@@ -926,23 +933,35 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
+  // Neutral pill with the tape colour as a small dot; selected is an ink fill.
   gradeChip: {
     minHeight: 44,
     minWidth: 64,
     borderRadius: radius.pill,
-    borderWidth: 2.5,
-    borderColor: 'transparent',
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.s,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.fill,
   },
   gradeChipSelected: {
-    borderColor: colors.textPrimary,
+    backgroundColor: colors.textPrimary,
+  },
+  gradeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderSoft,
   },
   gradeChipText: {
-    ...font('semibold'),
-    fontSize: 15,
+    ...font('display'),
+    fontSize: 18,
+    color: colors.textPrimary,
+  },
+  gradeChipTextSelected: {
+    color: colors.textInverse,
   },
   resultRow: {
     flexDirection: 'row',
@@ -952,25 +971,21 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flex: 1,
     minHeight: 44,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.borderSoft,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resultChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.textPrimary,
   },
   resultText: {
     ...font('medium'),
     color: colors.textSecondary,
     fontSize: 15,
-    letterSpacing: -0.2,
   },
   resultTextSelected: {
     ...font('semibold'),
-    color: colors.onAction,
+    color: colors.textInverse,
   },
   modalActions: {
     flexDirection: 'row',
@@ -983,7 +998,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     flex: 1,
   },
 
-  statsRow: {
+  statsBlock: {
     marginBottom: spacing.md,
+  },
+  sessionStrip: {
+    marginTop: spacing.xs,
   },
 });

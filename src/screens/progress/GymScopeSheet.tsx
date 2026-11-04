@@ -124,7 +124,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     done: {
       ...font('medium'),
       fontSize: 15,
-      color: colors.accent,
+      color: colors.accentInk,
     },
     hint: {
       ...typography.bodyMuted,
@@ -152,11 +152,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.body,
     },
     rowTitleSelected: {
-      color: colors.accent,
+      ...font('semibold'),
+      color: colors.accentInk,
     },
     rowSub: {
       ...font('regular'),
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textSecondary,
     },
     star: {

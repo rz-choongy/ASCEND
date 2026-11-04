@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCEND · type options, B vs current</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400..900&family=Chivo+Mono:wght@400..800&family=Sofia+Sans+Extra+Condensed:wght@400..900&family=Sofia+Sans:wght@400..800&family=Sofia+Sans+Condensed:wght@400..900&family=Schibsted+Grotesk:wght@400..900&family=Martian+Mono:wdth,wght@75..112.5,400..800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#151515; --mute:#5f5d58; --line:#d8d6d0; --bg:#efeee9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: "Schibsted Grotesk", Arial, sans-serif; background:var(--bg); color:var(--ink); line-height:1.45; }
+  main { max-width:1240px; margin:0 auto; padding:56px 32px 96px; }
+  h1 { font-family: "Schibsted Grotesk"; font-size:44px; font-weight:800; letter-spacing:-0.02em; }
+  .lede { font-size:17px; color:var(--mute); max-width:700px; margin-top:10px; }
+  .opt { background:#fff; border-radius:6px; padding:26px; margin-top:32px; display:grid; grid-template-columns: 1.15fr 1fr; gap:28px; }
+  .num { font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; background:var(--ink); color:#fff; display:inline-grid; place-items:center; margin-right:8px; }
+  .head { display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--mute); }
+  .why { margin:10px 0 16px; color:var(--mute); font-size:15px; }
+  .pairing { font-size:14px; padding:10px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:18px; }
+  .pairing b { color:var(--ink); }
+  .word { font-size:64px; line-height:1; margin:6px 0 14px; }
+  .h { font-size:30px; line-height:1.05; margin-bottom:10px; }
+  .body { font-size:16px; max-width:470px; }
+  .digits { font-size:38px; margin:14px 0 4px; font-variant-numeric: tabular-nums; }
+  .risk { font-size:13.5px; color:var(--mute); margin-top:16px; }
+  .risk b { color:var(--ink); }
+  .phones { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .cap { font-size:12.5px; color:var(--mute); margin-top:8px; text-align:center; }
+
+  .ph { aspect-ratio: 9/20; border-radius:26px; overflow:hidden; padding:16px 13px 12px; display:flex; flex-direction:column; gap:11px; background:var(--wall); color:var(--ink2); }
+  .ph .k { font-size:11px; font-weight:600; color:var(--mute2); }
+  .ph .row { display:flex; justify-content:space-between; align-items:center; }
+  .ph .datebar { display:inline-block; background:var(--ink2); color:var(--wall); font-size:11px; font-weight:700; padding:3px 7px;  align-self:flex-start; }
+  .ph .title { font-size:36px; line-height:.9; }
+  .ph .btn { background:#f2c230; border-radius:2px;  padding:14px 13px; display:flex; justify-content:space-between; align-items:center; font-size:18px;  }
+  .ph .btn small { display:block; font-size:11px; font-weight:500; opacity:.75; }
+  .ph .rule { height:6px; background:repeating-linear-gradient(90deg,var(--ink2) 0 14px,transparent 14px 20px); }
+  .ph .panel { background:var(--panel); border-radius:2px; padding:11px; }
+  .ph .nums { display:flex; gap:16px; margin-top:4px; }
+  .ph .n { font-size:26px; line-height:1.05; font-variant-numeric:tabular-nums; }
+  .ph .n small { display:block; font-size:10.5px; color:var(--mute2); }
+  .ph .nav { margin-top:auto; display:flex; justify-content:space-around; font-size:10.5px; font-weight:600; color:var(--mute2); }
+  .ph .nav span { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .ph .nav i { width:44px; height:22px; border-radius:2px; display:block; }
+  .ph .nav i::after { content:""; display:block; width:12px; height:12px; margin:5px auto; border:2px solid currentColor; border-radius:2px; }
+  .ph .nav .on { color:var(--ink2); } .ph .nav .on i { background:#f2c230; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .tile { height:42px; display:grid; place-items:center; font-size:17px; border-radius:1px; ); box-shadow:0 1px 0 rgba(0,0,0,.15); }
+  .tile.sel { outline:3px solid var(--ink2); outline-offset:2px; }
+  .sendrow { display:grid; grid-template-columns:1.4fr 1fr; gap:6px; }
+  .sendrow div { border-radius:2px; padding:12px 0; text-align:center; font-size:16px; }
+  .sendrow .send { background:var(--ink2); color:var(--wall); } .sendrow .flash { background:#f2c230; }
+  .log li { list-style:none; display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:7px 0; border-bottom:1px solid var(--hair); }
+  .log li:last-child { border:0; }
+  .chipg { width:32px; height:17px; display:inline-grid; place-items:center; font-size:11px;  margin-right:6px; }
+
+  .light { --wall:#e4e2dd; --panel:#f6f5f2; --ink2:#151515; --mute2:#6b6964; --hair:rgba(0,0,0,.08); }
+  .dark  { --wall:#1b1c1b; --panel:#2a2b29; --ink2:#f1f0eb; --mute2:#9a9893; --hair:rgba(255,255,255,.08); }
+  .dark .ph .btn, .dark .sendrow .flash, .dark .ph .nav .on i { color:#151515; }
+  .ph, .ph .B { font-family:"Sofia Sans"; }
+  .D, .Dn { font-family:"Sofia Sans Extra Condensed"; font-weight:800; }
+  .ph .btn, .sendrow { font-family:"Sofia Sans"; font-weight:750; }
+  .ph .title { font-size:46px; } .ph .n { font-size:32px; } .tile { font-size:21px; }
+  .cmp { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-top:28px; background:#fff; border-radius:6px; padding:26px; }
+  .cmp h2 { font-size:15px; font-weight:700; margin-bottom:10px; }
+  .cmp h2 span { font-weight:500; color:var(--mute); }
+  .shot { aspect-ratio:9/20; border-radius:26px; overflow:hidden; background:#000; }
+  .shot img { width:100%; height:100%; object-fit:cover; display:block; }
+  .rowlabel { grid-column:1/-1; font-size:13px; font-weight:700; color:var(--mute); text-transform:none; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  .notes { margin-top:28px; background:#fff; border-radius:6px; padding:22px 26px; font-size:15px; }
+  .notes li { margin:6px 0 6px 18px; }
+</style>
+</head>
+<body><main>
+<h1>Gear B vs your current app</h1>
+<p class="lede">Left: what the app looks like today (Android screenshots). Middle: Gear B type on Concrete + Yellow. Right: the same in dark mode (Rubber Mat). The layouts are rough mock-ups for comparing the look, not final screens.</p>
+<section class="cmp">
+<div class="rowlabel">Log screen</div>
+<div><h2>Current <span>· today</span></h2><div class="shot"><img src="current/log.png"></div></div>
+<div class="light"><h2>Gear B <span>· light</span></h2><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div>
+<div class="dark"><h2>Gear B <span>· dark</span></h2><div class="ph">
+  <span class="datebar">MON 2 NOV</span>
+  <div class="title D">Today</div>
+  <div class="btn"><span>Start climbing<small class="B">Default V-Scale</small></span><span>→</span></div>
+  <div class="rule"></div>
+  <div class="panel"><div class="row"><span class="k">Last climb · Sat</span><span class="k">1 h 20</span></div>
+    <div class="nums"><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">V4<small class="B">best</small></div><div class="n Dn">0%<small class="B">flashed</small></div></div></div>
+  <div class="panel"><div class="k">This week</div>
+    <div class="nums"><div class="n Dn">1<small class="B">session</small></div><div class="n Dn">2<small class="B">sends</small></div><div class="n Dn">0<small class="B">sets</small></div></div></div>
+  <div class="nav"><span class="on"><i></i>Log</span><span><i></i>Calendar</span><span><i></i>Progress</span></div>
+</div></div>
+</section><section class="cmp">
+<div class="rowlabel">Climb logger</div>
+<div><h2>Current <span>· today</span></h2><div class="shot"><img src="current/climb.png"></div></div>
+<div class="light"><h2>Gear B <span>· light</span></h2><div class="ph">
+  <div class="row"><span style="font-weight:700;font-size:13px">✕</span><span class="datebar">00:42</span></div>
+  <div class="D" style="font-size:28px">Default V-Scale</div>
+  <div class="grid4">
+    <div class="tile Dn" style="background:#f6f5f2;color:#151515">V0</div><div class="tile Dn" style="background:#f2c230;color:#151515">V1</div><div class="tile Dn" style="background:#3aa86b;color:#151515">V2</div><div class="tile Dn" style="background:#4d86e0;color:#151515">V3</div>
+    <div class="tile Dn sel" style="background:#e0533f;color:#151515">V4</div><div class="tile Dn" style="background:#ee8fbd;color:#151515">V5</div><div class="tile Dn" style="background:#9b7ad8;color:#151515">V6</div><div class="tile Dn" style="background:#151515;color:#f6f5f2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)">V7</div>
+  </div>
+  <div class="sendrow"><div class="send">Send V4</div><div class="flash">Flash</div></div>
+  <div class="panel"><div class="k">This session · 3 climbs</div>
+    <ul class="log">
+      <li><span><span class="chipg Dn" style="background:#e0533f;color:#151515">V4</span>Send</span><span class="k">2 min</span></li>
+      <li><span><span class="chipg Dn" style="background:#4d86e0;color:#151515">V3</span>Flash</span><span class="k">9 min</span></li>
+      <li><span><span class="chipg Dn" style="background:#4d86e0;color:#151515">V3</span>Send</span><span class="k">14 min</span></li>
+    </ul></div>
+</div></div>
+<div class="dark"><h2>Gear B <span>· dark</span></h2><div class="ph">
+  <div class="row"><span style="font-weight:700;font-size:13px">✕</span><span class="datebar">00:42</span></div>
+  <div class="D" style="font-size:28px">Default V-Scale</div>
+  <div class="grid4">
+    <div class="tile Dn" style="background:#f6f5f2;color:#151515">V0</div><div class="tile Dn" style="background:#f2c230;color:#151515">V1</div><div class="tile Dn" style="background:#3aa86b;color:#151515">V2</div><div class="tile Dn" style="background:#4d86e0;color:#151515">V3</div>
+    <div class="tile Dn sel" style="background:#e0533f;color:#151515">V4</div><div class="tile Dn" style="background:#ee8fbd;color:#151515">V5</div><div class="tile Dn" style="background:#9b7ad8;color:#151515">V6</div><div class="tile Dn" style="background:#151515;color:#f6f5f2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)">V7</div>
+  </div>
+  <div class="sendrow"><div class="send">Send V4</div><div class="flash">Flash</div></div>
+  <div class="panel"><div class="k">This session · 3 climbs</div>
+    <ul class="log">
+      <li><span><span class="chipg Dn" style="background:#e0533f;color:#151515">V4</span>Send</span><span class="k">2 min</span></li>
+      <li><span><span class="chipg Dn" style="background:#4d86e0;color:#151515">V3</span>Flash</span><span class="k">9 min</span></li>
+      <li><span><span class="chipg Dn" style="background:#4d86e0;color:#151515">V3</span>Send</span><span class="k">14 min</span></li>
+    </ul></div>
+</div></div>
+</section><div class="notes"><b>What changes</b><ul>
+<li>Font: from the Android system font to Sofia Sans, with tall Extra Condensed numbers and titles.</li>
+<li>Colour: from purple on near-black to concrete and tape yellow, with a matching dark mode. Your accent picker stays.</li>
+<li>Shapes: from soft rounded cards to near-square panels and flat tape.</li>
+<li>Labels: no more tracked all-caps labels. Plain sentence-case words.</li>
+</ul></div>
+</main></body></html>

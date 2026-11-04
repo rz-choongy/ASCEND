@@ -11,6 +11,7 @@ import {
   buildRecentSessions,
   buildWeekActivity,
   lastClimbSessions,
+  summarizeClimbSession,
   lastStrengthSessions,
   type ClimbSessionSummary,
   type LastSessions,
@@ -40,7 +41,7 @@ import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types'
 import { useTabBarClearance } from '../navigation/tabBar';
 import { newerApk, offerApk } from '../release';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { IconButton, PressableScale, SettingsGearIcon, font, getContrastText, radius, showDialog, spacing, useTheme } from '../ui';
+import { IconButton, PressableScale, SettingsGearIcon, font, radius, showDialog, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { ActiveSessionCard } from './today/ActiveSessionCard';
@@ -78,10 +79,23 @@ type Dashboard = {
   week: WeekActivity;
   lastWeek: WeekActivity;
   recent: RecentSession[];
+  /** Best grade with its tape colour for each recent climb, for the list's grade chips. */
+  recentBest: Record<string, { label: string; color: string }>;
   bodyweight: BodyweightLogRow | null;
   routines: RoutineSummary[];
   /** The Start card's routine: the last one picked, if it still exists. */
   routine: RoutineSummary | null;
+};
+
+const bestGradesFor = (sessions: SessionRow[]): Dashboard['recentBest'] => {
+  const best: Dashboard['recentBest'] = {};
+  sessions.forEach((session) => {
+    if (session.type !== 'climb') return;
+    const summary = summarizeClimbSession(session);
+    const color = summary.grades.find((g) => g.label === summary.bestGradeLabel)?.color;
+    if (summary.bestGradeLabel && color) best[session.id] = { label: summary.bestGradeLabel, color };
+  });
+  return best;
 };
 
 const loadDashboard = (): Dashboard => {
@@ -93,6 +107,7 @@ const loadDashboard = (): Dashboard => {
   const strengthHistory = completed.filter((session) => session.type === 'strength');
   const routines = getRoutines();
   const lastRoutineId = getLastRoutineId();
+  const recentRows = completed.slice(-RECENT_SHOWN);
   return {
     activeSession: getActiveSession(),
     gymName: gymDisplayName(getSelectedClimbGym() ?? ensureSelectedClimbGym()),
@@ -103,7 +118,8 @@ const loadDashboard = (): Dashboard => {
     strength: lastStrengthSessions(strengthHistory, getExerciseNames()),
     week: buildWeekActivity(twoWeeks, now),
     lastWeek: buildWeekActivity(twoWeeks, addDays(now, -7)),
-    recent: buildRecentSessions(completed.slice(-RECENT_SHOWN), strengthHistory, RECENT_SHOWN),
+    recent: buildRecentSessions(recentRows, strengthHistory, RECENT_SHOWN),
+    recentBest: bestGradesFor(recentRows),
     bodyweight: getLatestBodyweight(),
     routines,
     routine: routines.find((r) => r.id === lastRoutineId) ?? null,
@@ -229,7 +245,7 @@ export function LogScreen() {
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance + spacing.lg }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
@@ -285,6 +301,7 @@ export function LogScreen() {
         {data.recent.length > 0 ? (
           <RecentSessionsList
             sessions={data.recent}
+            bestGrades={data.recentBest}
             onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
             onSeeAll={() => navigation.navigate('Calendar')}
           />
@@ -324,7 +341,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       ...typography.display,
     },
     apkBanner: {
-      backgroundColor: colors.accent,
+      backgroundColor: colors.action,
       borderRadius: radius.lg,
       paddingHorizontal: spacing.sm,
       paddingVertical: spacing.s,
@@ -332,6 +349,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     apkText: {
       ...font('semibold'),
       fontSize: 14,
-      color: getContrastText(colors.accent),
+      color: colors.onAction,
     },
   });

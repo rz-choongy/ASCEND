@@ -15,96 +15,102 @@ export const getContrastText = (hex: string): string => {
   return contrastWithBlack >= contrastWithWhite ? '#000000' : '#ffffff';
 };
 
+/** Grade tape, V0 to V7: the colours a new grade gets in the gym editor and the V-scale default. */
 const gradePalette = [
-  '#e9dfc7',
-  '#d8a448',
-  '#9db56f',
-  '#4f8f7a',
-  '#486f9f',
-  '#9a6fb0',
-  '#d76f45',
-  '#3f473f',
+  '#F6F5F2',
+  '#F2C230',
+  '#3AA86B',
+  '#4D86E0',
+  '#E0533F',
+  '#EE8FBD',
+  '#9B7AD8',
+  '#151515',
 ];
 
-/**
- * Prism's semantic range. Status colours (success/warning/danger) draw from it,
- * and the `subtle` tints are the washes behind a status badge or PR flag.
- */
+/** Status colours (success/warning/danger) draw from this range. */
 const semantic = {
-  red: '#ef4444',
-  orange: '#f97316',
-  yellow: '#eab308',
-  green: '#22c55e',
-  sky: '#0ea5e9',
-  blue: '#3b82f6',
-  purple: '#a855f7',
-  pink: '#ec4899',
+  red: '#E8503A',
+  orange: '#FF5A1F',
+  yellow: '#F2C230',
+  green: '#3AA86B',
+  sky: '#5FB4E8',
+  blue: '#4D86E0',
+  purple: '#9B6BEA',
+  pink: '#EE8FBD',
 };
 
 /**
- * Prism dark: near-black ground, cards one step up, hairline borders doing the
- * separating. Neutral everywhere except `action`: Prism's solid pills and
- * selections, filled with the user's accent by `applyAccent`.
+ * Dark: pure black ground for OLED, cards one soft step up, no borders. The accent
+ * fills actions and is washed in behind the screen title.
  */
 export const darkColors = {
-  background: '#0a0a0a',
-  surface: '#161616',
-  surfaceAlt: '#1e1e1e',
-  surfaceRaised: '#333333',
-  border: '#2a2a2a',
-  borderSoft: '#3d3d3d',
-  separator: '#2a2a2a',
-  fill: '#1e1e1e',
-  fillSoft: '#161616',
-  // Solid fills for primary actions and selections (Prism's black pill).
-  // Overwritten by `applyAccent`, so the user's accent drives them.
-  action: '#eac60f',
-  onAction: '#000000',
-  textPrimary: '#f5f5f5',
-  textSecondary: '#a3a3a3',
-  textMuted: '#6b6b6b',
-  textInverse: '#0a0a0a',
-  accent: '#eac60f',
-  accentMuted: 'rgba(234, 198, 15, 0.16)',
-  accentSoft: 'rgba(234, 198, 15, 0.28)',
+  background: '#000000',
+  surface: '#17181B',
+  surfaceAlt: '#202125',
+  surfaceRaised: '#2A2B30',
+  border: '#26272B',
+  borderSoft: '#34353A',
+  separator: '#26272B',
+  fill: '#202125',
+  fillSoft: '#17181B',
+  // Solid fills for primary actions and selections. Overwritten by `applyAccent`.
+  action: '#22B0A0',
+  onAction: '#151515',
+  textPrimary: '#F2F2F4',
+  textSecondary: '#9A9DA6',
+  textMuted: '#6E717A',
+  textInverse: '#000000',
+  accent: '#22B0A0',
+  accentMuted: 'rgba(34, 176, 160, 0.16)',
+  accentSoft: 'rgba(34, 176, 160, 0.28)',
+  // The accent when it has to be read as text or a thin line on the surface.
+  accentInk: '#22B0A0',
+  // Chart marks: the strong series (flash, the line) and the quiet one (send, empty weeks).
+  chartStrong: '#F2F2F4',
+  chartQuiet: '#55575E',
+  chartTrack: '#2A2B30',
   success: semantic.green,
-  successSubtle: 'rgba(34, 197, 94, 0.16)',
+  successSubtle: 'rgba(58, 168, 107, 0.18)',
   warning: semantic.orange,
-  warningSubtle: 'rgba(249, 115, 22, 0.16)',
+  warningSubtle: 'rgba(255, 90, 31, 0.18)',
   danger: semantic.red,
-  dangerSubtle: 'rgba(239, 68, 68, 0.16)',
+  dangerSubtle: 'rgba(232, 80, 58, 0.18)',
   overlay: 'rgba(0, 0, 0, 0.6)',
   shadow: 'transparent',
   semantic,
   gradePalette,
 };
 
-/** Prism light: white cards floating on the soft-grey ground, accent-filled actions. */
-export const lightColors = {
-  background: '#f4f4f5',
-  surface: '#ffffff',
-  surfaceAlt: '#f4f4f5',
-  surfaceRaised: '#ffffff',
-  border: '#e5e5e5',
-  borderSoft: '#d4d4d4',
-  separator: '#e5e5e5',
-  fill: '#ececef',
-  fillSoft: '#f4f4f5',
-  action: '#b8860a',
-  onAction: '#ffffff',
-  textPrimary: '#0a0a0a',
-  textSecondary: '#737373',
-  textMuted: '#a3a3a3',
-  textInverse: '#ffffff',
-  accent: '#b8860a',
-  accentMuted: 'rgba(184, 134, 10, 0.12)',
-  accentSoft: 'rgba(184, 134, 10, 0.22)',
-  success: '#16a34a',
-  successSubtle: '#dcfce7',
-  warning: semantic.orange,
-  warningSubtle: '#ffedd5',
-  danger: '#dc2626',
-  dangerSubtle: '#fee2e2',
+/** Light: white cards on a cool soft-grey ground, no borders, accent-filled actions. */
+export const lightColors: ThemeColors = {
+  background: '#F1F2F6',
+  surface: '#FFFFFF',
+  surfaceAlt: '#F1F2F6',
+  surfaceRaised: '#FFFFFF',
+  border: '#E7E8ED',
+  borderSoft: '#D9DAE0',
+  separator: '#E7E8ED',
+  fill: '#E9EAEF',
+  fillSoft: '#F1F2F6',
+  action: '#22B0A0',
+  onAction: '#151515',
+  textPrimary: '#16171A',
+  textSecondary: '#666973',
+  textMuted: '#8E919A',
+  textInverse: '#FFFFFF',
+  accent: '#22B0A0',
+  accentMuted: 'rgba(34, 176, 160, 0.14)',
+  accentSoft: 'rgba(34, 176, 160, 0.26)',
+  accentInk: '#13695F',
+  chartStrong: '#16171A',
+  chartQuiet: '#B9BBC3',
+  chartTrack: '#E9EAEF',
+  success: '#23804D',
+  successSubtle: '#DDF2E5',
+  warning: '#C2410C',
+  warningSubtle: '#FFE8DC',
+  danger: '#C23A26',
+  dangerSubtle: '#FBE3DF',
   overlay: 'rgba(0, 0, 0, 0.4)',
   shadow: '#000000',
   semantic,
@@ -114,53 +120,69 @@ export const lightColors = {
 export type ThemeColors = typeof darkColors;
 export type ThemeMode = 'light' | 'dark';
 
-export type AccentColorId = 'blue' | 'teal' | 'purple' | 'orange' | 'rose' | 'amber';
-
-type AccentTint = { accent: string; accentMuted: string; accentSoft: string };
+export type AccentColorId =
+  | 'yellow'
+  | 'amber'
+  | 'orange'
+  | 'red'
+  | 'pink'
+  | 'magenta'
+  | 'purple'
+  | 'blue'
+  | 'sky'
+  | 'teal'
+  | 'green'
+  | 'lime';
 
 /**
- * Accent tints. Dark uses the iOS "vivid on black" variant of each hue; light
- * uses the standard one. Muted/soft are alpha tints of the accent itself rather
- * than baked-in mixes, so they sit correctly on every surface layer.
+ * Twelve flat accents, the same hex in both modes. Every one carries near-black text
+ * at 4.6:1 or better, so `onAction` is always #151515.
  */
-export const ACCENT_PALETTE: Record<AccentColorId, { label: string; dark: AccentTint; light: AccentTint }> = {
-  blue: {
-    label: 'Blue',
-    dark: { accent: '#0a84ff', accentMuted: 'rgba(10, 132, 255, 0.16)', accentSoft: 'rgba(10, 132, 255, 0.28)' },
-    light: { accent: '#007aff', accentMuted: 'rgba(0, 122, 255, 0.12)', accentSoft: 'rgba(0, 122, 255, 0.22)' },
-  },
-  teal: {
-    label: 'Teal',
-    dark: { accent: '#64d2ff', accentMuted: 'rgba(100, 210, 255, 0.16)', accentSoft: 'rgba(100, 210, 255, 0.28)' },
-    light: { accent: '#0d9488', accentMuted: 'rgba(13, 148, 136, 0.12)', accentSoft: 'rgba(13, 148, 136, 0.22)' },
-  },
-  purple: {
-    label: 'Purple',
-    dark: { accent: '#bf5af2', accentMuted: 'rgba(191, 90, 242, 0.16)', accentSoft: 'rgba(191, 90, 242, 0.28)' },
-    light: { accent: '#7c3aed', accentMuted: 'rgba(124, 58, 237, 0.12)', accentSoft: 'rgba(124, 58, 237, 0.22)' },
-  },
-  orange: {
-    label: 'Orange',
-    dark: { accent: '#ff9f0a', accentMuted: 'rgba(255, 159, 10, 0.16)', accentSoft: 'rgba(255, 159, 10, 0.28)' },
-    light: { accent: '#ea580c', accentMuted: 'rgba(234, 88, 12, 0.12)', accentSoft: 'rgba(234, 88, 12, 0.22)' },
-  },
-  rose: {
-    label: 'Rose',
-    dark: { accent: '#ff375f', accentMuted: 'rgba(255, 55, 95, 0.16)', accentSoft: 'rgba(255, 55, 95, 0.28)' },
-    light: { accent: '#e11d48', accentMuted: 'rgba(225, 29, 72, 0.12)', accentSoft: 'rgba(225, 29, 72, 0.22)' },
-  },
-  amber: {
-    label: 'Amber',
-    dark: { accent: '#eac60f', accentMuted: 'rgba(234, 198, 15, 0.16)', accentSoft: 'rgba(234, 198, 15, 0.28)' },
-    light: { accent: '#b8860a', accentMuted: 'rgba(184, 134, 10, 0.12)', accentSoft: 'rgba(184, 134, 10, 0.22)' },
-  },
+export const ACCENT_PALETTE: Record<AccentColorId, { label: string; hex: string }> = {
+  yellow: { label: 'Tape Yellow', hex: '#F2C230' },
+  amber: { label: 'Amber', hex: '#F59A23' },
+  orange: { label: 'Hazard Orange', hex: '#FF5A1F' },
+  red: { label: 'Red', hex: '#E8503A' },
+  pink: { label: 'Tape Pink', hex: '#EE8FBD' },
+  magenta: { label: 'Magenta', hex: '#D65CC0' },
+  purple: { label: 'Purple', hex: '#9B6BEA' },
+  blue: { label: 'Tape Blue', hex: '#4D86E0' },
+  sky: { label: 'Sky', hex: '#5FB4E8' },
+  teal: { label: 'Teal', hex: '#22B0A0' },
+  green: { label: 'Hold Green', hex: '#3AA86B' },
+  lime: { label: 'Lime', hex: '#B5D334' },
 };
 
-export const DEFAULT_ACCENT_ID: AccentColorId = 'amber';
+/** Accent ids from before 2.7.0, mapped to the nearest new accent so nobody's colour jumps. */
+export const LEGACY_ACCENT_IDS: Record<string, AccentColorId> = {
+  rose: 'red',
+};
+
+export const DEFAULT_ACCENT_ID: AccentColorId = 'teal';
+
+const hexToRgb = (hex: string) => {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255] as const;
+};
+
+const rgba = (hex: string, alpha: number) => `rgba(${hexToRgb(hex).join(', ')}, ${alpha})`;
+
+/** Darkens a hex towards black; used so a bright accent stays readable as text on white. */
+const darken = (hex: string, amount: number) =>
+  '#' +
+  hexToRgb(hex)
+    .map((c) => Math.round(c * (1 - amount)).toString(16).padStart(2, '0'))
+    .join('');
 
 export const applyAccent = (base: ThemeColors, accentId: AccentColorId, mode: ThemeMode): ThemeColors => {
-  const tint = ACCENT_PALETTE[accentId]?.[mode] ?? ACCENT_PALETTE[DEFAULT_ACCENT_ID][mode];
-  // Derived rather than fixed: a bright tint (amber, teal) needs dark text on
-  // its fill where a saturated one (blue, purple) needs white.
-  return { ...base, ...tint, action: tint.accent, onAction: getContrastText(tint.accent) };
+  const hex = (ACCENT_PALETTE[accentId] ?? ACCENT_PALETTE[DEFAULT_ACCENT_ID]).hex;
+  return {
+    ...base,
+    accent: hex,
+    accentMuted: rgba(hex, mode === 'light' ? 0.14 : 0.16),
+    accentSoft: rgba(hex, mode === 'light' ? 0.26 : 0.28),
+    accentInk: mode === 'light' ? darken(hex, 0.45) : hex,
+    action: hex,
+    onAction: getContrastText(hex) === '#000000' ? '#151515' : '#ffffff',
+  };
 };

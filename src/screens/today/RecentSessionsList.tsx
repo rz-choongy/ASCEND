@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { RecentSession } from '../../domain/dashboard';
 import { formatDuration } from '../../domain/dateUtils';
-import { DumbbellIcon, MountainMarkIcon, font, radius, spacing, useTheme, type Shadows } from '../../ui';
+import { DumbbellIcon, GradeChip, MountainMarkIcon, font, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
@@ -10,6 +10,8 @@ type Props = {
   sessions: RecentSession[];
   onOpen: (sessionId: string) => void;
   onSeeAll: () => void;
+  /** Best grade and its tape colour per climb session id, drawn as a chip beside the figure. */
+  bestGrades?: Record<string, { label: string; color: string }>;
 };
 
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -25,7 +27,7 @@ const whenLabel = (ms: number): string => {
 };
 
 /** Climbs and strength in one newest-first list. */
-export const RecentSessionsList = ({ sessions, onOpen, onSeeAll }: Props) => {
+export const RecentSessionsList = ({ sessions, onOpen, onSeeAll, bestGrades }: Props) => {
   const { colors, typography, shadows } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
@@ -41,6 +43,7 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll }: Props) => {
         <View style={styles.clip}>
           {sessions.map((session, index) => {
             const climb = session.type === 'climb';
+            const best = climb ? bestGrades?.[session.sessionId] : undefined;
             return (
               <Pressable
                 key={session.sessionId}
@@ -55,9 +58,9 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll }: Props) => {
               >
                 <View style={[styles.icon, climb ? styles.iconClimb : null]}>
                   {climb ? (
-                    <MountainMarkIcon size={17} color={colors.accent} />
+                    <MountainMarkIcon size={16} color={colors.accentInk} />
                   ) : (
-                    <DumbbellIcon size={17} color={colors.textPrimary} />
+                    <DumbbellIcon size={16} color={colors.textPrimary} />
                   )}
                 </View>
                 <View style={styles.body}>
@@ -71,8 +74,9 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll }: Props) => {
                 </View>
                 <View style={styles.figures}>
                   <Text style={styles.figure}>{session.figure}</Text>
-                  <Text style={styles.detail}>{session.detail}</Text>
+                  {best ? null : <Text style={styles.detail}>{session.detail}</Text>}
                 </View>
+                {best ? <GradeChip label={best.label} color={best.color} /> : null}
               </Pressable>
             );
           })}
@@ -104,8 +108,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     // Outer view carries the shadow; the inner one clips pressed rows to the corners.
     card: {
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       backgroundColor: colors.surface,
       ...shadows.card,
     },
@@ -117,8 +119,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.s,
-      minHeight: 60,
+      minHeight: 52,
       paddingHorizontal: spacing.s,
+      paddingVertical: spacing.xs,
     },
     rowDivided: {
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -128,8 +131,8 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       backgroundColor: colors.fillSoft,
     },
     icon: {
-      width: 36,
-      height: 36,
+      width: 32,
+      height: 32,
       borderRadius: radius.md,
       backgroundColor: colors.fill,
       alignItems: 'center',

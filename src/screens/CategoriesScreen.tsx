@@ -233,8 +233,6 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       padding: spacing.xs,
       paddingLeft: spacing.sm,
       borderRadius: radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
       backgroundColor: colors.surface,
       ...shadows.card,
     },

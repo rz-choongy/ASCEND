@@ -7,7 +7,7 @@ import { radius } from '../tokens/radius';
 import { PressableScale } from './PressableScale';
 
 /**
- * Prism's pill buttons:
+ * Pill buttons:
  * - `primary`   solid pill in the user's accent -- the CTA
  * - `secondary` bordered pill on the surface ("Add audio")
  * - `ghost`     soft filled pill
@@ -38,8 +38,8 @@ const getVariantStyles = (variant: ButtonVariant, colors: ThemeColors) => {
     case 'secondary':
       return {
         button: {
-          backgroundColor: colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
           borderColor: colors.borderSoft,
         },
         text: { color: colors.textPrimary },
@@ -104,7 +104,7 @@ export const Button = ({
 const createStyles = () =>
   StyleSheet.create({
     base: {
-      minHeight: 48,
+      minHeight: 50,
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
@@ -117,8 +117,7 @@ const createStyles = () =>
       gap: 8,
     },
     text: {
-      ...font('medium'),
-      fontSize: 16,
-      letterSpacing: -0.16,
+      ...font('bold'),
+      fontSize: 17,
     },
   });
