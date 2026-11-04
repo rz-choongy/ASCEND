@@ -202,6 +202,8 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const [gradingType, setGradingType] = useState<GradingType>('v_scale');
   const [rows, setRows] = useState<EditableGradeRow[]>(seedRowsForType('v_scale'));
   const [colorPickerIndex, setColorPickerIndex] = useState<number | null>(null);
+  // One grade at a time shows its V steppers; the rest stay one compact line.
+  const [openRangeId, setOpenRangeId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   // Plain ref, not state: guards against a second tap firing before React
   // re-renders with the disabled button, since handleSave runs synchronously.
@@ -579,13 +581,17 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           </Pressable>
         </View>
 
+        <View style={styles.gradeList}>
         {rows.map((row, index) => {
           const swatchColor = row.colorHex || colors.border;
           // V-Scale grades are their own V. Numeric and colour grades map to a V range, so they always
           // show both ends and any row can widen or narrow it.
           const isSingleValue = gradingType === 'v_scale' && row.gradeMin === row.gradeMax;
+          const rangeOpen = openRangeId === row.draftId;
+          const rangeText =
+            row.gradeMin === row.gradeMax ? `V${row.gradeMin}` : `V${row.gradeMin}–${row.gradeMax}`;
           return (
-            <View key={row.draftId} style={styles.gradeRow}>
+            <View key={row.draftId} style={[styles.gradeRow, index > 0 ? styles.gradeRowDivider : null]}>
               {gradingType === 'color' ? (
                 <View style={styles.moveColumn}>
                   <IconButton
@@ -630,9 +636,25 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                 placeholderTextColor={colors.textMuted}
                 style={styles.gradeLabelInput}
               />
-              {isSingleValue ? (
-                // One value per grade on V-scale and numeric gyms: one stepper sets both bounds.
-                <View style={styles.rangeGroup}>
+              {/* Tap the V value to open its steppers below the row. */}
+              <PressableScale
+                onPress={() => setOpenRangeId(rangeOpen ? null : row.draftId)}
+                scaleTo={0.95}
+                accessibilityLabel={`${row.label || 'Grade'} covers ${rangeText}. Change`}
+                style={[styles.rangePill, rangeOpen ? styles.rangePillOpen : null]}
+              >
+                <Text style={[styles.rangePillText, rangeOpen ? styles.rangePillTextOpen : null]}>{rangeText}</Text>
+              </PressableScale>
+              <IconButton
+                onPress={() => removeRow(index)}
+                accessibilityLabel={`Remove ${row.label || 'grade'}`}
+                hitSlop={8}
+              >
+                <Text style={styles.deleteGlyph}>×</Text>
+              </IconButton>
+              {rangeOpen && isSingleValue ? (
+                // V-scale grades are one V: a single stepper sets both bounds.
+                <View style={[styles.rangeGroup, styles.rangeGroupFull]}>
                   <Text style={styles.rangeDash}>V</Text>
                   <Stepper
                     compact
@@ -647,14 +669,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   />
                 </View>
               ) : null}
-              <IconButton
-                onPress={() => removeRow(index)}
-                accessibilityLabel={`Remove ${row.label || 'grade'}`}
-                hitSlop={8}
-              >
-                <Text style={styles.deleteGlyph}>×</Text>
-              </IconButton>
-              {!isSingleValue ? (
+              {rangeOpen && !isSingleValue ? (
                 <View style={[styles.rangeGroup, styles.rangeGroupFull]}>
                   <Text style={styles.rangeDash}>V</Text>
                   <Stepper
@@ -685,6 +700,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             </View>
           );
         })}
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -797,16 +813,46 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     fontSize: 16,
     ...font('medium'),
   },
+  // All grades share one card, split by hairlines, one line each.
+  gradeList: {
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadows.card,
+    overflow: 'hidden',
+  },
   gradeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.xs,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    ...shadows.card,
-    paddingVertical: spacing.xxs,
+    minHeight: 48,
+    paddingVertical: 2,
     paddingHorizontal: spacing.xs,
+  },
+  gradeRowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  rangePill: {
+    minWidth: 64,
+    minHeight: 34,
+    paddingHorizontal: spacing.s,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rangePillOpen: {
+    backgroundColor: colors.textPrimary,
+  },
+  rangePillText: {
+    ...font('semibold'),
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  rangePillTextOpen: {
+    color: colors.background,
   },
   // The grade label reads as the grade itself: display type on the card, no filled field.
   gradeLabelInput: {
@@ -819,7 +865,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: spacing.xxs,
     color: colors.textPrimary,
     ...font('display'),
-    fontSize: 24,
+    fontSize: 22,
   },
   rangeGroup: {
     flexDirection: 'row',
@@ -830,6 +876,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   rangeGroupFull: {
     flexBasis: '100%',
     justifyContent: 'center',
+    paddingBottom: spacing.xs,
   },
   rangeDash: {
     color: colors.textMuted,
