@@ -437,3 +437,50 @@ export const findFlashRate = (sessions: SessionRow[]): number => {
   const total = sendCount + flashCount;
   return total === 0 ? 0 : Math.round((flashCount / total) * 100);
 };
+
+/** The Progress screen's time windows: last 7, 30, 90, 365 days, or all history. */
+export type ProgressPeriod = 'W' | 'M' | '3M' | 'Y' | 'All';
+
+export const PROGRESS_PERIOD_DAYS: Record<ProgressPeriod, number | null> = {
+  W: 7,
+  M: 30,
+  '3M': 90,
+  Y: 365,
+  All: null,
+};
+
+const DAY_MS = 86_400_000;
+
+/** Sessions started inside the rolling window ending now. `All` returns every session. */
+export const filterSessionsToPeriod = (
+  sessions: SessionRow[],
+  period: ProgressPeriod,
+  now: Date = new Date()
+): SessionRow[] => {
+  const days = PROGRESS_PERIOD_DAYS[period];
+  if (days === null) return sessions;
+  const cutoff = now.getTime() - days * DAY_MS;
+  return sessions.filter((session) => session.started_at >= cutoff);
+};
+
+/** A weekly trend needs several weeks to read as a trend, so short windows still show this many. */
+export const MIN_TREND_WEEKS = 12;
+
+/**
+ * How many weeks a weekly trend should cover for a period: the window's length in weeks, but
+ * never fewer than MIN_TREND_WEEKS. `All` reaches back to the week of the earliest session.
+ */
+export const trendWeeksForPeriod = (
+  period: ProgressPeriod,
+  sessions: SessionRow[],
+  now: Date = new Date()
+): number => {
+  const days = PROGRESS_PERIOD_DAYS[period];
+  if (days !== null) return Math.max(MIN_TREND_WEEKS, Math.ceil(days / 7));
+  if (sessions.length === 0) return MIN_TREND_WEEKS;
+  const earliest = Math.min(...sessions.map((session) => session.started_at));
+  const span = Math.round(
+    (startOfWeek(now).getTime() - startOfWeek(new Date(earliest)).getTime()) / (7 * DAY_MS)
+  );
+  return Math.max(MIN_TREND_WEEKS, span + 1);
+};

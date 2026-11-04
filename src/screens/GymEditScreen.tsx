@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -27,7 +27,7 @@ import {
   Button,
   IconButton,
   PressableScale,
-  ScreenHeader,
+  CloseIcon,
   SegmentedControl,
   Stepper,
   font,
@@ -495,13 +495,30 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     }
   };
 
+  const renderHeader = (eyebrow: string, title: string, left?: ReactNode) => (
+    <View style={styles.header}>
+      <View style={styles.headerText}>
+        {left}
+        <Text style={styles.eyebrow} numberOfLines={1}>
+          {eyebrow}
+        </Text>
+        <Text style={styles.screenTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
+      <IconButton onPress={() => navigation.goBack()} accessibilityLabel="Close">
+        <CloseIcon size={16} color={colors.textPrimary} />
+      </IconButton>
+    </View>
+  );
+
   // ─── Branch mode: name-only UI ─────────────────────────────────────────────
   if (isBranchMode) {
     const eyebrow = parentGym?.name ?? 'Company';
     const title = editingGym ? 'Rename branch' : 'New branch';
     return (
       <SafeAreaView edges={['top']} style={styles.screen}>
-        <ScreenHeader eyebrow={eyebrow} title={title} onClose={() => navigation.goBack()} />
+        {renderHeader(eyebrow, title)}
 
         <KeyboardAvoidingView
           style={styles.keyboardAvoider}
@@ -550,11 +567,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   // ─── Full gym edit / create mode ──────────────────────────────────────────
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <ScreenHeader
-        eyebrow={editingGym ? editingGym.name : 'New gym'}
-        title={editingGym ? 'Edit grades' : 'Climb grades'}
-        onClose={() => navigation.goBack()}
-      />
+      {renderHeader(editingGym ? editingGym.name : 'New gym', editingGym ? 'Edit grades' : 'Climb grades')}
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoider}
@@ -780,6 +793,24 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  // Left-aligned display title with its context line above and a close circle on the right.
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.s,
+    marginBottom: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
+  },
+  eyebrow: {
+    ...typography.meta,
+    marginBottom: 2,
+  },
+  screenTitle: {
+    ...typography.display,
   },
   keyboardAvoider: {
     flex: 1,

@@ -663,18 +663,24 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
         <IconButton onPress={() => navigation.navigate('Tabs')} accessibilityLabel="Close">
           <CloseIcon size={16} color={colors.textPrimary} />
         </IconButton>
-        <TextInput
-          style={styles.titleInput}
-          value={title}
-          onChangeText={setTitle}
-          onBlur={handleSaveTitle}
-          onSubmitEditing={handleSaveTitle}
-          placeholder={displayTitle}
-          placeholderTextColor={colors.textPrimary}
-          returnKeyType="done"
-          accessibilityLabel="Session name"
-          numberOfLines={1}
-        />
+        <View style={styles.titleBlock}>
+          <TextInput
+            style={styles.titleInput}
+            value={title}
+            onChangeText={setTitle}
+            onBlur={handleSaveTitle}
+            onSubmitEditing={handleSaveTitle}
+            placeholder={displayTitle}
+            placeholderTextColor={colors.textPrimary}
+            returnKeyType="done"
+            accessibilityLabel="Session name"
+            numberOfLines={1}
+          />
+          {/* Quiet meta line, same slot as the gym on the climb logger. */}
+          <Text style={styles.titleMeta} numberOfLines={1}>
+            {routine ? routine.name : `Started ${formatLogTime(session.started_at)}`}
+          </Text>
+        </View>
         {showTimer && session.status === 'active' ? (
           <View style={styles.timer} accessibilityLabel={`Elapsed ${formatElapsed(now - session.started_at)}`}>
             <View style={styles.liveDot} />
@@ -948,13 +954,22 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     gap: spacing.s,
     marginBottom: spacing.xs,
   },
+  titleBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
   titleInput: {
     ...typography.display,
-    fontSize: 30,
-    lineHeight: 34,
-    flex: 1,
-    minHeight: 38,
+    fontSize: 28,
+    lineHeight: 32,
+    minHeight: 32,
     padding: 0,
+  },
+  titleMeta: {
+    ...typography.meta,
+    lineHeight: 18,
+    minHeight: 24,
+    textAlignVertical: 'center',
   },
   totals: {
     marginBottom: spacing.s,
@@ -1143,7 +1158,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   bigStepText: {
     ...font('mono'),
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   logHeaderRow: {
@@ -1240,7 +1255,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   recordBadgeText: {
     ...font('semibold'),
     color: colors.textPrimary,
-    fontSize: 12,
+    fontSize: 13,
   },
   emptyText: {
     ...font('regular'),

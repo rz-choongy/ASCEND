@@ -1,19 +1,16 @@
 import { useMemo, useState } from 'react';
 import { LayoutAnimation, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Svg, { Polyline } from 'react-native-svg';
 import { applyClimbEvents } from '../../domain/climbLogUtils';
 import {
   buildAllTimeStats,
   buildGradeDistribution,
   buildGradeDistributionAcrossGyms,
   buildHardestSendTrend,
-  buildWeekCompletion,
   buildWeeklyFrequency,
   findFirstReachedDate,
-  findFlashRate,
-  findLongestStreakEver,
-  findMostClimbsInSession,
   getAvailableClimbGyms,
+  trendWeeksForPeriod,
+  type ProgressPeriod,
 } from '../../domain/progressInsights';
 import { getSessionEvents } from '../../domain/sessionStore';
 import {
@@ -24,14 +21,12 @@ import {
 } from '../../domain/settingsStore';
 import { formatMonthDay } from '../../domain/strengthProgress';
 import type { SessionRow } from '../../domain/types';
-import { Card, Chip, LineChart, StatRow, font, spacing, useTheme } from '../../ui';
+import { BarChart, Card, Chip, GradeChip, LineChart, StatRow, font, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 import { GymScopeSheet, type GymScopeOption } from './GymScopeSheet';
 
 const WEEKS_SHOWN = 8;
-const SENDS_BARS_SHOWN = 6;
-const TREND_WEEKS = 12;
 
 /** Sentinel scope meaning "pool every gym", stored alongside real gym ids. */
 const ALL_GYMS = '__all__';
@@ -44,14 +39,14 @@ const keyOf = (gymId: string | null) => gymId ?? UNSPECIFIED;
 const gymIdOf = (key: string) => (key === UNSPECIFIED ? null : key);
 
 type Props = {
-  /** Full history: streaks, personal bests, and the weekly trend ignore the month toggle. */
+  /** Full history: the weekly frequency chart and "since" dates ignore the period. */
   sessions: SessionRow[];
-  /** Sessions inside the All time / By month selection. */
+  /** Sessions inside the selected period (W / M / 3M / Y / All). */
   scopedSessions: SessionRow[];
-  streak: number;
+  period: ProgressPeriod;
 };
 
-export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
+export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   // undefined = user hasn't picked one this session yet -- fall back to the persisted
@@ -62,8 +57,8 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
 
   const allTimeStats = useMemo(() => buildAllTimeStats(scopedSessions), [scopedSessions]);
   const weeklyFrequency = useMemo(() => buildWeeklyFrequency(sessions, WEEKS_SHOWN), [sessions]);
-  const weekCompletion = useMemo(() => buildWeekCompletion(sessions), [sessions]);
-  const gradeTrend = useMemo(() => buildHardestSendTrend(sessions, TREND_WEEKS), [sessions]);
+  const trendWeeks = useMemo(() => trendWeeksForPeriod(period, sessions), [period, sessions]);
+  const gradeTrend = useMemo(() => buildHardestSendTrend(sessions, trendWeeks), [sessions, trendWeeks]);
   const availableGyms = useMemo(() => getAvailableClimbGyms(scopedSessions), [scopedSessions]);
 
   const activeScope = useMemo(() => {
@@ -128,6 +123,11 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
     [climbSessions]
   );
   const sendsLogged = logsPerSession.reduce((sum, logs) => sum + logs.length, 0);
+  const flashesLogged = logsPerSession.reduce(
+    (sum, logs) => sum + logs.filter((log) => log.result === 'FLASH').length,
+    0
+  );
+  const flashRate = sendsLogged === 0 ? 0 : Math.round((flashesLogged / sendsLogged) * 100);
   // The tape colour of the hardest climb, for the dot beside the grade.
   const hardestColor = useMemo(() => {
     let best: { gradeMax: number; color: string | null } | null = null;
@@ -139,57 +139,38 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
     return (best as { color: string | null } | null)?.color ?? undefined;
   }, [logsPerSession]);
 
+  // "Since" is the first time the grade was ever reached, not the first time inside the period.
   const firstReached = useMemo(
-    () => findFirstReachedDate(scopedSessions, allTimeStats.hardestGradeLabel),
-    [scopedSessions, allTimeStats.hardestGradeLabel]
+    () => findFirstReachedDate(sessions, allTimeStats.hardestGradeLabel),
+    [sessions, allTimeStats.hardestGradeLabel]
   );
 
-  // Personal bests are historical records -- always computed over full history.
-  const longestStreakEver = useMemo(() => findLongestStreakEver(sessions), [sessions]);
-  const mostClimbsInSession = useMemo(() => findMostClimbsInSession(sessions), [sessions]);
-  const flashRate = useMemo(() => findFlashRate(sessions), [sessions]);
-  const daysDoneThisWeek = weekCompletion.filter((day) => day.done).length;
-
   const pyramidMax = Math.max(1, ...gradeDistribution.map((bar) => bar.count));
-  const weekTotals = weeklyFrequency.map((w) => w.climbCount);
-  const weekMax = Math.max(1, ...weekTotals);
-  const sparkPoints = weekTotals.map((total, i) => ({
-    x: weekTotals.length > 1 ? (i / (weekTotals.length - 1)) * 100 : 50,
-    y: 100 - (total / weekMax) * 90 - 5,
-  }));
+  const weekPeak = Math.max(0, ...weeklyFrequency.map((w) => w.climbCount));
+  const trendMeta = period === 'All' ? 'all time' : `last ${trendWeeks} weeks`;
 
   return (
     <View style={styles.stack}>
-      <Card padded="compact">
-        <StatRow
-          bare
-          items={[
-            {
-              label: 'Hardest send',
-              value: allTimeStats.hardestGradeLabel ?? '—',
-              sub: firstReached ? `since ${formatMonthDay(firstReached)}` : undefined,
-              dotColor: allTimeStats.hardestGradeLabel ? hardestColor : undefined,
-            },
-            {
-              label: 'Sends',
-              value: String(sendsLogged),
-              sub: `${climbSessions.length} session${climbSessions.length === 1 ? '' : 's'}`,
-            },
-            { label: 'Flash rate', value: `${flashRate}%`, sub: 'first try' },
-          ]}
-        />
-        <View style={styles.streakRow}>
-          <Text style={styles.streakLabel}>Current streak</Text>
-          <Text style={styles.streakValue}>
-            {streak} {streak === 1 ? 'day' : 'days'}
-          </Text>
-          <View style={styles.dots} accessible accessibilityLabel={`${daysDoneThisWeek} of 7 days this week`}>
-            {weekCompletion.map((day, i) => (
-              <View key={i} style={[styles.dot, day.done ? styles.dotDone : null]} />
-            ))}
-          </View>
-        </View>
-      </Card>
+      <StatRow
+        items={[
+          {
+            label: 'Hardest',
+            value: allTimeStats.hardestGradeLabel ?? '—',
+            sub: firstReached ? `since ${formatMonthDay(firstReached)}` : undefined,
+            dotColor: allTimeStats.hardestGradeLabel ? hardestColor : undefined,
+          },
+          {
+            label: 'Sends',
+            value: String(sendsLogged),
+            sub: `${climbSessions.length} session${climbSessions.length === 1 ? '' : 's'}`,
+          },
+          {
+            label: 'Flashed',
+            value: `${flashRate}%`,
+            sub: sendsLogged > 0 ? `${flashesLogged} of ${sendsLogged}` : 'first try',
+          },
+        ]}
+      />
 
       {gradeDistribution.length > 0 ? (
         <Card padded="graph">
@@ -231,8 +212,7 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
           </View>
 
           {/* Easiest first, reading down -- the order grades are climbed in. Each bar is
-              flashes in strong ink, then the other sends in quiet grey, each segment
-              carrying its own count. */}
+              flashes in strong ink, then the other sends in quiet grey; the total sits to the right. */}
           <View style={styles.pyramid}>
             {gradeDistribution.map((bar) => {
               const sends = bar.count - bar.flashCount;
@@ -243,25 +223,18 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
                   accessible
                   accessibilityLabel={`${bar.label}: ${bar.count} climbs, ${bar.flashCount} flashed`}
                 >
-                  <Text style={styles.pyrGrade} numberOfLines={1} adjustsFontSizeToFit>
-                    {bar.label}
-                  </Text>
+                  <GradeChip label={bar.label} color={bar.color} style={styles.pyrGrade} />
                   <View style={styles.pyrTrack}>
-                    <View style={[styles.pyrBar, { width: `${(bar.count / pyramidMax) * 100}%` }]}>
-                      {bar.flashCount > 0 ? (
-                        <View style={[styles.pyrSegment, styles.pyrFlash, { flex: bar.flashCount }]}>
-                          <Text style={[styles.pyrSegmentText, styles.pyrFlashText]}>
-                            {bar.flashCount}
-                          </Text>
-                        </View>
-                      ) : null}
-                      {sends > 0 ? (
-                        <View style={[styles.pyrSegment, styles.pyrSend, { flex: sends }]}>
-                          <Text style={[styles.pyrSegmentText, styles.pyrSendText]}>{sends}</Text>
-                        </View>
-                      ) : null}
-                    </View>
+                    {bar.flashCount > 0 ? (
+                      <View
+                        style={[styles.pyrSegment, styles.pyrFlash, { width: `${(bar.flashCount / pyramidMax) * 100}%` }]}
+                      />
+                    ) : null}
+                    {sends > 0 ? (
+                      <View style={[styles.pyrSegment, styles.pyrSend, { width: `${(sends / pyramidMax) * 100}%` }]} />
+                    ) : null}
                   </View>
+                  <Text style={styles.pyrCount}>{bar.count}</Text>
                 </View>
               );
             })}
@@ -292,7 +265,7 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
         <Card padded="graph">
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Grade trend</Text>
-            <Text style={styles.cardMeta}>hardest send · last {TREND_WEEKS} weeks</Text>
+            <Text style={styles.cardMeta}>hardest send by week · {trendMeta}</Text>
           </View>
           <View style={styles.chart}>
             <LineChart
@@ -306,50 +279,28 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
 
       <Card padded="graph">
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Frequency</Text>
+          <Text style={styles.cardTitle}>Sessions</Text>
           <Text style={styles.cardMeta}>
-            last {WEEKS_SHOWN} weeks · peak {weekMax}/wk
+            per week · last {WEEKS_SHOWN} weeks{weekPeak > 0 ? ` · peak ${weekPeak}` : ''}
           </Text>
         </View>
-        <View style={styles.sparkWrap}>
-          <Svg style={styles.spark} viewBox="0 0 100 100" preserveAspectRatio="none">
-            <Polyline
-              points={sparkPoints.map((p) => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke={colors.chartStrong}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              vectorEffect="non-scaling-stroke"
-            />
-          </Svg>
-          {sparkPoints.map((p, i) => (
-            <View
-              key={i}
-              style={[
-                styles.sparkDot,
-                i === sparkPoints.length - 1 ? styles.sparkDotLatest : null,
-                { left: `${p.x}%`, top: `${p.y}%` },
-              ]}
-            />
-          ))}
-        </View>
-        <View style={styles.sparkLbls}>
-          {weeklyFrequency.map((w) => (
-            <Text key={w.weekLabel} style={styles.sparkLblText}>
-              {w.weekLabel}
-            </Text>
-          ))}
+        <View style={styles.chart}>
+          <BarChart
+            height={120}
+            maxValue={Math.max(1, weekPeak)}
+            bars={weeklyFrequency.map((week, i) => ({
+              label: week.weekLabel,
+              segments: [
+                {
+                  value: week.climbCount,
+                  // Ink bars; only the current week takes the accent.
+                  color: i === weeklyFrequency.length - 1 ? colors.accent : colors.chartStrong,
+                },
+              ],
+            }))}
+          />
         </View>
       </Card>
-
-      <StatRow
-        items={[
-          { label: 'Sessions', value: String(climbSessions.length) },
-          { label: 'Best streak', value: `${longestStreakEver}d` },
-          { label: 'Most climbs', value: String(mostClimbsInSession) },
-        ]}
-      />
     </View>
   );
 }
@@ -357,21 +308,6 @@ export function ClimbProgressView({ sessions, scopedSessions, streak }: Props) {
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     stack: { gap: spacing.xs },
-
-    streakRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      marginTop: 10,
-      paddingTop: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.separator,
-    },
-    streakLabel: { ...typography.meta, ...font('semibold') },
-    streakValue: { ...typography.body, ...font('bold'), fontSize: 15, flex: 1, fontVariant: ['tabular-nums'] },
-    dots: { flexDirection: 'row', gap: 4 },
-    dot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.chartTrack },
-    dotDone: { backgroundColor: colors.accent },
 
     cardHeader: {
       flexDirection: 'row',
@@ -394,31 +330,27 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
 
     pyramid: { marginTop: spacing.xs, gap: 8 },
     pyrRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    pyrGrade: {
-      ...typography.numeric,
-      width: 40,
-      fontSize: 20,
-      lineHeight: 22,
-    },
-    pyrTrack: { flex: 1, height: 20, borderRadius: 6, backgroundColor: colors.chartTrack, overflow: 'hidden' },
-    // Tall enough to hold its numbers; a segment never shrinks below its count.
-    // Absolutely positioned so it reads as a fill on top of pyrTrack's full-width track.
-    pyrBar: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
+    pyrGrade: { width: 40 },
+    pyrTrack: {
+      flex: 1,
+      height: 16,
       borderRadius: 6,
+      backgroundColor: colors.chartTrack,
       flexDirection: 'row',
-      overflow: 'hidden',
       gap: 2,
+      overflow: 'hidden',
     },
-    pyrSegment: { minWidth: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-    pyrSegmentText: { ...font('semibold'), fontSize: 12, fontVariant: ['tabular-nums'] },
+    pyrSegment: { height: '100%', borderRadius: 6 },
     pyrFlash: { backgroundColor: colors.chartStrong },
-    pyrFlashText: { color: colors.surface },
     pyrSend: { backgroundColor: colors.chartQuiet },
-    pyrSendText: { color: colors.textPrimary },
+    pyrCount: {
+      ...font('semibold'),
+      fontSize: 14,
+      color: colors.textPrimary,
+      minWidth: 22,
+      textAlign: 'right',
+      fontVariant: ['tabular-nums'],
+    },
     moreChip: { borderStyle: 'dashed' },
     legend: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.xs },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -426,31 +358,4 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     legendText: { ...typography.meta },
 
     chart: { marginTop: spacing.s },
-    sparkWrap: { marginTop: spacing.sm, height: 56, position: 'relative' },
-    spark: { width: '100%', height: 56 },
-    sparkDot: {
-      position: 'absolute',
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.chartStrong,
-      transform: [{ translateX: -3 }, { translateY: -3 }],
-    },
-    sparkDotLatest: {
-      width: 11,
-      height: 11,
-      borderRadius: 5.5,
-      backgroundColor: colors.accent,
-      borderWidth: 2,
-      borderColor: colors.surface,
-      transform: [{ translateX: -5.5 }, { translateY: -5.5 }],
-    },
-    sparkLbls: { flexDirection: 'row', marginTop: 8 },
-    sparkLblText: {
-      flex: 1,
-      textAlign: 'center',
-      ...font('medium'),
-      fontSize: 11,
-      color: colors.textMuted,
-    },
   });

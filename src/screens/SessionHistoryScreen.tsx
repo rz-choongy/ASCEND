@@ -32,6 +32,7 @@ import {
   ChevronLeftIcon,
   DialogHost,
   GradeChip,
+  PencilIcon,
   ListGroup,
   ListRow,
   SessionStrip,
@@ -220,6 +221,8 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
 
   const [notes, setNotes] = useState(session?.notes ?? '');
   const [title, setTitle] = useState(session?.title ?? '');
+  const [titleFocused, setTitleFocused] = useState(false);
+  const titleInputRef = useRef<TextInput>(null);
 
   // Save title and notes however the screen is left -- the Back button, a swipe, or
   // Android's back -- not only when a field happens to blur first.
@@ -423,17 +426,31 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
         </Pressable>
         {/* Session metadata header */}
         <View style={styles.metaBlock}>
-          <Text style={styles.titleLabel}>Session title</Text>
-          <TextInput
-            style={styles.titleInput}
-            value={title}
-            onChangeText={setTitle}
-            onBlur={saveTitle}
-            onSubmitEditing={saveTitle}
-            returnKeyType="done"
-            placeholder={fallbackTitle}
-            placeholderTextColor={colors.textMuted}
-          />
+          {/* The title is the screen title: display font, left, editable in place. The
+              default name shows in full ink so it never reads as an empty field. */}
+          <Pressable
+            style={styles.titleRow}
+            onPress={() => titleInputRef.current?.focus()}
+            accessibilityLabel="Edit session title"
+          >
+            <TextInput
+              ref={titleInputRef}
+              style={[styles.titleInput, titleFocused && styles.titleInputFocused]}
+              value={title}
+              onChangeText={setTitle}
+              onFocus={() => setTitleFocused(true)}
+              onBlur={() => {
+                setTitleFocused(false);
+                saveTitle();
+              }}
+              onSubmitEditing={saveTitle}
+              returnKeyType="done"
+              placeholder={fallbackTitle}
+              placeholderTextColor={colors.textPrimary}
+              accessibilityLabel="Session title"
+            />
+            {titleFocused ? null : <PencilIcon size={16} color={colors.textMuted} />}
+          </Pressable>
           <Text style={styles.metaLine}>{formatDateLine(session.started_at)}</Text>
           {duration != null ? (
             session.status === 'completed' ? (
@@ -515,6 +532,7 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
                   meta={formatLogTime(climb.createdAt)}
                   left={
                     <GradeChip
+                      variant="dot"
                       label={climb.gradeLabel}
                       color={climb.gradeColor || colors.surfaceAlt}
                       style={styles.gradeChipLead}
@@ -811,21 +829,24 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     marginBottom: spacing.md,
     gap: 4,
   },
-  titleLabel: {
-    ...typography.meta,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: 2,
   },
   titleInput: {
     ...typography.display,
-    fontSize: 30,
-    lineHeight: 34,
-    minHeight: 48,
-    borderRadius: radius.md,
-    backgroundColor: colors.fill,
-    color: colors.textPrimary,
-    paddingHorizontal: spacing.s,
-    paddingVertical: 6,
-    marginTop: 4,
-    marginBottom: 2,
+    flexShrink: 1,
+    minHeight: 44,
+    padding: 0,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  // Same underline the Stepper uses while editing, so focus reads as "typing here".
+  titleInputFocused: {
+    flex: 1,
+    borderBottomColor: colors.action,
   },
   metaLine: {
     ...typography.bodyMuted,

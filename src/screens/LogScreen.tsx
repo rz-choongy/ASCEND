@@ -21,7 +21,7 @@ import {
 } from '../domain/dashboard';
 import { addDays, startOfWeek } from '../domain/dateUtils';
 import { getExerciseNames } from '../domain/exerciseStore';
-import { ensureSelectedClimbGym, getSelectedClimbGym, gymDisplayName, gymDisplayNameById } from '../domain/gymStore';
+import { ensureSelectedClimbGym, getSelectedClimbGym, gymDisplayName, gymDisplayNameById, isUnnamedDefaultGym } from '../domain/gymStore';
 import {
   createSession,
   getActiveSession,
@@ -36,7 +36,7 @@ import { getRoutines, type RoutineSummary } from '../domain/routineStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
 import { getLastRoutineId, getShowSessionTimer, setLastRoutineId } from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
-import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
+import { formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
 import { newerApk, offerApk } from '../release';
@@ -62,7 +62,8 @@ const MONTH_NAMES = [
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const RECENT_SHOWN = 4;
+const RECENT_SHOWN = 3;
+/** Name the built-in grade scale is seeded with: a grading system, not a place, so Today doesn't show it as a gym. */
 
 function formatHeaderDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
@@ -70,14 +71,14 @@ function formatHeaderDate(d: Date): string {
 
 type Dashboard = {
   activeSession: SessionRow | null;
-  gymName: string;
+  /** The selected gym's name, or null when only the built-in default scale is set. */
+  gymName: string | null;
   streak: number;
   showTimer: boolean;
   lastType: SessionType | null;
   climb: LastSessions<ClimbSessionSummary> | null;
   strength: LastSessions<StrengthSessionSummary> | null;
   week: WeekActivity;
-  lastWeek: WeekActivity;
   recent: RecentSession[];
   /** Best grade with its tape colour for each recent climb, for the list's grade chips. */
   recentBest: Record<string, { label: string; color: string }>;
@@ -98,26 +99,30 @@ const bestGradesFor = (sessions: SessionRow[]): Dashboard['recentBest'] => {
   return best;
 };
 
+const selectedGymName = (): string | null => {
+  const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
+  if (isUnnamedDefaultGym(gym)) return null;
+  return gymDisplayName(gym);
+};
+
 const loadDashboard = (): Dashboard => {
   const completed = getCompletedSessions();
   const now = new Date();
   const weekStart = startOfWeek(now);
-  // Two weeks in one query: this week for the card, last week for its comparisons.
-  const twoWeeks = getSessionsForDateRange(addDays(weekStart, -7).getTime(), addDays(weekStart, 7).getTime());
+  const thisWeek = getSessionsForDateRange(weekStart.getTime(), addDays(weekStart, 7).getTime());
   const strengthHistory = completed.filter((session) => session.type === 'strength');
   const routines = getRoutines();
   const lastRoutineId = getLastRoutineId();
   const recentRows = completed.slice(-RECENT_SHOWN);
   return {
     activeSession: getActiveSession(),
-    gymName: gymDisplayName(getSelectedClimbGym() ?? ensureSelectedClimbGym()),
+    gymName: selectedGymName(),
     streak: getSessionStreak(),
     showTimer: getShowSessionTimer(),
     lastType: completed[completed.length - 1]?.type ?? null,
     climb: lastClimbSessions(completed),
     strength: lastStrengthSessions(strengthHistory, getExerciseNames()),
-    week: buildWeekActivity(twoWeeks, now),
-    lastWeek: buildWeekActivity(twoWeeks, addDays(now, -7)),
+    week: buildWeekActivity(thisWeek, now),
     recent: buildRecentSessions(recentRows, strengthHistory, RECENT_SHOWN),
     recentBest: bestGradesFor(recentRows),
     bodyweight: getLatestBodyweight(),
@@ -155,9 +160,6 @@ export function LogScreen() {
   const mode: SessionType = pickedMode ?? data.lastType ?? 'climb';
   const { activeSession, strength } = data;
   const firstExercise = strength?.latest.exercises[0];
-  const strengthHint = strength
-    ? `Last: ${strength.latest.title ?? formatDaysAgo(strength.latest.startedAt)}`
-    : 'Sets, reps and PRs';
   const strengthStartsFrom = firstExercise
     ? `${firstExercise.name} · ${firstExercise.weight === 0 ? 'BW' : `${formatWeight(firstExercise.weight)} kg`} × ${firstExercise.reps}`
     : 'Each exercise opens at your last weight';
@@ -237,7 +239,7 @@ export function LogScreen() {
 
   const activeWhere = activeSession
     ? activeSession.type === 'climb'
-      ? (activeSession.gym_id && gymDisplayNameById(activeSession.gym_id)) || data.gymName
+      ? (activeSession.gym_id && gymDisplayNameById(activeSession.gym_id)) || data.gymName || ''
       : activeSession.title?.trim() || ''
     : '';
 
@@ -275,7 +277,6 @@ export function LogScreen() {
             mode={mode}
             onModeChange={setPickedMode}
             gymName={data.gymName}
-            strengthHint={strengthHint}
             strengthStartsFrom={strengthStartsFrom}
             onChangeGym={() => navigation.navigate('GymSelect')}
             routineName={data.routine?.name ?? null}
@@ -291,12 +292,7 @@ export function LogScreen() {
           onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
         />
 
-        <WeekCard week={data.week} lastWeek={data.lastWeek} streak={data.streak} />
-
-        <BodyweightRow
-          latest={data.bodyweight}
-          onLogged={(row) => setData((current) => (current ? { ...current, bodyweight: row } : current))}
-        />
+        <WeekCard week={data.week} streak={data.streak} />
 
         {data.recent.length > 0 ? (
           <RecentSessionsList
@@ -306,6 +302,12 @@ export function LogScreen() {
             onSeeAll={() => navigation.navigate('Calendar')}
           />
         ) : null}
+
+        {/* Kept on Today because it's the only place to log bodyweight; Progress only charts it. */}
+        <BodyweightRow
+          latest={data.bodyweight}
+          onLogged={(row) => setData((current) => (current ? { ...current, bodyweight: row } : current))}
+        />
       </ScrollView>
     </SafeAreaView>
   );

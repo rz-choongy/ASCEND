@@ -12,6 +12,9 @@ import {
   buildGradeDistribution,
   buildGradeDistributionAcrossGyms,
   buildHardestSendTrend,
+  filterSessionsToPeriod,
+  MIN_TREND_WEEKS,
+  trendWeeksForPeriod,
 } from './progressInsights';
 import type { SessionRow } from './types';
 
@@ -217,5 +220,49 @@ describe('buildHardestSendTrend', () => {
     const strength = { ...sessionAt('s', 'gym-1', at(9, 26)), type: 'strength' as const };
 
     expect(buildHardestSendTrend([strength, sessionAt('c', 'gym-1', at(9, 26))], 12, TODAY)).toEqual([]);
+  });
+});
+
+describe('filterSessionsToPeriod', () => {
+  const now = new Date(2026, 10, 4, 12, 0, 0);
+  const daysAgo = (days: number) => now.getTime() - days * 86_400_000;
+  const at = (id: string, startedAt: number): SessionRow => ({ ...makeSession(id, null), started_at: startedAt });
+  const sessions = [at('old', daysAgo(400)), at('year', daysAgo(200)), at('q', daysAgo(60)), at('m', daysAgo(20)), at('w', daysAgo(3))];
+  const ids = (rows: SessionRow[]) => rows.map((s) => s.id);
+
+  it('keeps sessions inside each rolling window', () => {
+    expect(ids(filterSessionsToPeriod(sessions, 'W', now))).toEqual(['w']);
+    expect(ids(filterSessionsToPeriod(sessions, 'M', now))).toEqual(['m', 'w']);
+    expect(ids(filterSessionsToPeriod(sessions, '3M', now))).toEqual(['q', 'm', 'w']);
+    expect(ids(filterSessionsToPeriod(sessions, 'Y', now))).toEqual(['year', 'q', 'm', 'w']);
+  });
+
+  it('returns every session for All', () => {
+    expect(filterSessionsToPeriod(sessions, 'All', now)).toBe(sessions);
+  });
+
+  it('includes a session exactly on the cutoff', () => {
+    expect(ids(filterSessionsToPeriod([at('edge', daysAgo(7))], 'W', now))).toEqual(['edge']);
+  });
+});
+
+describe('trendWeeksForPeriod', () => {
+  const now = new Date(2026, 10, 4, 12, 0, 0);
+  const at = (startedAt: number): SessionRow => ({ ...makeSession('x', null), started_at: startedAt });
+
+  it('never goes below the minimum for short windows', () => {
+    expect(trendWeeksForPeriod('W', [], now)).toBe(MIN_TREND_WEEKS);
+    expect(trendWeeksForPeriod('M', [], now)).toBe(MIN_TREND_WEEKS);
+    expect(trendWeeksForPeriod('3M', [], now)).toBe(13);
+  });
+
+  it('covers a year for Y', () => {
+    expect(trendWeeksForPeriod('Y', [], now)).toBe(53);
+  });
+
+  it('reaches back to the earliest session for All', () => {
+    const twentyWeeksAgo = now.getTime() - 20 * 7 * 86_400_000;
+    expect(trendWeeksForPeriod('All', [at(now.getTime()), at(twentyWeeksAgo)], now)).toBe(21);
+    expect(trendWeeksForPeriod('All', [at(now.getTime())], now)).toBe(MIN_TREND_WEEKS);
   });
 });

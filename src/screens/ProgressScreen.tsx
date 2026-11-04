@@ -2,10 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { LayoutAnimation, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { firstOfMonth } from '../domain/dateUtils';
-import { getCompletedSessions, getSessionStreak } from '../domain/sessionStore';
+import { filterSessionsToPeriod, type ProgressPeriod } from '../domain/progressInsights';
+import { getCompletedSessions } from '../domain/sessionStore';
 import type { SessionRow } from '../domain/types';
-import { Card, ChevronLeftIcon, ChevronRightIcon, IconButton, SegmentedControl, font, spacing, useTheme } from '../ui';
+import { Card, SegmentedControl, font, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { useTabBarClearance } from '../navigation/tabBar';
@@ -13,64 +13,46 @@ import { BodyweightCard } from './progress/BodyweightCard';
 import { ClimbProgressView } from './progress/ClimbProgressView';
 import { StrengthProgressView } from './progress/StrengthProgressView';
 
-const MONTHS_BACK_LIMIT = 12;
-
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+const PERIOD_OPTIONS: { value: ProgressPeriod; label: string }[] = [
+  { value: 'W', label: 'W' },
+  { value: 'M', label: 'M' },
+  { value: '3M', label: '3M' },
+  { value: 'Y', label: 'Y' },
+  { value: 'All', label: 'All' },
 ];
 
+const PERIOD_EMPTY_COPY: Record<ProgressPeriod, string> = {
+  W: 'No sessions in the last 7 days.',
+  M: 'No sessions in the last 30 days.',
+  '3M': 'No sessions in the last 90 days.',
+  Y: 'No sessions in the last year.',
+  All: 'No sessions yet.',
+};
+
 type ProgressMode = 'climbing' | 'strength';
-type ProgressView = 'all' | 'month';
 
 export function ProgressScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const tabBarClearance = useTabBarClearance();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
-  const [streak, setStreak] = useState(0);
   const [mode, setMode] = useState<ProgressMode>('climbing');
-  const [view, setView] = useState<ProgressView>('all');
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => firstOfMonth(new Date()));
+  const [period, setPeriod] = useState<ProgressPeriod>('All');
 
-  const handleChangeView = (next: ProgressView) => {
+  const handleChangePeriod = (next: ProgressPeriod) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setView(next);
+    setPeriod(next);
   };
 
   useFocusEffect(
     useCallback(() => {
       setSessions(getCompletedSessions());
-      setStreak(getSessionStreak());
     }, [])
   );
 
-  const thisMonth = useMemo(() => firstOfMonth(new Date()), []);
-  const earliestMonth = useMemo(
-    () => new Date(thisMonth.getFullYear(), thisMonth.getMonth() - MONTHS_BACK_LIMIT, 1),
-    [thisMonth]
-  );
-  const canGoPrevMonth = currentMonth.getTime() > earliestMonth.getTime();
-  const canGoNextMonth = currentMonth.getTime() < thisMonth.getTime();
-
-  const goToPrevMonth = () => {
-    if (!canGoPrevMonth) return;
-    setCurrentMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1));
-  };
-  const goToNextMonth = () => {
-    if (!canGoNextMonth) return;
-    setCurrentMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1));
-  };
-
-  const monthSessions = useMemo(() => {
-    const start = currentMonth.getTime();
-    const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).getTime();
-    return sessions.filter((s) => s.started_at >= start && s.started_at < end);
-  }, [sessions, currentMonth]);
-
-  // Each mode's grids and charts scope to the selected month; streaks, personal bests,
-  // and the rolling weekly trend stay on full history.
-  const scopedSessions = view === 'month' ? monthSessions : sessions;
+  // Stats, the pyramid and the graphs scope to the chosen window; the weekly
+  // frequency chart is always the last 8 weeks.
+  const scopedSessions = useMemo(() => filterSessionsToPeriod(sessions, period), [sessions, period]);
 
   if (sessions.length === 0) {
     return (
@@ -95,8 +77,6 @@ export function ProgressScreen() {
       >
         <Text style={styles.screenTitle}>Progress</Text>
 
-        <BodyweightCard />
-
         <View style={styles.segmentedPrimary}>
           <SegmentedControl
             options={[
@@ -108,62 +88,25 @@ export function ProgressScreen() {
           />
         </View>
         <View style={styles.segmentedSecondary}>
-          <SegmentedControl
-            compact
-            options={[
-              { value: 'all', label: 'All time' },
-              { value: 'month', label: 'By month' },
-            ]}
-            value={view}
-            onChange={handleChangeView}
-          />
+          <SegmentedControl compact options={PERIOD_OPTIONS} value={period} onChange={handleChangePeriod} />
         </View>
 
-        {view === 'month' ? (
-          <View style={styles.monthNav}>
-            <IconButton
-              variant="bare"
-              onPress={goToPrevMonth}
-              disabled={!canGoPrevMonth}
-              accessibilityLabel="Previous month"
-              hitSlop={10}
-            >
-              <ChevronLeftIcon
-                size={16}
-                color={canGoPrevMonth ? colors.textPrimary : colors.textMuted}
-                strokeWidth={2.4}
-              />
-            </IconButton>
-            <Text style={styles.monthNavLabel}>
-              {MONTH_NAMES[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </Text>
-            <IconButton
-              variant="bare"
-              onPress={goToNextMonth}
-              disabled={!canGoNextMonth}
-              accessibilityLabel="Next month"
-              hitSlop={10}
-            >
-              <ChevronRightIcon
-                size={16}
-                color={canGoNextMonth ? colors.textPrimary : colors.textMuted}
-                strokeWidth={2.4}
-              />
-            </IconButton>
-          </View>
-        ) : null}
-
-        {view === 'month' && monthSessions.length === 0 ? (
-          <Card padded="compact" style={styles.emptyMonth}>
-            <Text style={styles.emptyMonthText}>No sessions logged this month.</Text>
+        {scopedSessions.length === 0 ? (
+          <Card padded="compact" style={styles.emptyPeriod}>
+            <Text style={styles.emptyPeriodText}>{PERIOD_EMPTY_COPY[period]}</Text>
           </Card>
         ) : null}
 
         {mode === 'climbing' ? (
-          <ClimbProgressView sessions={sessions} scopedSessions={scopedSessions} streak={streak} />
+          <ClimbProgressView sessions={sessions} scopedSessions={scopedSessions} period={period} />
         ) : (
           <StrengthProgressView sessions={sessions} scopedSessions={scopedSessions} />
         )}
+
+        {/* Bodyweight sits under either tab's content: it belongs to neither, and stays one tap away. */}
+        <View style={styles.bodyweight}>
+          <BodyweightCard />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -196,25 +139,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginBottom: spacing.xs,
     },
 
-    monthNav: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.md,
-      marginBottom: spacing.xs,
-    },
-    monthNavLabel: {
-      ...typography.body,
-      ...font('semibold'),
-      minWidth: 150,
-      textAlign: 'center',
-    },
-    emptyMonth: {
+    emptyPeriod: {
       alignItems: 'center',
       marginBottom: spacing.xs,
     },
-    emptyMonthText: {
+    emptyPeriodText: {
       ...typography.bodyMuted,
+    },
+    bodyweight: {
+      marginTop: spacing.xs,
     },
 
     emptyState: {

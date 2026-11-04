@@ -277,6 +277,10 @@ export const gymDisplayName = (gym: GymRow): string => {
   return parent ? `${parent.name} · ${gym.name}` : gym.name;
 };
 
+/** The seeded default gym, still under its seeded name: it is a grade system, not a real gym. */
+export const isUnnamedDefaultGym = (gym: { id: string; name: string }): boolean =>
+  gym.id === DEFAULT_CLIMB_GYM_ID && gym.name.trim() === 'Default V-Scale';
+
 export const gymDisplayNameById = (gymId: string): string | null => {
   const gym = getGymById(gymId);
   return gym ? gymDisplayName(gym) : null;

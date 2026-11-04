@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,7 +18,7 @@ import {
   IconButton,
   PencilIcon,
   PressableScale,
-  ScreenHeader,
+  CloseIcon,
   font,
   radius,
   showDialog,
@@ -27,6 +27,7 @@ import {
   type Shadows,
 } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
+import type { Typography } from '../ui/tokens/typography';
 
 type GymSelectScreenProps = RootStackScreenProps<'GymSelect'>;
 
@@ -43,8 +44,8 @@ const gradingTypeLabel = (gradingType: string): string => {
 };
 
 export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => {
-  const { colors, shadows } = useTheme();
-  const styles = useMemo(() => createStyles(colors, shadows), [colors, shadows]);
+  const { colors, typography, shadows } = useTheme();
+  const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
   const returnToSessionId = route.params?.returnToSessionId;
   const [allGyms, setAllGyms] = useState<GymRow[]>([]);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
@@ -102,21 +103,35 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
     }
   };
 
+  const renderHeader = (eyebrow: string, title: string, left?: ReactNode) => (
+    <View style={styles.header}>
+      <View style={styles.headerText}>
+        {left}
+        <Text style={styles.eyebrow} numberOfLines={1}>
+          {eyebrow}
+        </Text>
+        <Text style={styles.screenTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
+      <IconButton onPress={() => navigation.goBack()} accessibilityLabel="Close">
+        <CloseIcon size={16} color={colors.textPrimary} />
+      </IconButton>
+    </View>
+  );
+
   // ─── Level 2: inside a company ────────────────────────────────────────────
   if (drillParentId) {
     return (
       <SafeAreaView edges={['top']} style={styles.screen}>
-        <ScreenHeader
-          eyebrow={drillParent?.name ?? 'Company'}
-          title="Select branch"
-          onClose={() => navigation.goBack()}
-          left={
-            <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
-              <ChevronLeftIcon size={14} color={colors.accentInk} strokeWidth={2.4} />
-              <Text style={styles.backLabel}>All gyms</Text>
-            </Pressable>
-          }
-        />
+        {renderHeader(
+          drillParent?.name ?? 'Company',
+          'Select branch',
+          <Pressable onPress={() => setDrillParentId(null)} style={styles.backButton} hitSlop={10}>
+            <ChevronLeftIcon size={14} color={colors.accentInk} strokeWidth={2.4} />
+            <Text style={styles.backLabel}>All gyms</Text>
+          </Pressable>
+        )}
 
         <ScrollView contentContainerStyle={styles.content}>
           {branches.length === 0 ? (
@@ -177,11 +192,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   // ─── Level 1: root gyms ───────────────────────────────────────────────────
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <ScreenHeader
-        eyebrow="Climbing grades"
-        title="Choose gym"
-        onClose={() => navigation.goBack()}
-      />
+      {renderHeader('Climbing grades', 'Choose gym')}
 
       <ScrollView contentContainerStyle={styles.content}>
         {rootGyms.length === 0 && (
@@ -264,7 +275,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   );
 };
 
-const createStyles = (colors: ThemeColors, shadows: Shadows) =>
+const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shadows) =>
   StyleSheet.create({
   screen: {
     flex: 1,
@@ -272,6 +283,24 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  // Left-aligned display title with its context line above and a close circle on the right.
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.s,
+    marginBottom: spacing.sm,
+  },
+  headerText: {
+    flex: 1,
+  },
+  eyebrow: {
+    ...typography.meta,
+    marginBottom: 2,
+  },
+  screenTitle: {
+    ...typography.display,
   },
   backButton: {
     flexDirection: 'row',

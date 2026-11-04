@@ -5,6 +5,7 @@ jest.mock('./sessionStore', () => ({
 }));
 jest.mock('./gymStore', () => ({
   gymDisplayNameById: jest.fn((id: string) => (id === 'gym-1' ? 'Boulder Lab' : null)),
+  isUnnamedDefaultGym: (gym: { id: string; name: string }) => gym.name === 'Default V-Scale',
 }));
 
 import { getSessionEvents } from './sessionStore';

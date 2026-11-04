@@ -20,7 +20,12 @@ import { BarChart, Card, ChevronRightIcon, PressableScale, StatRow, font, spacin
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
-const STRENGTH_SESSIONS_SHOWN = 10;
+/** Six bars leave each one room for a full "3,960 kg" label. */
+const STRENGTH_SESSIONS_SHOWN = 6;
+
+/** Whole kilograms with thousands separators: 3960 -> "3,960 kg". */
+const formatKg = (value: number): string =>
+  `${String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} kg`;
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Progress'>,
@@ -30,7 +35,7 @@ type NavProp = CompositeNavigationProp<
 type Props = {
   /** Full history, for the "this week" figure. */
   sessions: SessionRow[];
-  /** Sessions inside the All time / By month selection. */
+  /** Sessions inside the selected period (W / M / 3M / Y / All). */
   scopedSessions: SessionRow[];
 };
 
@@ -95,10 +100,13 @@ export function StrengthProgressView({ sessions, scopedSessions }: Props) {
           <View style={styles.chart}>
             <BarChart
               height={110}
-              valueFormatter={(value) => `${Math.round(value)}kg`}
-              bars={volumeTrend.map((bar) => ({
+              valueFormatter={formatKg}
+              bars={volumeTrend.map((bar, i) => ({
                 label: bar.label,
-                segments: [{ value: bar.volume, color: colors.accent }],
+                // Ink bars; only the latest session takes the accent.
+                segments: [
+                  { value: bar.volume, color: i === volumeTrend.length - 1 ? colors.accent : colors.chartStrong },
+                ],
               }))}
             />
           </View>

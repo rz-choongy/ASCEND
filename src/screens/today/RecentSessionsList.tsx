@@ -76,7 +76,7 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll, bestGrades }: P
                   <Text style={styles.figure}>{session.figure}</Text>
                   {best ? null : <Text style={styles.detail}>{session.detail}</Text>}
                 </View>
-                {best ? <GradeChip label={best.label} color={best.color} /> : null}
+                {best ? <GradeChip variant="dot" label={best.label} color={best.color} /> : null}
               </Pressable>
             );
           })}
@@ -151,9 +151,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       color: colors.textPrimary,
     },
     rowMeta: {
-      ...font('regular'),
-      fontSize: 12,
-      color: colors.textSecondary,
+      ...typography.meta,
       fontVariant: ['tabular-nums'],
     },
     figures: {
@@ -168,6 +166,5 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     detail: {
       ...typography.meta,
-      fontSize: 11,
     },
   });

@@ -39,10 +39,7 @@ const semantic = {
   pink: '#EE8FBD',
 };
 
-/**
- * Dark: pure black ground for OLED, cards one soft step up, no borders. The accent
- * fills actions and is washed in behind the screen title.
- */
+/** Dark: pure black ground for OLED, cards one soft step up, no borders. The accent fills actions. */
 export const darkColors = {
   background: '#000000',
   surface: '#17181B',

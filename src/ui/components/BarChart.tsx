@@ -29,7 +29,7 @@ type BarChartProps = {
   valueFormatter?: (value: number) => string;
 };
 
-const BAR_MAX_WIDTH = 22;
+const BAR_MAX_WIDTH = 24;
 const SEGMENT_GAP = 2;
 const BAR_RADIUS = 6;
 const MIN_SEGMENT_HEIGHT = 2;

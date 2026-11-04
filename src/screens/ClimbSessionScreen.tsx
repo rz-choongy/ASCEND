@@ -18,6 +18,7 @@ import {
   getGyms,
   getSelectedClimbGym,
   gymDisplayNameById,
+  isUnnamedDefaultGym,
 } from '../domain/gymStore';
 import {
   applyClimbEvents,
@@ -111,6 +112,9 @@ const normalizeGradeOption = (grade: unknown): GradeOption | null => {
   };
 };
 
+/** What an unnamed climb session is called everywhere else (history, detail). */
+const DEFAULT_TITLE = 'Climbing session';
+
 const GRADE_OPTIONS: GradeOption[] = defaultOptionsForType('v_scale')
   .map(normalizeGradeOption)
   .filter((grade): grade is GradeOption => grade !== null);
@@ -149,7 +153,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentGym, setCurrentGym] = useState<GymLike | null>(null);
   const currentGymName = useMemo(
-    () => (currentGym ? (gymDisplayNameById(currentGym.id) ?? currentGym.name) : null),
+    () => (currentGym && !isUnnamedDefaultGym(currentGym) ? (gymDisplayNameById(currentGym.id) ?? currentGym.name) : null),
     [currentGym]
   );
   const [gradeOptions, setGradeOptions] = useState<GradeOption[]>(GRADE_OPTIONS);
@@ -210,7 +214,8 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       bestLabel,
       bestColor,
       flashes,
-      avg: (sum / logs.length).toFixed(1),
+      // Shown as a grade ("V4"), never a decimal.
+      avg: `V${Math.round(sum / logs.length)}`,
     };
   }, [logs]);
 
@@ -403,62 +408,51 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   return (
     // Bottom edge too: Done sits at the very bottom and must clear the home indicator.
     <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
-      {/* Header — close, gym name, and elapsed timer bound into one row */}
+      {/* Header: close, the session's name (tap to rename) with the gym under it, elapsed time.
+          Same pattern as the strength logger. */}
       <View style={styles.headerRow}>
-        <IconButton
-          variant="bare"
-          onPress={() => navigation.navigate('Tabs')}
-          accessibilityLabel="Close"
-          hitSlop={8}
-        >
-          <CloseIcon color={colors.textSecondary} />
+        <IconButton onPress={() => navigation.navigate('Tabs')} accessibilityLabel="Close">
+          <CloseIcon size={16} color={colors.textPrimary} />
         </IconButton>
-        <Text style={styles.headerGym} numberOfLines={1}>
-          {currentGymName ?? 'Boulder gym'}
-        </Text>
+        <View style={styles.titleBlock}>
+          <TextInput
+            style={styles.titleInput}
+            value={title}
+            onChangeText={setTitle}
+            onBlur={handleSaveTitle}
+            onSubmitEditing={handleSaveTitle}
+            // The default name reads as the title, not as a disabled field.
+            placeholder={DEFAULT_TITLE}
+            placeholderTextColor={colors.textPrimary}
+            returnKeyType="done"
+            accessibilityLabel="Session name"
+            numberOfLines={1}
+          />
+          <Pressable
+            style={styles.gymSelector}
+            disabled={gymLocked}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={`Climb grades: ${currentGymName ?? 'No gym picked'}${gymLocked ? ', locked' : ', change'}`}
+            onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
+          >
+            <Text style={styles.gymSelectorName} numberOfLines={1}>
+              {currentGymName ?? 'No gym picked'}
+            </Text>
+            {/* Once a climb is logged the gym is fixed, so say so instead of offering a dead button. */}
+            {gymLocked ? (
+              <Text style={styles.gymSelectorLocked}>Locked</Text>
+            ) : (
+              <Text style={styles.gymSelectorAction}>Change</Text>
+            )}
+          </Pressable>
+        </View>
         {showTimer && session.status === 'active' ? (
-          <View style={styles.timerCol}>
-            <View style={styles.timerLabelRow}>
-              <View style={styles.liveDot} />
-              <Text style={styles.timerLabel}>Elapsed</Text>
-            </View>
+          <View style={styles.timer} accessibilityLabel={`Elapsed ${formatElapsed(elapsedMs)}`}>
+            <View style={styles.liveDot} />
             <Text style={styles.timerValue}>{formatElapsed(elapsedMs)}</Text>
           </View>
-        ) : (
-          <View style={styles.closeBtn} />
-        )}
-      </View>
-
-      <View style={styles.titleBlock}>
-        <TextInput
-          style={styles.titleInput}
-          value={title}
-          onChangeText={setTitle}
-          onBlur={handleSaveTitle}
-          onSubmitEditing={handleSaveTitle}
-          placeholder="Session name"
-          placeholderTextColor={colors.textMuted}
-          returnKeyType="done"
-        />
-        <Pressable
-          style={styles.gymSelector}
-          disabled={gymLocked}
-          hitSlop={4}
-          accessibilityRole="button"
-          accessibilityLabel={`Climb grades: ${currentGymName ?? 'Default V-Scale'}${gymLocked ? ', locked' : ', change'}`}
-          onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
-        >
-          <View style={styles.gymDot} />
-          <Text style={styles.gymSelectorName} numberOfLines={1}>
-            {currentGymName ?? 'Default V-Scale'}
-          </Text>
-          {/* Once a climb is logged the gym is fixed, so say so instead of offering a dead button. */}
-          {gymLocked ? (
-            <Text style={styles.gymSelectorLocked}>Locked</Text>
-          ) : (
-            <Text style={styles.gymSelectorAction}>Change</Text>
-          )}
-        </Pressable>
+        ) : null}
       </View>
 
       {/* Session so far: one stat row, then the climbs as a strip of tape colours. */}
@@ -479,7 +473,12 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             { label: 'Avg grade', value: sessionStats?.avg ?? '–' },
           ]}
         />
-        {stripColors.length > 0 ? <SessionStrip colors={stripColors} style={styles.summaryStrip} /> : null}
+        {stripColors.length > 0 ? (
+          <>
+            <SessionStrip colors={stripColors} style={styles.summaryStrip} />
+            <Text style={styles.summaryCaption}>Each climb in order, by tape colour</Text>
+          </>
+        ) : null}
       </Card>
 
       {/* Grade grid — neutral tiles, the big label in the display face, a thin tape-colour
@@ -534,17 +533,17 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         returnKeyType="done"
       />
 
-      {/* Send and Flash are equal choices: neither is styled as the default. */}
+      {/* Send is the everyday log, so it's the filled primary; Flash sits beside it outlined. */}
       <View style={styles.actionRow}>
         <Button
           label={`Send ${selectedGrade.label}`}
-          variant="ghost"
+          variant="primary"
           onPress={() => handleLog('SEND')}
           style={styles.actionButton}
         />
         <Button
           label={`Flash ${selectedGrade.label}`}
-          variant="ghost"
+          variant="secondary"
           icon={(color) => <BoltIcon size={16} color={color} filled />}
           onPress={() => handleLog('FLASH')}
           style={styles.actionButton}
@@ -595,8 +594,9 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                 style={styles.logRow}
               >
                 <GradeChip
+                  variant="dot"
                   label={log.gradeLabel}
-                  color={log.gradeColor ?? colors.surfaceRaised}
+                  color={log.gradeColor ?? colors.chartQuiet}
                   style={styles.logChip}
                 />
                 {pinnedGrade ? <Text style={styles.pinnedGrade}>{pinnedGrade}</Text> : null}
@@ -627,7 +627,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
       {hasLogs ? (
         <View style={styles.finishBar}>
-          <Button label="Done" onPress={handleDone} style={styles.finishButton} />
+          <Button label="Done" variant="secondary" onPress={handleDone} style={styles.finishButton} />
         </View>
       ) : null}
 
@@ -694,34 +694,53 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingBottom: spacing.s,
   },
 
-  // Header — close / gym name / elapsed timer as one row
+  // Header row: close / session name with the gym under it / elapsed time.
+  // Mirrors StrengthSessionScreen so both loggers open the same way.
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 2,
-    marginBottom: 4,
+    gap: spacing.s,
+    marginBottom: spacing.xs,
   },
-  closeBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerGym: {
-    ...typography.title,
-    fontSize: 17,
+  titleBlock: {
     flex: 1,
-    textAlign: 'center',
+    minWidth: 0,
   },
-  timerCol: {
-    alignItems: 'flex-end',
-    minWidth: 64,
+  titleInput: {
+    ...typography.display,
+    fontSize: 28,
+    lineHeight: 32,
+    minHeight: 32,
+    padding: 0,
   },
-  timerLabelRow: {
+  gymSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
+    minHeight: 24,
+  },
+  gymSelectorName: {
+    ...typography.meta,
+    flexShrink: 1,
+  },
+  gymSelectorLocked: {
+    ...typography.meta,
+    color: colors.textMuted,
+  },
+  gymSelectorAction: {
+    ...typography.meta,
+    ...font('semibold'),
+    color: colors.textPrimary,
+    textDecorationLine: 'underline',
+  },
+  timer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.s,
+    minHeight: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.fill,
   },
   liveDot: {
     width: 6,
@@ -729,56 +748,9 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     borderRadius: 3,
     backgroundColor: colors.accent,
   },
-  timerLabel: {
-    ...typography.meta,
-  },
   timerValue: {
-    ...typography.numeric,
-    fontSize: 24,
-    lineHeight: 26,
-  },
-
-  // Session name, with the grade system as one quiet line under it.
-  titleBlock: {
-    paddingHorizontal: 4,
-    marginBottom: spacing.xs,
-  },
-  titleInput: {
-    ...typography.display,
-    fontSize: 30,
-    lineHeight: 34,
-    minHeight: 34,
-    padding: 0,
-  },
-  gymSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: 36,
-  },
-  gymDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.accent,
-  },
-  gymSelectorName: {
-    ...typography.body,
-    fontSize: 14,
-    flexShrink: 1,
-  },
-  gymSelectorLocked: {
-    ...font('semibold'),
-    marginLeft: 'auto',
-    color: colors.textMuted,
-    fontSize: 13,
-  },
-  gymSelectorAction: {
-    ...font('semibold'),
-    marginLeft: 'auto',
-    color: colors.textSecondary,
-    fontSize: 13,
-    textDecorationLine: 'underline',
+    ...typography.mono,
+    color: colors.textPrimary,
   },
 
   summaryCard: {
@@ -786,6 +758,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   summaryStrip: {
     marginTop: spacing.xs,
+  },
+  summaryCaption: {
+    ...typography.meta,
+    color: colors.textMuted,
+    marginTop: 6,
   },
 
   // Grade grid — neutral tiles inside a card, tape colour as a thin bottom edge.
@@ -828,8 +805,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gradeRangeText: {
     ...typography.meta,
-    fontSize: 11,
-    lineHeight: 13,
+    lineHeight: 15,
     fontVariant: ['tabular-nums'],
   },
   gradeEdge: {
@@ -858,8 +834,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   actionButton: {
     flex: 1,
-    minHeight: 54,
-    backgroundColor: colors.surface,
+    minHeight: 56,
   },
 
   // Session panel
@@ -933,7 +908,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   highBadgeText: {
     ...font('semibold'),
-    fontSize: 12,
+    fontSize: 13,
     // Label in body text, not the accent: light-theme accents on the tinted pill fall
     // under 3:1. The star carries the accent colour.
     color: colors.textPrimary,

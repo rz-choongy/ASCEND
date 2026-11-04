@@ -496,7 +496,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     todayTagText: {
       ...font('semibold'),
-      fontSize: 12,
+      fontSize: 13,
       color: colors.accentInk,
       fontVariant: ['tabular-nums'],
     },

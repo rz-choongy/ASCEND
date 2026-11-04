@@ -71,7 +71,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginBottom: 2,
     },
     title: {
-      ...typography.title,
+      ...typography.display,
       marginTop: 1,
     },
     closeButton: {

@@ -1,28 +1,16 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SessionType } from '../../domain/types';
-import {
-  Button,
-  Card,
-  ChevronRightIcon,
-  DumbbellIcon,
-  MountainMarkIcon,
-  PressableScale,
-  font,
-  radius,
-  spacing,
-  useTheme,
-} from '../../ui';
+import { Button, SegmentedControl, font, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
 type Props = {
   mode: SessionType;
   onModeChange: (mode: SessionType) => void;
-  gymName: string;
-  /** Sub-line on the Strength tile, e.g. "Last: Pull day". */
-  strengthHint: string;
-  /** What the strength context row says the first exercise starts from. */
+  /** The selected gym's name, or null when only the built-in default grade scale is set. */
+  gymName: string | null;
+  /** What the strength context line says the first exercise starts from. */
   strengthStartsFrom: string;
   onChangeGym: () => void;
   /** The routine the next strength session starts from, or null to start from last time. */
@@ -31,15 +19,19 @@ type Props = {
   onStart: () => void;
 };
 
+const MODE_OPTIONS: { value: SessionType; label: string }[] = [
+  { value: 'climb', label: 'Climbing' },
+  { value: 'strength', label: 'Strength' },
+];
+
 /**
- * The two session types as big tiles that double as the switch, a context
- * row for the chosen one (gym for climbing, routine for strength), and a single Start button.
+ * A segmented switch for the session type, one context line for the chosen one
+ * (gym for climbing, routine for strength), and a single Start button.
  */
 export const StartCard = ({
   mode,
   onModeChange,
   gymName,
-  strengthHint,
   strengthStartsFrom,
   onChangeGym,
   routineName,
@@ -50,118 +42,57 @@ export const StartCard = ({
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const climb = mode === 'climb';
 
-  const tile = (type: SessionType, title: string, sub: string) => {
-    const selected = mode === type;
-    const fg = selected ? colors.onAction : colors.textPrimary;
-    return (
-      <PressableScale
-        onPress={() => onModeChange(type)}
-        scaleTo={0.97}
-        accessibilityLabel={`${title}${selected ? ', selected' : ''}`}
-        style={[styles.tile, selected ? styles.tileSelected : null]}
-      >
-        {type === 'climb' ? <MountainMarkIcon size={22} color={fg} /> : <DumbbellIcon size={22} color={fg} />}
-        <View style={styles.tileText}>
-          <Text style={[styles.tileTitle, { color: fg }]}>{title}</Text>
-          <Text style={[styles.tileSub, { color: fg }]} numberOfLines={1}>
-            {sub}
-          </Text>
-        </View>
-      </PressableScale>
-    );
-  };
+  const contextText = climb ? gymName ?? 'No gym picked' : routineName ?? strengthStartsFrom;
+  const linkText = climb ? (gymName ? 'Change gym' : 'Pick gym') : routineName ? 'Change routine' : 'Pick routine';
+  const onLink = climb ? onChangeGym : onChangeRoutine;
+  const a11y = climb
+    ? `Gym: ${gymName ?? 'none'}. ${linkText}`
+    : `Routine: ${routineName ?? 'none, starts from last time'}. ${linkText}`;
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.tiles}>
-        {tile('climb', 'Climb', gymName)}
-        {tile('strength', 'Strength', strengthHint)}
-      </View>
+    <View style={styles.block}>
+      <SegmentedControl options={MODE_OPTIONS} value={mode} onChange={onModeChange} />
 
-      {climb ? (
-        <PressableScale onPress={onChangeGym} scaleTo={0.98} style={styles.context} accessibilityLabel={`Gym: ${gymName}. Change`}>
-          <View style={styles.contextText}>
-            <Text style={styles.contextLabel}>Gym</Text>
-            <Text style={styles.contextValue} numberOfLines={1}>
-              {gymName}
-            </Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.textMuted} />
-        </PressableScale>
-      ) : (
-        <PressableScale
-          onPress={onChangeRoutine}
-          scaleTo={0.98}
-          style={styles.context}
-          accessibilityLabel={`Routine: ${routineName ?? 'none'}. Change`}
-        >
-          <View style={styles.contextText}>
-            <Text style={styles.contextLabel}>{routineName ? 'Routine' : 'No routine · starts from last time'}</Text>
-            <Text style={styles.contextValue} numberOfLines={1}>
-              {routineName ?? strengthStartsFrom}
-            </Text>
-          </View>
-          <ChevronRightIcon size={16} color={colors.textMuted} />
-        </PressableScale>
-      )}
+      <Pressable onPress={onLink} hitSlop={6} style={styles.context} accessibilityRole="button" accessibilityLabel={a11y}>
+        <View style={styles.dot} />
+        <Text style={styles.contextValue} numberOfLines={1}>
+          {contextText}
+        </Text>
+        <Text style={styles.link}>{linkText}</Text>
+      </Pressable>
 
       <Button label={climb ? 'Start climbing' : 'Start strength'} onPress={onStart} />
-    </Card>
+    </View>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
-    card: {
-      padding: spacing.s,
-      gap: spacing.s,
-    },
-    tiles: {
-      flexDirection: 'row',
+    block: {
       gap: spacing.xs,
-    },
-    // PressableScale centres its children; tiles read top-down instead.
-    tile: {
-      flex: 1,
-      minHeight: 92,
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      padding: spacing.s,
-      borderRadius: radius.md + 4,
-      backgroundColor: colors.surfaceAlt,
-    },
-    tileSelected: {
-      backgroundColor: colors.action,
-    },
-    tileText: {
-      gap: 1,
-      alignSelf: 'stretch',
-    },
-    tileTitle: {
-      ...font('semibold'),
-      fontSize: 17,
-    },
-    tileSub: {
-      ...font('regular'),
-      fontSize: 12,
-      opacity: 0.8,
     },
     context: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      minHeight: 48,
-      paddingHorizontal: spacing.xxs,
       gap: spacing.xs,
+      minHeight: 40,
+      paddingHorizontal: spacing.xxs,
     },
-    contextText: {
-      flex: 1,
-      gap: 1,
-    },
-    contextLabel: {
-      ...typography.section,
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
     },
     contextValue: {
-      ...typography.body,
+      ...font('semibold'),
+      flex: 1,
+      fontSize: 15,
+      color: colors.textPrimary,
+    },
+    link: {
+      ...typography.meta,
+      ...font('semibold'),
+      textDecorationLine: 'underline',
     },
   });

@@ -301,7 +301,7 @@ export function CalendarScreen() {
           </Text>
         </View>
         {hardestGradeLabel && replay ? (
-          <GradeChip label={hardestGradeLabel} color={replay.dotColor} />
+          <GradeChip variant="dot" label={hardestGradeLabel} color={replay.dotColor} />
         ) : null}
         <ChevronRightIcon color={colors.textMuted} size={16} />
       </TouchableOpacity>
@@ -340,22 +340,25 @@ export function CalendarScreen() {
     ));
   }
 
-  const filterChips = (
-    <View style={styles.filterChips}>
-      <Chip label="All" selected={typeFilter === null} onPress={() => setTypeFilter(null)} />
-      <Chip label="Climb" selected={typeFilter === 'climb'} onPress={() => setTypeFilter('climb')} />
-      <Chip label="Strength" selected={typeFilter === 'strength'} onPress={() => setTypeFilter('strength')} />
-    </View>
-  );
+  // One compact pill on the title row: tap cycles All -> Climb -> Strength. Filters every
+  // view, including the month's dots.
+  const nextTypeFilter: Record<string, SessionType | null> = {
+    all: 'climb',
+    climb: 'strength',
+    strength: null,
+  };
+  const typeFilterLabel =
+    typeFilter === 'climb' ? 'Climb only' : typeFilter === 'strength' ? 'Strength only' : 'All types';
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <View style={styles.titleRow}>
         <Text style={styles.screenTitle}>Calendar</Text>
         <Chip
-          label="Discarded"
-          selected={showDiscarded}
-          onPress={() => setShowDiscarded((v) => !v)}
+          label={typeFilterLabel}
+          selected={typeFilter !== null}
+          onPress={() => setTypeFilter((f) => nextTypeFilter[f ?? 'all'])}
+          style={styles.filterPill}
         />
       </View>
 
@@ -369,10 +372,18 @@ export function CalendarScreen() {
           value={viewMode}
           onChange={setViewMode}
         />
+        <TouchableOpacity
+          onPress={() => setShowDiscarded((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: showDiscarded }}
+          hitSlop={10}
+          activeOpacity={0.6}
+        >
+          <Text style={[styles.discardedLink, showDiscarded && styles.discardedLinkActive]}>
+            {showDiscarded ? 'Hide discarded' : 'Discarded'}
+          </Text>
+        </TouchableOpacity>
       </View>
-
-      {/* One filter for every view, above what it filters -- including the month's dots. */}
-      <View style={styles.filterRow}>{filterChips}</View>
 
       {showDiscarded ? (
         <Text style={styles.discardedBanner}>
@@ -556,9 +567,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
 
   viewSwitcher: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.s,
     paddingHorizontal: spacing.sm,
     marginBottom: spacing.xs,
-    alignItems: 'flex-start',
+  },
+  // A quiet text link: discarded sessions are a side door, not a peer of the views.
+  discardedLink: {
+    ...typography.meta,
+    ...font('semibold'),
+    textDecorationLine: 'underline',
+  },
+  discardedLinkActive: {
+    color: colors.textPrimary,
+  },
+  filterPill: {
+    minHeight: 32,
+    paddingHorizontal: 12,
   },
 
   // Header
@@ -587,7 +614,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   weekdayText: {
     ...typography.meta,
-    fontSize: 12,
     ...font('semibold'),
     color: colors.textMuted,
   },
@@ -671,18 +697,10 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
   },
-  filterRow: {
-    paddingHorizontal: spacing.sm,
-    marginBottom: spacing.xs,
-  },
   panelDateLabel: {
     ...typography.title,
     fontSize: 17,
     marginBottom: spacing.xs,
-  },
-  filterChips: {
-    flexDirection: 'row',
-    gap: spacing.xs,
   },
   noSessions: {
     ...typography.bodyMuted,

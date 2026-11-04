@@ -21,6 +21,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-11-04',
     changes: [
       { kind: 'new', text: 'A new look: new type, softer cards, and stats grouped in compact rows.' },
+      { kind: 'improved', text: 'Today is simpler: pick Climbing or Strength, check your gym, and start. This week shows one summary line and a day strip.' },
+      { kind: 'improved', text: 'Progress opens on your climbing stats, with a W, M, 3M, Y or All period picker and weekly session bars.' },
+      { kind: 'improved', text: 'Send is now the main button in the climb logger, and both loggers share the same header with the session name and timer.' },
+      { kind: 'improved', text: 'Calendar has one row of controls, with the type filter on the title row.' },
       { kind: 'new', text: 'Pick from 12 accent colours in Settings, including teal and purple. Teal is the new default.' },
       { kind: 'improved', text: 'Grades show as plain text with a tape-colour dot instead of big coloured blocks.' },
       { kind: 'improved', text: 'Graphs get more room, with a shaded line and the latest point highlighted.' },

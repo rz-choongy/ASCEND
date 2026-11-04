@@ -2,19 +2,23 @@ import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { getContrastText } from '../tokens/colors';
 import { font } from '../tokens/fonts';
 import { radius } from '../tokens/radius';
+import { useTheme } from '../theme/ThemeContext';
 
 type GradeChipProps = {
   label: string;
   /** The grade's tape colour. */
   color: string;
   style?: ViewStyle;
+  /** `dot` is plain text with a small tape dot, for lists. `fill` is the tape block, for the pyramid. */
+  variant?: 'fill' | 'dot';
 };
 
 /**
  * A small tape-coloured grade label for lists, the pyramid and session rows.
  * Small on purpose: a big figure (hardest, best) is plain text with a dot, via StatRow.
  */
-export const GradeChip = ({ label, color, style }: GradeChipProps) => (
+export const GradeChip = ({ label, color, style, variant = 'fill' }: GradeChipProps) =>
+  variant === 'dot' ? <GradeDot label={label} color={color} style={style} /> : (
   <View style={[styles.chip, { backgroundColor: color }, style]}>
     <Text style={[styles.text, { color: getContrastText(color) === '#000000' ? '#151515' : '#ffffff' }]} numberOfLines={1}>
       {label}
@@ -22,7 +26,35 @@ export const GradeChip = ({ label, color, style }: GradeChipProps) => (
   </View>
 );
 
+const GradeDot = ({ label, color, style }: { label: string; color: string; style?: ViewStyle }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.dotRow, style]}>
+      <View style={[styles.dot, { backgroundColor: color, borderColor: colors.border }]} />
+      <Text style={[styles.dotText, { color: colors.textPrimary }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+  dotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  dotText: {
+    ...font('display'),
+    fontSize: 18,
+    lineHeight: 21,
+  },
   chip: {
     minWidth: 32,
     height: 22,

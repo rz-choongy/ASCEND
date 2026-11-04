@@ -310,6 +310,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
           onPress={() => navigation.goBack()}
           accessibilityLabel="Back"
           hitSlop={8}
+          style={styles.backButton}
         >
           <ChevronLeftIcon size={20} color={colors.textPrimary} strokeWidth={1.8} />
         </IconButton>
@@ -559,17 +560,18 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flex: 1,
       backgroundColor: colors.background,
     },
+    // A small back control above a left-aligned display title, like the tab screens.
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
+      alignItems: 'flex-start',
       paddingHorizontal: spacing.sm,
-      paddingTop: spacing.xs,
+      paddingTop: spacing.xxs,
       paddingBottom: spacing.xs,
     },
+    backButton: {
+      marginLeft: -spacing.xs,
+    },
     title: {
-      ...typography.title,
-      fontSize: 20,
+      ...typography.display,
     },
     content: {
       paddingHorizontal: spacing.sm,

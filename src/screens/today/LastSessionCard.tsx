@@ -4,7 +4,7 @@ import type { ClimbSessionSummary, LastSessions, StrengthSessionSummary } from '
 import { formatDuration } from '../../domain/dateUtils';
 import { formatVolume, formatWeight } from '../../domain/strengthProgress';
 import type { SessionType } from '../../domain/types';
-import { Card, PressableScale, SessionStrip, StatRow, font, radius, spacing, useTheme } from '../../ui';
+import { Card, PressableScale, StatRow, font, radius, spacing, useTheme } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 import { countDelta, percentDelta, type Delta } from './deltas';
@@ -69,8 +69,6 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
     }
     const { latest, previous } = climb;
     const bestColor = latest.grades.find((g) => g.label === latest.bestGradeLabel)?.color ?? undefined;
-    // One segment per climb in its tape colour, easiest grade first.
-    const tape = latest.grades.flatMap((g) => Array.from({ length: g.count }, () => g.color ?? colors.textMuted));
     return (
       <PressableScale onPress={() => onOpen(latest.sessionId)} scaleTo={0.98} style={styles.pressable}>
         <Card padded="compact" style={styles.card}>
@@ -83,7 +81,6 @@ export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
               stat('Flashed', `${latest.flashRate}%`, countDelta(latest.flashRate, previous?.flashRate, 'vs last', ' pts')),
             ]}
           />
-          {tape.length > 0 ? <SessionStrip colors={tape} /> : null}
         </Card>
       </PressableScale>
     );
@@ -162,8 +159,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flexShrink: 1,
     },
     duration: {
-      ...typography.mono,
-      fontSize: 12,
+      ...typography.meta,
+      fontVariant: ['tabular-nums'],
     },
     empty: {
       ...typography.bodyMuted,
@@ -190,7 +187,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     prText: {
       ...font('semibold'),
-      fontSize: 10,
+      fontSize: 13,
       color: colors.accentInk,
     },
     exerciseTop: {

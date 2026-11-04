@@ -162,7 +162,7 @@ const createStyles = (colors: ThemeColors) =>
     bigText: {
       ...font('mono'),
       color: colors.textSecondary,
-      fontSize: 12,
+      fontSize: 13,
     },
     valuePressable: {
       flexShrink: 1,

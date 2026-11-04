@@ -60,7 +60,9 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
       gap: 4,
       borderRadius: TAB_BAR_HEIGHT / 2,
       backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
+      // A full 1px line, not a hairline: on light the white pill sits on a near-white
+      // ground and a sub-pixel edge disappears on high-density Android screens.
+      borderWidth: 1,
       borderColor: colors.border,
       ...shadows.lg,
     },
