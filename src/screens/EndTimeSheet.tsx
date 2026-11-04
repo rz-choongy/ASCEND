@@ -289,8 +289,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     time: {
       ...typography.numeric,
-      fontSize: 44,
-      lineHeight: 46,
+      fontSize: 38,
+      lineHeight: 44,
     },
     duration: {
       ...font('medium'),

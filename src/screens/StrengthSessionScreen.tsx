@@ -1298,8 +1298,8 @@ const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
     },
     value: {
       ...typography.numeric,
-      fontSize: 40,
-      lineHeight: 44,
+      fontSize: 34,
+      lineHeight: 40,
       textAlign: 'center',
     },
     // Same footprint as the number it replaces, underlined so it reads as editing.

@@ -98,8 +98,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     elapsed: {
       ...typography.numeric,
-      fontSize: 44,
-      lineHeight: 48,
+      fontSize: 38,
+      lineHeight: 44,
     },
     started: {
       ...typography.title,
