@@ -9,3 +9,8 @@ Only used for bug reports in v1. App data stays on-device.
 - Mark an install as the owner's (skips the bug-vs-feature check) from the SQL editor, using the
   `Install` line of one of your own reports:
   `insert into private.owner_installs (install_id, note) values ('<install id>', 'Ryan');`
+
+## Triage agent
+
+A daily cloud agent works the inbox: it triages new reports, reproduces bugs with a failing
+test, and opens a fix PR. Its instructions are in [TRIAGE.md](TRIAGE.md).
