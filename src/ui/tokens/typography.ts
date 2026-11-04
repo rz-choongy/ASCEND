@@ -60,7 +60,7 @@ export const createTypography = (colors: ThemeColors) =>
     },
     // Durations and timers.
     mono: {
-      ...font('semibold'),
+      ...font('mono'),
       fontSize: 14,
       color: colors.textSecondary,
       fontVariant: tabular,

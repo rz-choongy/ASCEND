@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.1',
+    date: '2026-11-04',
+    changes: [
+      { kind: 'improved', text: 'New type: Google Sans Flex across the app, with timers and clock times in Google Sans Code.' },
+    ],
+  },
+  {
     version: '2.7.0',
     date: '2026-11-04',
     changes: [
