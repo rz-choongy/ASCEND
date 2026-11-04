@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.3',
+    date: '2026-11-04',
+    changes: [
+      { kind: 'new', text: 'When a new app version needs a fresh install, Today and Settings show a banner. Tap it to download.' },
+    ],
+  },
+  {
     version: '2.6.2',
     date: '2026-11-02',
     changes: [

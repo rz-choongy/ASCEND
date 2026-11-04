@@ -33,6 +33,7 @@ import {
 } from '../domain/sessionNotification';
 import { formatDaysAgo } from '../domain/strengthProgress';
 import { APP_VERSION } from '../changelog';
+import { newerApk, offerApk } from '../release';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
@@ -79,6 +80,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const apk = newerApk();
   const [kilterUser, setKilterUser] = useState<string | null>(null);
   const [kilterSyncedAt, setKilterSyncedAt] = useState<number | null>(null);
   const [isSyncingKilter, setIsSyncingKilter] = useState(false);
@@ -183,7 +185,9 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     try {
       const result = await Updates.checkForUpdateAsync();
       if (!result.isAvailable) {
-        showDialog('Up to date', "You're already on the latest version.");
+        // No JS update, but a native change may need a fresh APK instead.
+        if (apk) offerApk(apk);
+        else showDialog('Up to date', "You're already on the latest version.");
         return;
       }
       await Updates.fetchUpdateAsync();
@@ -506,6 +510,13 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             subtitle={isCheckingUpdate ? 'Checking…' : 'Fetch and apply the latest update now'}
             onPress={handleCheckForUpdates}
           />
+          {apk ? (
+            <ListRow
+              title="New app version available"
+              subtitle="Needs a fresh install. Tap to download"
+              onPress={() => offerApk(apk)}
+            />
+          ) : null}
         </ListGroup>
 
         <View style={styles.footer}>

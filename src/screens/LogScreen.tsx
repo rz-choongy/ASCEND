@@ -38,8 +38,9 @@ import { applySetEvents } from '../domain/strengthLogUtils';
 import { formatDaysAgo, formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
 import { useTabBarClearance } from '../navigation/tabBar';
+import { newerApk, offerApk } from '../release';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { IconButton, SettingsGearIcon, showDialog, spacing, useTheme } from '../ui';
+import { IconButton, PressableScale, SettingsGearIcon, font, getContrastText, radius, showDialog, spacing, useTheme } from '../ui';
 import type { ThemeColors } from '../ui/tokens/colors';
 import type { Typography } from '../ui/tokens/typography';
 import { ActiveSessionCard } from './today/ActiveSessionCard';
@@ -120,6 +121,7 @@ export function LogScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const tabBarClearance = useTabBarClearance();
+  const apk = newerApk();
 
   const [data, setData] = useState<Dashboard | null>(null);
   // Which kind of session the start card is set up for; follows the last one
@@ -238,6 +240,12 @@ export function LogScreen() {
           <SettingsButton colors={colors} onPress={() => navigation.navigate('Settings')} />
         </View>
 
+        {apk ? (
+          <PressableScale style={styles.apkBanner} onPress={() => offerApk(apk)} accessibilityLabel="New app version available">
+            <Text style={styles.apkText}>New app version available. Tap to download</Text>
+          </PressableScale>
+        ) : null}
+
         {activeSession ? (
           <ActiveSessionCard
             session={activeSession}
@@ -314,5 +322,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     screenTitle: {
       ...typography.display,
+    },
+    apkBanner: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.s,
+    },
+    apkText: {
+      ...font('semibold'),
+      fontSize: 14,
+      color: getContrastText(colors.accent),
     },
   });

@@ -47,6 +47,16 @@ Create a new native build instead of an update when changing:
 - `app.json` native configuration that affects the binary.
 - Permissions, icons, splash configuration, bundle identifiers, package names, or plugins.
 
+## Shipping a Native Change to Installed Phones
+
+Phones only get a native change by installing a new APK. The app tells them when one is out:
+
+1. Bump `version` in `app.json` (this is the runtime, separate from the changelog version).
+2. Run the EAS Build workflow, or `npx eas-cli build --profile sideload --platform android`.
+3. When the build finishes, run `scripts/announce-apk.sh` from master, then commit `src/release.ts`.
+
+Older installs then show a "New app version available" banner on Today and in Settings. One tap downloads the APK. JS-only changes still ship on push to master, and Settings > Check for updates applies them straight away.
+
 ## Apple Distribution Options Before Public App Store Release
 
 - Expo Go: fastest early testing. Users install Expo Go and scan the QR code. This avoids App Review, but it is not a real app install and only works while the project remains compatible with Expo Go.
