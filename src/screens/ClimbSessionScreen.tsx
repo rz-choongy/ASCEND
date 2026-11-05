@@ -599,12 +599,14 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                   color={log.gradeColor ?? colors.chartQuiet}
                   style={styles.logChip}
                 />
-                {pinnedGrade ? <Text style={styles.pinnedGrade}>{pinnedGrade}</Text> : null}
-                {log.result === 'FLASH' ? (
-                  <View style={styles.flashMark}>
-                    <BoltIcon size={14} color={colors.accentInk} filled />
-                  </View>
+                {showLoggedVGrade ? (
+                  <Text style={styles.pinnedGrade} numberOfLines={1}>
+                    {pinnedGrade ?? ''}
+                  </Text>
                 ) : null}
+                <View style={styles.flashMark}>
+                  {log.result === 'FLASH' ? <BoltIcon size={14} color={colors.accentInk} filled /> : null}
+                </View>
                 {isSessionHigh ? (
                   <View style={styles.highBadge}>
                     <StarIcon size={11} color={colors.accentInk} strokeWidth={2.2} filled />
@@ -881,20 +883,23 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.separator,
   },
+  // Fixed-width columns so grade / V grade / flash line up row to row.
   logChip: {
     flexShrink: 0,
-    maxWidth: 72,
+    width: 72,
   },
   pinnedGrade: {
     ...typography.numeric,
     flexShrink: 0,
+    width: 34,
     fontSize: 15,
     lineHeight: 20,
     color: colors.textSecondary,
   },
   flashMark: {
     flexShrink: 0,
-    marginLeft: -2,
+    width: 16,
+    alignItems: 'center',
   },
   highBadge: {
     flexShrink: 0,
