@@ -137,7 +137,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       borderRadius: radius.md,
       backgroundColor: colors.fill,
       color: colors.textPrimary,
-      fontSize: 17,
+      fontSize: 15,
       paddingHorizontal: spacing.s,
     },
     actions: {

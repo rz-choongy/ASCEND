@@ -345,7 +345,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginLeft: -4,
       paddingVertical: spacing.xxs,
     },
-    backText: { ...font('medium'), fontSize: 16, color: colors.accentInk },
+    backText: { ...font('medium'), fontSize: 14, color: colors.accentInk },
     title: {
       ...typography.display,
       marginTop: 2,

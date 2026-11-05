@@ -62,7 +62,7 @@ export const WeekCard = ({ week, streak }: Props) => {
 const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     card: {
-      gap: spacing.s,
+      gap: spacing.xs,
     },
     headerRow: {
       flexDirection: 'row',
@@ -90,29 +90,29 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     day: {
       flex: 1,
       alignItems: 'center',
-      gap: 6,
+      gap: 4,
     },
     dayLabel: {
       ...typography.meta,
+      fontSize: 11,
+      lineHeight: 14,
+      color: colors.textMuted,
     },
     dayLabelToday: {
-      ...font('bold'),
+      ...font('semibold'),
       color: colors.textPrimary,
     },
     circle: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      backgroundColor: colors.fill,
+      width: 7,
+      height: 7,
+      borderRadius: 3.5,
+      backgroundColor: colors.surfaceRaised,
     },
     circleDone: {
       backgroundColor: colors.accent,
     },
     circleTodayEmpty: {
-      backgroundColor: 'transparent',
+      backgroundColor: colors.textSecondary,
     },
-    circleToday: {
-      borderWidth: 2,
-      borderColor: colors.textPrimary,
-    },
+    circleToday: {},
   });

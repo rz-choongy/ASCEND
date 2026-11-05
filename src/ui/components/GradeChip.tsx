@@ -45,15 +45,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     borderWidth: StyleSheet.hairlineWidth,
   },
   dotText: {
-    ...font('display'),
-    fontSize: 18,
-    lineHeight: 21,
+    ...font('medium'),
+    fontSize: 13,
+    lineHeight: 16,
   },
   chip: {
     minWidth: 32,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   },
   text: {
     ...font('display'),
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
   },
 });

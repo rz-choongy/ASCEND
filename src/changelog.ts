@@ -17,6 +17,15 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.2',
+    date: '2026-11-05',
+    changes: [
+      { kind: 'improved', text: 'Smaller, tighter type and spacing across the app, so more fits on screen.' },
+      { kind: 'improved', text: 'This week uses small dots instead of big circles.' },
+      { kind: 'improved', text: 'Gym branches show by their own name, like Collingwood, so they no longer get cut off.' },
+    ],
+  },
+  {
     version: '2.7.1',
     date: '2026-11-04',
     changes: [

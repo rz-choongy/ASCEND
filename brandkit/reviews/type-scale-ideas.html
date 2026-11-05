@@ -1,0 +1,143 @@
+<!doctype html><html><head><meta charset="utf-8"><title>ASCEND type scale ideas</title>
+<style>
+@font-face{font-family:GSF;font-weight:400;src:url(../../node_modules/@expo-google-fonts/google-sans-flex/400Regular/GoogleSansFlex_400Regular.ttf)}
+@font-face{font-family:GSF;font-weight:500;src:url(../../node_modules/@expo-google-fonts/google-sans-flex/500Medium/GoogleSansFlex_500Medium.ttf)}
+@font-face{font-family:GSF;font-weight:600;src:url(../../node_modules/@expo-google-fonts/google-sans-flex/600SemiBold/GoogleSansFlex_600SemiBold.ttf)}
+@font-face{font-family:GSF;font-weight:700;src:url(../../node_modules/@expo-google-fonts/google-sans-flex/700Bold/GoogleSansFlex_700Bold.ttf)}
+:root{--bg:#000;--s:#17181B;--s2:#202125;--t:#F2F2F4;--t2:#9A9DA6;--t3:#6E717A;--a:#F2C230;--on:#151515;--org:#FF5A1F;--red:#E8503A;--grn:#3AA86B;--blu:#3D7BE0}
+*{box-sizing:border-box;margin:0}
+body{background:#2b2c30;font-family:GSF,sans-serif;color:var(--t);padding:28px;font-feature-settings:"tnum"}
+.wrap{display:flex;gap:22px;align-items:flex-start}
+.col{width:360px}
+.cap{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.why{font-size:12.5px;line-height:17px;color:#c9cbd2;margin-bottom:12px;min-height:68px}
+.phone{background:var(--bg);border-radius:28px;padding:18px 14px 20px;height:760px;overflow:hidden;border:1px solid #3a3b40}
+.dot{display:inline-block;border-radius:50%;vertical-align:middle}
+.row{display:flex;align-items:center}
+.sp{flex:1}
+.card{background:var(--s);border-radius:16px}
+.btn{background:var(--a);color:var(--on);border-radius:999px;text-align:center;font-weight:600}
+.seg{display:flex;background:var(--s2);border-radius:999px;padding:3px}
+.seg div{flex:1;text-align:center;border-radius:999px;color:var(--t2)}
+.seg .on{background:var(--t);color:#000}
+.mut{color:var(--t2)} .dim{color:var(--t3)}
+.dk{background:var(--s);}
+</style></head><body>
+<h1 style="font-size:22px;font-weight:700;color:#fff;margin-bottom:4px">Today: five type and density ideas</h1>
+<p style="font-size:13px;color:#c9cbd2;margin-bottom:22px">Google Sans Flex in every option. Same data in each: your week, Urban Climb Collingwood, 9 Degrees, Orange and Red grades, 6 sends, 100% flashed, 81.9 kg.</p>
+<div class="wrap">
+
+<!-- NOW -->
+<div class="col"><div class="cap">Now (2.7.1)</div><div class="why">Display 30, numbers 28, body 16, grade labels 18, week circles 30px. Everything shouts at the same volume, so nothing leads.</div>
+<div class="phone">
+ <div style="font-size:30px;font-weight:600;letter-spacing:-.6px">Today</div>
+ <div class="card" style="padding:16px;margin-top:14px">
+  <div class="row" style="font-size:14px;font-weight:700">This week<span class="sp"></span><span class="mut" style="font-weight:500;font-size:13px">2 sessions</span></div>
+  <div class="row" style="justify-content:space-between;margin-top:12px">
+   <span class="dot" style="width:30px;height:30px;background:var(--a)"></span><span class="dot" style="width:30px;height:30px;background:var(--s2)"></span><span class="dot" style="width:30px;height:30px;background:var(--a)"></span><span class="dot" style="width:30px;height:30px;background:var(--s2)"></span><span class="dot" style="width:30px;height:30px;border:2px solid var(--t)"></span><span class="dot" style="width:30px;height:30px;background:var(--s2)"></span><span class="dot" style="width:30px;height:30px;background:var(--s2)"></span></div>
+  <div class="mut" style="font-size:13px;margin-top:10px">3 week streak</div></div>
+ <div class="card" style="padding:16px;margin-top:12px">
+  <div class="seg" style="font-size:16px"><div class="on" style="padding:8px">Climb</div><div style="padding:8px">Strength</div></div>
+  <div class="row" style="margin-top:14px;font-size:16px;font-weight:500;white-space:nowrap;overflow:hidden">Urban Climb · Collingw…<span class="sp"></span><span style="color:var(--a);font-size:14px">Change gym</span></div>
+  <div class="btn" style="padding:14px;margin-top:14px;font-size:16px">Start climbing</div></div>
+ <div class="card" style="padding:16px;margin-top:12px">
+  <div style="font-size:14px;font-weight:700">Last session</div>
+  <div class="row" style="margin-top:10px;gap:22px"><div><div style="font-size:28px;font-weight:600">6</div><div class="mut" style="font-size:13px">sends</div></div><div><div style="font-size:28px;font-weight:600">100%</div><div class="mut" style="font-size:13px">flashed</div></div><div><div style="font-size:28px;font-weight:600">Red</div><div class="mut" style="font-size:13px">top</div></div></div></div>
+ <div style="font-size:14px;font-weight:700;margin:18px 2px 8px">Recent sessions</div>
+ <div class="card" style="padding:4px 16px">
+  <div class="row" style="padding:12px 0;font-size:16px;font-weight:500;white-space:nowrap">Urban Climb · Collin…<span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--red);margin-right:6px"></span><span style="font-size:18px;font-weight:600">Red</span></div>
+  <div class="row" style="padding:12px 0;font-size:16px;font-weight:500;white-space:nowrap">9 Degrees<span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--org);margin-right:6px"></span><span style="font-size:18px;font-weight:600">Orange</span></div></div>
+</div></div>
+
+<!-- A -->
+<div class="col"><div class="cap">A. Android standard</div><div class="why">Material 3 sizes: title 22, card title 16, body 14, labels 12. Week dots are 8px under day letters. Gym shows branch only; the chain name sits muted beside it. Closest to how good Android apps feel.</div>
+<div class="phone">
+ <div style="font-size:22px;font-weight:600;letter-spacing:-.2px">Today</div>
+ <div class="card" style="padding:12px 14px;margin-top:12px">
+  <div class="row" style="font-size:14px;font-weight:600">This week<span class="sp"></span><span class="mut" style="font-weight:400;font-size:12px">2 sessions · 3 wk streak</span></div>
+  <div class="row" style="justify-content:space-between;margin-top:10px;padding:0 4px">
+   <script>document.write(['M','T','W','T','F','S','S'].map((d,i)=>`<div style="text-align:center;font-size:11px;color:${i==2?'#F2F2F4':'#6E717A'};font-weight:${i==2?600:400}">${d}<div style="margin-top:5px"><span class="dot" style="width:8px;height:8px;background:${[0,2].includes(i)?'#F2C230':'#2A2B30'}"></span></div></div>`).join(''))</script></div></div>
+ <div class="card" style="padding:12px 14px;margin-top:10px">
+  <div class="seg" style="font-size:14px;font-weight:500"><div class="on" style="padding:6px">Climb</div><div style="padding:6px">Strength</div></div>
+  <div class="row" style="margin-top:12px;font-size:14px;font-weight:500">Collingwood&nbsp;<span class="dim" style="font-weight:400">Urban Climb</span><span class="sp"></span><span style="color:var(--a);font-size:13px;font-weight:500">Change</span></div>
+  <div class="btn" style="padding:11px;margin-top:12px;font-size:15px">Start climbing</div></div>
+ <div class="card" style="padding:12px 14px;margin-top:10px">
+  <div class="row" style="font-size:14px;font-weight:600">Last session<span class="sp"></span><span class="mut" style="font-size:12px;font-weight:400">Mon · Collingwood</span></div>
+  <div class="row" style="margin-top:8px;gap:24px"><div><div style="font-size:20px;font-weight:600">6</div><div class="mut" style="font-size:12px">sends</div></div><div><div style="font-size:20px;font-weight:600">100%</div><div class="mut" style="font-size:12px">flashed</div></div><div><div class="row" style="font-size:20px;font-weight:600"><span class="dot" style="width:10px;height:10px;background:var(--red);margin-right:6px"></span>Red</div><div class="mut" style="font-size:12px">top grade</div></div></div></div>
+ <div style="font-size:14px;font-weight:600;margin:16px 2px 6px">Recent</div>
+ <div class="card" style="padding:2px 14px">
+  <div class="row" style="padding:10px 0;font-size:14px"><div><div style="font-weight:500">Collingwood</div><div class="dim" style="font-size:12px">Mon · 6 sends</div></div><span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--red);margin-right:6px"></span><span style="font-size:13px;font-weight:500">Red</span></div>
+  <div class="row" style="padding:10px 0;font-size:14px;border-top:1px solid #26272B"><div><div style="font-weight:500">9 Degrees</div><div class="dim" style="font-size:12px">Wed · 8 sends</div></div><span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--org);margin-right:6px"></span><span style="font-size:13px;font-weight:500">Orange</span></div>
+  <div class="row" style="padding:10px 0;font-size:14px;border-top:1px solid #26272B"><div><div style="font-weight:500">Collingwood</div><div class="dim" style="font-size:12px">Last Sat · 5 sends</div></div><span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--org);margin-right:6px"></span><span style="font-size:13px;font-weight:500">Orange</span></div></div>
+ <div class="card row" style="padding:12px 14px;margin-top:10px;font-size:14px"><span style="font-weight:500">Bodyweight</span><span class="sp"></span><span style="font-weight:600">81.9</span>&nbsp;<span class="mut" style="font-size:12px">kg</span></div>
+</div></div>
+
+<!-- B -->
+<div class="col"><div class="cap">B. Logbook list</div><div class="why">Like Hevy and Strong: almost no cards, one list. Body 15, meta 12. Week is a single row of 7 tiny squares inside the header. Grades show as the tape dot alone, with the name in the session detail. Densest option.</div>
+<div class="phone">
+ <div class="row"><div style="font-size:22px;font-weight:600">Today</div><span class="sp"></span>
+  <script>document.write([1,0,3,0,0,0,0].map(v=>`<span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-left:4px;background:${v&1?'#F2C230':'#2A2B30'};${v==3?'outline:1.5px solid #F2F2F4;outline-offset:1px':''}"></span>`).join(''))</script></div>
+ <div class="mut" style="font-size:12px;margin-top:2px">2 sessions this week · 3 week streak</div>
+ <div class="card" style="padding:12px 14px;margin-top:14px">
+  <div class="row" style="font-size:15px;font-weight:500"><span class="dot" style="width:8px;height:8px;background:var(--a);margin-right:8px"></span>Collingwood<span class="sp"></span><span class="mut" style="font-size:12px">Change</span></div>
+  <div class="row" style="gap:8px;margin-top:12px"><div class="btn" style="flex:1;padding:10px;font-size:14px">Start climb</div><div style="flex:1;padding:10px;font-size:14px;border-radius:999px;text-align:center;background:var(--s2);font-weight:600">Start strength</div></div></div>
+ <div style="font-size:12px;font-weight:600;color:var(--t2);margin:18px 2px 4px">Last session</div>
+ <div class="row" style="font-size:15px;padding:8px 2px;gap:6px"><span style="font-weight:600">6</span><span class="mut">sends</span><span class="dim">·</span><span style="font-weight:600">100%</span><span class="mut">flashed</span><span class="sp"></span><span class="dot" style="width:10px;height:10px;background:var(--red)"></span></div>
+ <div style="font-size:12px;font-weight:600;color:var(--t2);margin:14px 2px 2px">Recent</div>
+ <script>document.write([['Collingwood','Mon','6 sends','#E8503A'],['9 Degrees','Wed','8 sends','#FF5A1F'],['Collingwood','Sat','5 sends','#FF5A1F'],['9 Degrees','Thu','4 sends','#3AA86B']].map(r=>`<div class="row" style="padding:10px 2px;border-bottom:1px solid #1d1e22;font-size:15px"><span style="width:34px;font-size:12px;color:#6E717A">${r[1]}</span><span style="font-weight:500">${r[0]}</span><span class="sp"></span><span class="mut" style="font-size:12px;margin-right:10px">${r[2]}</span><span class="dot" style="width:10px;height:10px;background:${r[3]}"></span></div>`).join(''))</script>
+ <div class="row" style="padding:14px 2px;font-size:15px"><span class="mut">Bodyweight</span><span class="sp"></span><span style="font-weight:600">81.9 kg</span></div>
+</div></div>
+
+<!-- C -->
+<div class="col"><div class="cap">C. One loud number</div><div class="why">Like Whoop and Oura: one 34px figure leads (sends this week), everything else drops to 13–14. The week is a row of thin bars whose height is the send count. The gym becomes a small chip.</div>
+<div class="phone">
+ <div class="row" style="font-size:14px;font-weight:500"><span class="mut">Wednesday 4 Nov</span><span class="sp"></span><span style="background:var(--s2);border-radius:999px;padding:4px 10px;font-size:12px">Collingwood ▾</span></div>
+ <div style="margin-top:14px"><span style="font-size:34px;font-weight:600;letter-spacing:-.6px">14</span><span class="mut" style="font-size:14px;margin-left:6px">sends this week</span></div>
+ <div class="row" style="align-items:flex-end;gap:6px;height:34px;margin-top:10px">
+  <script>document.write([6,0,8,0,0,0,0].map((v,i)=>`<div style="flex:1;text-align:center"><div style="height:${v?v*3:3}px;background:${v?'#F2C230':'#2A2B30'};border-radius:2px"></div></div>`).join(''))</script></div>
+ <div class="row dim" style="gap:6px;font-size:11px;margin-top:4px"><script>document.write('MTWTFSS'.split('').map((d,i)=>`<div style="flex:1;text-align:center;${i==2?'color:#F2F2F4;font-weight:600':''}">${d}</div>`).join(''))</script></div>
+ <div class="btn" style="padding:12px;margin-top:18px;font-size:15px">Start climbing</div>
+ <div class="mut" style="text-align:center;font-size:12px;margin-top:8px">or start strength</div>
+ <div class="card" style="padding:12px 14px;margin-top:16px">
+  <div class="row" style="font-size:13px"><span class="mut">Last session · Mon</span><span class="sp"></span><span class="dot" style="width:8px;height:8px;background:var(--red);margin-right:5px"></span><span style="font-weight:500">Red</span></div>
+  <div class="row" style="margin-top:6px;gap:18px;font-size:14px"><span><b style="font-weight:600">6</b> <span class="mut">sends</span></span><span><b style="font-weight:600">100%</b> <span class="mut">flashed</span></span><span><b style="font-weight:600">3 wk</b> <span class="mut">streak</span></span></div></div>
+ <div class="card" style="padding:2px 14px;margin-top:10px">
+  <script>document.write([['Collingwood','Mon · 6 sends','#E8503A','Red'],['9 Degrees','Wed · 8 sends','#FF5A1F','Orange'],['Collingwood','Sat · 5 sends','#FF5A1F','Orange']].map((r,i)=>`<div class="row" style="padding:10px 0;font-size:14px;${i?'border-top:1px solid #26272B':''}"><span style="font-weight:500">${r[0]}</span>&nbsp;&nbsp;<span class="dim" style="font-size:12px">${r[1]}</span><span class="sp"></span><span class="dot" style="width:8px;height:8px;background:${r[2]};margin-right:5px"></span><span style="font-size:13px">${r[3]}</span></div>`).join(''))</script></div>
+ <div class="row" style="padding:14px 2px;font-size:14px"><span class="mut">Bodyweight</span><span class="sp"></span><span style="font-weight:600">81.9 kg</span></div>
+</div></div>
+
+<!-- D -->
+<div class="col"><div class="cap">D. Activity cards</div><div class="why">Like Strava: each session is a small card. The branch name is the title (15), the date is under it (12), and stats sit in a label-over-value row (12 over 17). The week uses 10px rings.</div>
+<div class="phone">
+ <div class="row"><div style="font-size:24px;font-weight:600">Today</div><span class="sp"></span><span class="mut" style="font-size:12px">3 week streak</span></div>
+ <div class="row" style="justify-content:space-between;margin-top:12px;padding:0 6px">
+  <script>document.write('MTWTFSS'.split('').map((d,i)=>`<div style="text-align:center;font-size:11px;color:#6E717A">${d}<div style="margin-top:4px"><span class="dot" style="width:10px;height:10px;${[0,2].includes(i)?'background:#F2C230':'border:1.5px solid '+(i==2?'#F2F2F4':'#3a3b40')}"></span></div></div>`).join(''))</script></div>
+ <div class="card" style="padding:12px 14px;margin-top:14px">
+  <div class="seg" style="font-size:13px;font-weight:500"><div class="on" style="padding:6px">Climb</div><div style="padding:6px">Strength</div></div>
+  <div class="btn" style="padding:11px;margin-top:10px;font-size:15px">Start at Collingwood</div>
+  <div class="mut" style="text-align:center;font-size:12px;margin-top:8px">Change gym</div></div>
+ <script>document.write([['Collingwood','Urban Climb · Mon 2 Nov','6','100%','#E8503A','Red'],['9 Degrees','Wed 28 Oct','8','75%','#FF5A1F','Orange']].map(r=>`<div class="card" style="padding:12px 14px;margin-top:10px"><div style="font-size:15px;font-weight:600">${r[0]}</div><div class="dim" style="font-size:12px;margin-top:1px">${r[1]}</div><div class="row" style="gap:22px;margin-top:10px"><div><div class="dim" style="font-size:12px">Sends</div><div style="font-size:17px;font-weight:600">${r[2]}</div></div><div><div class="dim" style="font-size:12px">Flashed</div><div style="font-size:17px;font-weight:600">${r[3]}</div></div><div><div class="dim" style="font-size:12px">Top</div><div class="row" style="font-size:17px;font-weight:600"><span class="dot" style="width:9px;height:9px;background:${r[4]};margin-right:5px"></span>${r[5]}</div></div></div></div>`).join(''))</script>
+ <div class="card row" style="padding:12px 14px;margin-top:10px;font-size:14px"><span class="mut">Bodyweight</span><span class="sp"></span><span style="font-weight:600">81.9 kg</span></div>
+</div></div>
+
+<!-- E -->
+<div class="col"><div class="cap">E. Quiet journal</div><div class="why">Like Apple Fitness summaries: one size (15) for almost everything, with hierarchy from weight and grey only. Titles are 20. Week letters turn yellow on days you trained, so no dots at all. Calmest, but the least scannable.</div>
+<div class="phone">
+ <div style="font-size:20px;font-weight:600">Today</div>
+ <div class="row" style="margin-top:12px;font-size:15px;font-weight:600;letter-spacing:6px"><script>document.write('MTWTFSS'.split('').map((d,i)=>`<span style="color:${[0,2].includes(i)?'#F2C230':'#3a3b40'};${i==2?'text-decoration:underline;text-underline-offset:5px':''}">${d}</span>`).join(''))</script><span class="sp"></span><span class="mut" style="font-size:13px;letter-spacing:0;font-weight:400">2 this week</span></div>
+ <div class="card" style="padding:14px;margin-top:14px;font-size:15px">
+  <div class="row"><span style="font-weight:600">Climb</span>&nbsp;&nbsp;<span class="dim">Strength</span><span class="sp"></span><span class="mut">Collingwood</span></div>
+  <div class="btn" style="padding:11px;margin-top:12px;font-size:15px">Start</div></div>
+ <div style="font-size:15px;line-height:22px;margin-top:18px;padding:0 2px">
+  <div style="font-weight:600">Monday at Collingwood</div>
+  <div class="mut">6 sends, all flashed. Top grade <span style="color:var(--t)"><span class="dot" style="width:8px;height:8px;background:var(--red);margin:0 3px 2px 0"></span>Red</span>.</div></div>
+ <div style="font-size:15px;line-height:22px;margin-top:14px;padding:0 2px">
+  <div style="font-weight:600">Wednesday at 9 Degrees</div>
+  <div class="mut">8 sends, 6 flashed. Top grade <span style="color:var(--t)"><span class="dot" style="width:8px;height:8px;background:var(--org);margin:0 3px 2px 0"></span>Orange</span>.</div></div>
+ <div style="font-size:15px;line-height:22px;margin-top:14px;padding:0 2px">
+  <div style="font-weight:600">Last Saturday at Collingwood</div>
+  <div class="mut">5 sends, 4 flashed. Top grade <span style="color:var(--t)"><span class="dot" style="width:8px;height:8px;background:var(--org);margin:0 3px 2px 0"></span>Orange</span>.</div></div>
+ <div class="row" style="font-size:15px;margin-top:18px;padding:0 2px"><span class="mut">Bodyweight</span><span class="sp"></span><span style="font-weight:600">81.9 kg</span></div>
+</div></div>
+
+</div></body></html>

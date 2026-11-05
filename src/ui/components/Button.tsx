@@ -104,7 +104,7 @@ export const Button = ({
 const createStyles = () =>
   StyleSheet.create({
     base: {
-      minHeight: 50,
+      minHeight: 44,
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
@@ -117,7 +117,8 @@ const createStyles = () =>
       gap: 8,
     },
     text: {
-      ...font('bold'),
-      fontSize: 17,
+      ...font('semibold'),
+      fontSize: 15,
+      lineHeight: 20,
     },
   });

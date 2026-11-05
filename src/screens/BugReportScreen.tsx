@@ -242,7 +242,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       color: colors.textPrimary,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.s,
-      fontSize: 16,
+      fontSize: 14,
       ...font('regular'),
     },
     screenshotPreview: {

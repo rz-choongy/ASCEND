@@ -708,7 +708,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   titleInput: {
     ...typography.display,
-    fontSize: 28,
+    fontSize: 22,
     lineHeight: 32,
     minHeight: 32,
     padding: 0,
@@ -800,7 +800,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gradeText: {
     ...typography.numeric,
-    fontSize: 26,
+    fontSize: 22,
     lineHeight: 28,
   },
   gradeRangeText: {
@@ -888,7 +888,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   pinnedGrade: {
     ...typography.numeric,
     flexShrink: 0,
-    fontSize: 17,
+    fontSize: 15,
     lineHeight: 20,
     color: colors.textSecondary,
   },
@@ -960,7 +960,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   pickerTitle: {
     ...typography.title,
-    fontSize: 20,
+    fontSize: 18,
     marginTop: 2,
   },
   pickerHint: {
@@ -988,7 +988,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   pickerTileText: {
     ...typography.numeric,
-    fontSize: 28,
+    fontSize: 22,
     lineHeight: 30,
   },
   pickerCancel: {

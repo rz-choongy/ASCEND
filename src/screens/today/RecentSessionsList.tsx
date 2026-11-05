@@ -34,7 +34,7 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll, bestGrades }: P
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Recent sessions</Text>
+        <Text style={styles.title}>Recent</Text>
         <Pressable onPress={onSeeAll} hitSlop={10} accessibilityRole="button">
           <Text style={styles.seeAll}>See all</Text>
         </Pressable>
@@ -58,9 +58,9 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll, bestGrades }: P
               >
                 <View style={[styles.icon, climb ? styles.iconClimb : null]}>
                   {climb ? (
-                    <MountainMarkIcon size={16} color={colors.accentInk} />
+                    <MountainMarkIcon size={14} color={colors.accentInk} />
                   ) : (
-                    <DumbbellIcon size={16} color={colors.textPrimary} />
+                    <DumbbellIcon size={14} color={colors.textPrimary} />
                   )}
                 </View>
                 <View style={styles.body}>
@@ -102,7 +102,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     seeAll: {
       ...font('medium'),
-      fontSize: 13,
+      fontSize: 12,
       color: colors.textSecondary,
     },
     // Outer view carries the shadow; the inner one clips pressed rows to the corners.
@@ -119,7 +119,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.s,
-      minHeight: 52,
+      minHeight: 48,
       paddingHorizontal: spacing.s,
       paddingVertical: spacing.xs,
     },
@@ -131,8 +131,8 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       backgroundColor: colors.fillSoft,
     },
     icon: {
-      width: 32,
-      height: 32,
+      width: 28,
+      height: 28,
       borderRadius: radius.md,
       backgroundColor: colors.fill,
       alignItems: 'center',
@@ -146,9 +146,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       gap: 1,
     },
     rowTitle: {
-      ...font('medium'),
-      fontSize: 15,
-      color: colors.textPrimary,
+      ...typography.body,
     },
     rowMeta: {
       ...typography.meta,
@@ -160,7 +158,8 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     figure: {
       ...font('semibold'),
-      fontSize: 15,
+      fontSize: 14,
+      lineHeight: 18,
       color: colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },

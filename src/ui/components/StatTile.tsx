@@ -245,7 +245,7 @@ const createTileStyles = (colors: ThemeColors, typography: Typography, shadows: 
       marginTop: 2,
     },
     valueCompact: {
-      fontSize: 26,
+      fontSize: 22,
       lineHeight: 28,
       marginTop: 0,
     },

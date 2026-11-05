@@ -143,7 +143,7 @@ const createStyles = (colors: ThemeColors, shadows: Shadows) =>
     title: {
       ...font('medium'),
       color: colors.textPrimary,
-      fontSize: 16,
+      fontSize: 14,
       letterSpacing: -0.16,
     },
     subtitle: {

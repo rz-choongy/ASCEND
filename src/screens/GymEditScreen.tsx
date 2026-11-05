@@ -830,7 +830,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     backgroundColor: colors.fill,
     color: colors.textPrimary,
     paddingHorizontal: spacing.s,
-    fontSize: 16,
+    fontSize: 14,
     ...font('regular'),
   },
   gradeHeader: {
@@ -841,7 +841,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   addRowText: {
     color: colors.accentInk,
-    fontSize: 16,
+    fontSize: 14,
     ...font('medium'),
   },
   // All grades share one card, split by hairlines, one line each.
@@ -896,7 +896,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     paddingHorizontal: spacing.xxs,
     color: colors.textPrimary,
     ...font('display'),
-    fontSize: 22,
+    fontSize: 20,
   },
   rangeGroup: {
     flexDirection: 'row',
@@ -911,7 +911,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   rangeDash: {
     color: colors.textMuted,
-    fontSize: 16,
+    fontSize: 14,
     ...font('medium'),
   },
   swatchTarget: {
@@ -940,7 +940,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   deleteGlyph: {
     color: colors.textMuted,
-    fontSize: 17,
+    fontSize: 15,
     ...font('medium'),
     lineHeight: 20,
   },
@@ -961,7 +961,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   modalTitle: {
     ...typography.title,
-    fontSize: 20,
+    fontSize: 18,
   },
   colorGrid: {
     flexDirection: 'row',
@@ -993,7 +993,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   deleteLinkText: {
     color: colors.danger,
-    fontSize: 17,
+    fontSize: 15,
     ...font('regular'),
   },
   inheritedNotice: {
@@ -1007,7 +1007,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   inheritedIcon: {
     color: colors.accentInk,
-    fontSize: 18,
+    fontSize: 16,
     ...font('bold'),
     lineHeight: 22,
   },

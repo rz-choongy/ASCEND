@@ -10,6 +10,8 @@ type Props = {
   onModeChange: (mode: SessionType) => void;
   /** The selected gym's name, or null when only the built-in default grade scale is set. */
   gymName: string | null;
+  /** The gym's company when it is a branch, shown muted after the branch name. */
+  gymParent?: string | null;
   /** What the strength context line says the first exercise starts from. */
   strengthStartsFrom: string;
   onChangeGym: () => void;
@@ -32,6 +34,7 @@ export const StartCard = ({
   mode,
   onModeChange,
   gymName,
+  gymParent,
   strengthStartsFrom,
   onChangeGym,
   routineName,
@@ -57,6 +60,7 @@ export const StartCard = ({
         <View style={styles.dot} />
         <Text style={styles.contextValue} numberOfLines={1}>
           {contextText}
+          {climb && gymName && gymParent ? <Text style={styles.contextParent}>{`  ${gymParent}`}</Text> : null}
         </Text>
         <Text style={styles.link}>{linkText}</Text>
       </Pressable>
@@ -75,24 +79,26 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      minHeight: 40,
+      minHeight: 36,
       paddingHorizontal: spacing.xxs,
     },
     dot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
+      width: 7,
+      height: 7,
+      borderRadius: 3.5,
       backgroundColor: colors.accent,
     },
     contextValue: {
-      ...font('semibold'),
+      ...typography.body,
       flex: 1,
-      fontSize: 15,
-      color: colors.textPrimary,
+    },
+    contextParent: {
+      ...font('regular'),
+      color: colors.textMuted,
     },
     link: {
       ...typography.meta,
-      ...font('semibold'),
-      textDecorationLine: 'underline',
+      ...font('medium'),
+      color: colors.accentInk,
     },
   });

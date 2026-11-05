@@ -72,7 +72,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     latestValue: {
       ...typography.numeric,
-      fontSize: 28,
+      fontSize: 22,
       lineHeight: 30,
     },
     latestUnit: {

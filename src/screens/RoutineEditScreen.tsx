@@ -285,7 +285,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     nameInput: {
       ...font('medium'),
-      fontSize: 18,
+      fontSize: 16,
       color: colors.textPrimary,
       minHeight: 48,
       paddingHorizontal: spacing.sm,
@@ -320,7 +320,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     smallButtonText: {
       ...font('medium'),
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textPrimary,
     },
     pressed: {

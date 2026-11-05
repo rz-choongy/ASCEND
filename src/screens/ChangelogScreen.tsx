@@ -109,7 +109,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     version: {
       ...typography.numeric,
-      fontSize: 24,
+      fontSize: 22,
       lineHeight: 26,
     },
     currentBadge: {

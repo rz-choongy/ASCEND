@@ -80,6 +80,6 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       marginRight: -4,
     },
     closeText: {
-      fontSize: 16,
+      fontSize: 14,
     },
   });

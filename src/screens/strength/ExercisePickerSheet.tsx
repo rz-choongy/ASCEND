@@ -426,7 +426,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     searchInput: {
       ...font('regular'),
       flex: 1,
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textPrimary,
       paddingVertical: 0,
     },
@@ -512,7 +512,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     addText: {
       ...font('semibold'),
-      fontSize: 16,
+      fontSize: 14,
       color: colors.accentInk,
     },
     empty: {

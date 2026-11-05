@@ -4,7 +4,7 @@ jest.mock('./sessionStore', () => ({
   getSessionEvents: jest.fn(),
 }));
 jest.mock('./gymStore', () => ({
-  gymDisplayNameById: jest.fn((id: string) => (id === 'gym-1' ? 'Boulder Lab' : null)),
+  gymShortNameById: jest.fn((id: string) => (id === 'gym-1' ? 'Boulder Lab' : null)),
   isUnnamedDefaultGym: (gym: { id: string; name: string }) => gym.name === 'Default V-Scale',
 }));
 

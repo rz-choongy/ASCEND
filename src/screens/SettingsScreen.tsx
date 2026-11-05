@@ -611,7 +611,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     accentTitle: {
       ...font('medium'),
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textPrimary,
     },
     accentSubtitle: {

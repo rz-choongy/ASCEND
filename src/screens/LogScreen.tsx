@@ -21,7 +21,7 @@ import {
 } from '../domain/dashboard';
 import { addDays, startOfWeek } from '../domain/dateUtils';
 import { getExerciseNames } from '../domain/exerciseStore';
-import { ensureSelectedClimbGym, getSelectedClimbGym, gymDisplayName, gymDisplayNameById, isUnnamedDefaultGym } from '../domain/gymStore';
+import { ensureSelectedClimbGym, getGymById, getSelectedClimbGym, gymDisplayNameById, isUnnamedDefaultGym } from '../domain/gymStore';
 import {
   createSession,
   getActiveSession,
@@ -72,7 +72,7 @@ function formatHeaderDate(d: Date): string {
 type Dashboard = {
   activeSession: SessionRow | null;
   /** The selected gym's name, or null when only the built-in default scale is set. */
-  gymName: string | null;
+  gym: { name: string; parent: string | null } | null;
   streak: number;
   showTimer: boolean;
   lastType: SessionType | null;
@@ -99,10 +99,11 @@ const bestGradesFor = (sessions: SessionRow[]): Dashboard['recentBest'] => {
   return best;
 };
 
-const selectedGymName = (): string | null => {
+/** The selected gym as branch name plus its company, so the start line never truncates. */
+const selectedGym = (): { name: string; parent: string | null } | null => {
   const gym = getSelectedClimbGym() ?? ensureSelectedClimbGym();
   if (isUnnamedDefaultGym(gym)) return null;
-  return gymDisplayName(gym);
+  return { name: gym.name, parent: gym.parent_id ? getGymById(gym.parent_id)?.name ?? null : null };
 };
 
 const loadDashboard = (): Dashboard => {
@@ -116,7 +117,7 @@ const loadDashboard = (): Dashboard => {
   const recentRows = completed.slice(-RECENT_SHOWN);
   return {
     activeSession: getActiveSession(),
-    gymName: selectedGymName(),
+    gym: selectedGym(),
     streak: getSessionStreak(),
     showTimer: getShowSessionTimer(),
     lastType: completed[completed.length - 1]?.type ?? null,
@@ -239,7 +240,7 @@ export function LogScreen() {
 
   const activeWhere = activeSession
     ? activeSession.type === 'climb'
-      ? (activeSession.gym_id && gymDisplayNameById(activeSession.gym_id)) || data.gymName || ''
+      ? (activeSession.gym_id && gymDisplayNameById(activeSession.gym_id)) || data.gym?.name || ''
       : activeSession.title?.trim() || ''
     : '';
 
@@ -276,7 +277,8 @@ export function LogScreen() {
           <StartCard
             mode={mode}
             onModeChange={setPickedMode}
-            gymName={data.gymName}
+            gymName={data.gym?.name ?? null}
+            gymParent={data.gym?.parent ?? null}
             strengthStartsFrom={strengthStartsFrom}
             onChangeGym={() => navigation.navigate('GymSelect')}
             routineName={data.routine?.name ?? null}
@@ -324,8 +326,8 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     content: {
       paddingHorizontal: spacing.sm,
-      paddingTop: spacing.sm,
-      gap: spacing.sm,
+      paddingTop: spacing.s,
+      gap: spacing.s,
     },
     headerRow: {
       flexDirection: 'row',
@@ -337,7 +339,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       gap: 2,
     },
     date: {
-      ...typography.section,
+      ...typography.meta,
     },
     screenTitle: {
       ...typography.display,

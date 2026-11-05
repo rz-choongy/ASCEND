@@ -289,7 +289,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     time: {
       ...typography.numeric,
-      fontSize: 38,
+      fontSize: 30,
       lineHeight: 44,
     },
     duration: {

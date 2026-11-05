@@ -156,7 +156,7 @@ const createStyles = (colors: ThemeColors) =>
     symbolText: {
       ...font('regular'),
       color: colors.textPrimary,
-      fontSize: 22,
+      fontSize: 20,
       lineHeight: 26,
     },
     bigText: {
@@ -170,7 +170,7 @@ const createStyles = (colors: ThemeColors) =>
     value: {
       ...font('semibold'),
       color: colors.textPrimary,
-      fontSize: 20,
+      fontSize: 18,
       letterSpacing: -0.4,
       fontVariant: ['tabular-nums'],
       minWidth: 76,
@@ -179,7 +179,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     valueCompact: {
       minWidth: 32,
-      fontSize: 17,
+      fontSize: 15,
     },
     // Same footprint as the label it replaces, with an underline so it reads as editing.
     valueInput: {

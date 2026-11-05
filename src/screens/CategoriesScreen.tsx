@@ -239,7 +239,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     addInput: {
       ...font('regular'),
       flex: 1,
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textPrimary,
       minHeight: 44,
       paddingVertical: 0,

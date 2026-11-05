@@ -200,7 +200,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       backgroundColor: colors.fill,
       color: colors.textPrimary,
       paddingHorizontal: spacing.s,
-      fontSize: 16,
+      fontSize: 14,
       ...font('regular'),
     },
     error: {

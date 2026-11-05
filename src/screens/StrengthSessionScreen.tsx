@@ -960,7 +960,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   titleInput: {
     ...typography.display,
-    fontSize: 28,
+    fontSize: 22,
     lineHeight: 32,
     minHeight: 32,
     padding: 0,
@@ -1070,7 +1070,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   firstPickTitle: {
     ...typography.title,
-    fontSize: 18,
+    fontSize: 16,
   },
   quickRow: {
     flexDirection: 'row',
@@ -1117,7 +1117,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   modalTitle: {
     ...typography.title,
-    fontSize: 20,
+    fontSize: 18,
   },
   // A UITextField in its filled style: no outline, just a tinted well.
   modalInput: {
@@ -1126,7 +1126,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     backgroundColor: colors.fill,
     ...font('regular'),
     color: colors.textPrimary,
-    fontSize: 17,
+    fontSize: 15,
     paddingHorizontal: spacing.s,
   },
   modalActions: {
@@ -1298,7 +1298,7 @@ const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
     },
     value: {
       ...typography.numeric,
-      fontSize: 34,
+      fontSize: 28,
       lineHeight: 40,
       textAlign: 'center',
     },
@@ -1323,7 +1323,7 @@ const createPanelStyles = (colors: ThemeColors, typography: Typography) =>
     },
     stepText: {
       ...font('regular'),
-      fontSize: 22,
+      fontSize: 20,
       lineHeight: 26,
       color: colors.textPrimary,
     },

@@ -823,7 +823,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   backLabel: {
     ...font('medium'),
     color: colors.textSecondary,
-    fontSize: 16,
+    fontSize: 14,
   },
   metaBlock: {
     marginBottom: spacing.md,
@@ -879,7 +879,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     borderRadius: radius.lg,
     ...shadows.card,
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 14,
     padding: 12,
     minHeight: 100,
   },
@@ -928,7 +928,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   modalTitle: {
     ...typography.title,
-    fontSize: 20,
+    fontSize: 18,
   },
   modalContent: {
     gap: spacing.xs,
@@ -939,7 +939,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     backgroundColor: colors.fill,
     color: colors.textPrimary,
     ...font('regular'),
-    fontSize: 17,
+    fontSize: 15,
     paddingHorizontal: spacing.s,
   },
   modalRow: {
@@ -978,7 +978,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gradeChipText: {
     ...font('display'),
-    fontSize: 18,
+    fontSize: 16,
     color: colors.textPrimary,
   },
   gradeChipTextSelected: {

@@ -98,7 +98,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     elapsed: {
       ...typography.numeric,
-      fontSize: 38,
+      fontSize: 30,
       lineHeight: 44,
     },
     started: {

@@ -310,7 +310,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   backLabel: {
     color: colors.accentInk,
-    fontSize: 17,
+    fontSize: 15,
     ...font('regular'),
   },
   content: {
@@ -339,7 +339,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   gymName: {
     color: colors.textPrimary,
-    fontSize: 17,
+    fontSize: 15,
     ...font('semibold'),
   },
   gymMeta: {
@@ -377,7 +377,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   emptyText: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 14,
     ...font('semibold'),
   },
   emptySubText: {
@@ -397,7 +397,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   },
   emptyStateText: {
     color: colors.textMuted,
-    fontSize: 16,
+    fontSize: 14,
     ...font('regular'),
     textAlign: 'center',
   },

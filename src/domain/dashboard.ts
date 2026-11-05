@@ -1,6 +1,6 @@
 import { applyClimbEvents } from './climbLogUtils';
 import { addDays, startOfWeek } from './dateUtils';
-import { gymDisplayNameById, isUnnamedDefaultGym } from './gymStore';
+import { gymShortNameById, isUnnamedDefaultGym } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
 import { estimateOneRepMax, exerciseKeyFor, findRecordSetIds, type ExerciseNames } from './strengthProgress';
@@ -11,7 +11,7 @@ import type { SessionRow } from './types';
 
 const namedGym = (gymId: string | null | undefined): string | null => {
   if (!gymId) return null;
-  const name = gymDisplayNameById(gymId);
+  const name = gymShortNameById(gymId);
   if (!name || isUnnamedDefaultGym({ id: gymId, name })) return null;
   return name;
 };

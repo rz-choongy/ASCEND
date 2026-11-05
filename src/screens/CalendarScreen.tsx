@@ -598,7 +598,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   monthLabel: {
     ...typography.title,
-    fontSize: 17,
+    fontSize: 15,
   },
 
   // Weekday labels
@@ -645,7 +645,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     backgroundColor: colors.accent,
   },
   dayNumber: {
-    fontSize: 17,
+    fontSize: 15,
     ...font('regular'),
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
@@ -699,7 +699,7 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   },
   panelDateLabel: {
     ...typography.title,
-    fontSize: 17,
+    fontSize: 15,
     marginBottom: spacing.xs,
   },
   noSessions: {

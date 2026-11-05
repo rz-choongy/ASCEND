@@ -166,7 +166,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     title: {
       ...typography.title,
-      fontSize: 19,
+      fontSize: 17,
     },
     message: {
       ...typography.bodyMuted,
@@ -201,7 +201,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     },
     buttonText: {
       ...font('medium'),
-      fontSize: 16,
+      fontSize: 14,
       color: colors.textPrimary,
     },
     primaryText: {

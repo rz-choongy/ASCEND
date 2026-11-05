@@ -286,6 +286,9 @@ export const gymDisplayNameById = (gymId: string): string | null => {
   return gym ? gymDisplayName(gym) : null;
 };
 
+/** Short form for tight rows: a branch shows only its own name ("Collingwood"). */
+export const gymShortNameById = (gymId: string): string | null => getGymById(gymId)?.name ?? null;
+
 export const getSelectedClimbGym = (): GymRow | null => {
   ensureDefaultClimbGymSeeded();
   const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
