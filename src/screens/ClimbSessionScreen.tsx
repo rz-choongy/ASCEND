@@ -432,7 +432,6 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
             style={styles.gymSelector}
             disabled={gymLocked}
             hitSlop={4}
-            accessibilityRole="button"
             accessibilityLabel={`Climb grades: ${currentGymName ?? 'No gym picked'}${gymLocked ? ', locked' : ', change'}`}
             onPress={() => navigation.navigate('GymSelect', { returnToSessionId: sessionId })}
           >
@@ -533,22 +532,27 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         returnKeyType="done"
       />
 
-      {/* Send is the everyday log, so it's the filled primary; Flash sits beside it outlined. */}
+      {/* One joined control, no gap: Send (filled) and Flash (tinted) with a one-line legend. */}
       <View style={styles.actionRow}>
-        <Button
-          label={`Send ${selectedGrade.label}`}
-          variant="primary"
+        <PressableScale
+          scaleTo={0.97}
+          accessibilityLabel={`Send ${selectedGrade.label}`}
+          style={[styles.actionSegment, styles.actionSend]}
           onPress={() => handleLog('SEND')}
-          style={styles.actionButton}
-        />
-        <Button
-          label={`Flash ${selectedGrade.label}`}
-          variant="secondary"
-          icon={(color) => <BoltIcon size={16} color={color} filled />}
+        >
+          <Text style={styles.actionSendText}>Send {selectedGrade.label}</Text>
+        </PressableScale>
+        <PressableScale
+          scaleTo={0.97}
+          accessibilityLabel={`Flash ${selectedGrade.label}`}
+          style={[styles.actionSegment, styles.actionFlash]}
           onPress={() => handleLog('FLASH')}
-          style={styles.actionButton}
-        />
+        >
+          <BoltIcon size={16} color={colors.accentInk} filled />
+          <Text style={styles.actionFlashText}>Flash {selectedGrade.label}</Text>
+        </PressableScale>
       </View>
+      <Text style={styles.actionLegend}>Send = topped it · Flash = topped it first try</Text>
 
       <Card style={styles.panel}>
         <View style={styles.panelHeaderRow}>
@@ -831,12 +835,41 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
 
   actionRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.accent,
   },
-  actionButton: {
+  actionSegment: {
     flex: 1,
     minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  actionSend: {
+    backgroundColor: colors.accent,
+  },
+  actionFlash: {
+    backgroundColor: colors.accentMuted,
+  },
+  actionSendText: {
+    ...font('semibold'),
+    fontSize: 16,
+    color: colors.onAction,
+  },
+  actionFlashText: {
+    ...font('semibold'),
+    fontSize: 16,
+    color: colors.accentInk,
+  },
+  actionLegend: {
+    ...typography.meta,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: spacing.xs,
   },
 
   // Session panel
