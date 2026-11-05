@@ -31,17 +31,15 @@ const dayLabel = (ms: number): string => {
 const gradeDelta = (latest: ClimbSessionSummary, previous: ClimbSessionSummary | null): Delta | null => {
   if (!previous || latest.bestGradeValue === null || previous.bestGradeValue === null) return null;
   if (latest.gymName !== previous.gymName) return null;
-  if (latest.bestGradeValue > previous.bestGradeValue) return { text: 'harder than last', tone: 'up' };
-  if (latest.bestGradeValue < previous.bestGradeValue) return { text: `last: ${previous.bestGradeLabel}`, tone: 'flat' };
-  return { text: 'same as last', tone: 'flat' };
+  return latest.bestGradeValue > previous.bestGradeValue ? { text: 'harder than last', tone: 'up' } : null;
 };
 
-/** The last session of the chosen type, with how it compares to the one before. */
+/** The last session of the chosen type, with where it beat the one before. */
 export const LastSessionCard = ({ mode, climb, strength, onOpen }: Props) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
-  // Deltas sit in the stat's sub-line in the neutral meta colour: they compare, they don't grade.
+  // Deltas sit in the stat's sub-line in the neutral meta colour, and only when they're a step up.
   const stat = (label: string, value: string, delta: Delta | null, dotColor?: string) => ({
     label,
     value,

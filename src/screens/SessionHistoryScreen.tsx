@@ -35,6 +35,7 @@ import {
   PencilIcon,
   ListGroup,
   ListRow,
+  OverflowMenu,
   SessionStrip,
   StatRow,
   font,
@@ -420,10 +421,20 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={handleBack} style={styles.backRow} hitSlop={12}>
-          <ChevronLeftIcon size={14} color={colors.textMuted} strokeWidth={2.2} />
-          <Text style={styles.backLabel}>Back</Text>
-        </Pressable>
+        <View style={styles.topBar}>
+          <Pressable onPress={handleBack} style={styles.backRow} hitSlop={12}>
+            <ChevronLeftIcon size={14} color={colors.textMuted} strokeWidth={2.2} />
+            <Text style={styles.backLabel}>Back</Text>
+          </Pressable>
+          {/* Deleting is rare, so it lives in the menu rather than on the page. A discarded
+              session keeps its own Delete beside Restore below. */}
+          {session.status === 'completed' ? (
+            <OverflowMenu
+              accessibilityLabel="Session options"
+              items={[{ label: 'Delete session', destructive: true, onPress: handleRemoveSession }]}
+            />
+          ) : null}
+        </View>
         {/* Session metadata header */}
         <View style={styles.metaBlock}>
           {/* The title is the screen title: display font, left, editable in place. The
@@ -608,21 +619,6 @@ export const SessionHistoryScreen = ({ route, navigation }: SessionDetailScreenP
           </View>
         ) : null}
 
-        {session.status === 'completed' ? (
-          <View style={styles.dangerBlock}>
-            <Text style={styles.dangerLabel}>Correction</Text>
-            <Text style={styles.dangerCopy}>
-              Delete this session from history.
-            </Text>
-            <Button
-              label="Delete session"
-              variant="ghost"
-              onPress={handleRemoveSession}
-              style={styles.removeButton}
-              textStyle={styles.removeButtonText}
-            />
-          </View>
-        ) : null}
       </ScrollView>
       </KeyboardAvoidingView>
 
@@ -814,11 +810,17 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     padding: spacing.sm,
     paddingBottom: spacing.xxl,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 38,
+    marginBottom: spacing.xs,
+  },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xxs,
-    marginBottom: spacing.xs,
   },
   backLabel: {
     ...font('medium'),

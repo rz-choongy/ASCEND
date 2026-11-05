@@ -4,7 +4,9 @@ import {
   midpointGrade,
   findSessionHighIndex,
   formatVGrade,
+  isNewThirtyDayHigh,
   loggedClimbVGrade,
+  pickStartingGrade,
 } from './climbLogUtils';
 
 const event = (id: string, type: string, payload: unknown, createdAt = 1) => ({
@@ -217,5 +219,110 @@ describe('loggedClimbVGrade', () => {
   it("falls back to the climb's own grades when the option is missing", () => {
     expect(loggedClimbVGrade({ gradeLabel: 'Blue', gradeMin: 4, gradeMax: 6 }, undefined)).toBe('V4–6');
     expect(loggedClimbVGrade({ gradeLabel: 'Red', gradeMin: 7, gradeMax: 7 }, null)).toBe('V7');
+  });
+});
+
+describe('isNewThirtyDayHigh', () => {
+  it('is false with no prior history to beat', () => {
+    expect(isNewThirtyDayHigh([], 6, null)).toBe(false);
+  });
+
+  it('is true when the climb beats the 30-day bar and the session so far', () => {
+    expect(isNewThirtyDayHigh([{ gradeMax: 4 }], 6, 5)).toBe(true);
+  });
+
+  it('is false when it only ties the bar', () => {
+    expect(isNewThirtyDayHigh([], 5, 5)).toBe(false);
+  });
+
+  it('is false for a repeat of the session high, which keeps the badge on the first', () => {
+    expect(isNewThirtyDayHigh([{ gradeMax: 6 }], 6, 5)).toBe(false);
+  });
+
+  it('agrees with findSessionHighIndex on the new row', () => {
+    const before = [{ gradeMax: 6 }];
+    expect(isNewThirtyDayHigh(before, 7, 5)).toBe(true);
+    expect(findSessionHighIndex([...before, { gradeMax: 7 }], 5)).toBe(1);
+  });
+});
+
+describe('pickStartingGrade', () => {
+  const vOptions = [
+    { id: 'v0', label: 'V0', min: 0, max: 0 },
+    { id: 'v3', label: 'V3', min: 3, max: 3 },
+    { id: 'v5', label: 'V5', min: 5, max: 5 },
+  ];
+  const log = (gradeLabel: string, gradeMin: number, gradeMax = gradeMin, extra: object = {}) => ({
+    gradeLabel,
+    gradeMin,
+    gradeMax,
+    ...extra,
+  });
+  const past = (gymId: string | null, logs: ReturnType<typeof log>[]) => ({
+    gymId,
+    getLogs: jest.fn(() => logs),
+  });
+
+  it('uses the last climb logged in this session', () => {
+    const picked = pickStartingGrade(vOptions, [log('V3', 3), log('V5', 5)], [past('g1', [log('V0', 0)])], 'g1');
+    expect(picked?.id).toBe('v5');
+  });
+
+  it('falls back to the last climb of the newest past session at the same gym', () => {
+    const picked = pickStartingGrade(
+      vOptions,
+      [],
+      [past('g2', [log('V5', 5)]), past('g1', [log('V0', 0), log('V3', 3)]), past('g1', [log('V5', 5)])],
+      'g1'
+    );
+    expect(picked?.id).toBe('v3');
+  });
+
+  it('skips past sessions with no climbs', () => {
+    const picked = pickStartingGrade(vOptions, [], [past('g1', []), past('g1', [log('V5', 5)])], 'g1');
+    expect(picked?.id).toBe('v5');
+  });
+
+  it('falls back to any gym when this gym has no history', () => {
+    const picked = pickStartingGrade(vOptions, [], [past('g2', [log('V3', 3)])], 'g1');
+    expect(picked?.id).toBe('v3');
+  });
+
+  it('falls back to the first option with no history at all', () => {
+    expect(pickStartingGrade(vOptions, [], [], 'g1')?.id).toBe('v0');
+  });
+
+  it('matches by grade id first, so an exact pick off a band lands on the band', () => {
+    const colours = [
+      { id: 'blue', label: 'Blue', min: 0, max: 2 },
+      { id: 'red', label: 'Red', min: 4, max: 6 },
+    ];
+    const picked = pickStartingGrade(colours, [log('Red', 5, 5, { gradeId: 'red' })], [], 'g1');
+    expect(picked?.id).toBe('red');
+  });
+
+  it('maps a grade from another gym onto the band that holds it', () => {
+    const colours = [
+      { id: 'blue', label: 'Blue', min: 0, max: 2 },
+      { id: 'red', label: 'Red', min: 4, max: 6 },
+    ];
+    const picked = pickStartingGrade(colours, [], [past('g2', [log('V5', 5)])], 'g1');
+    expect(picked?.id).toBe('red');
+  });
+
+  it('moves on when the remembered grade no longer exists at this gym', () => {
+    const picked = pickStartingGrade(
+      vOptions,
+      [],
+      [past('g1', [log('V9', 9, 9, { gradeId: 'gone' })]), past('g1', [log('V3', 3)])],
+      'g1'
+    );
+    expect(picked?.id).toBe('v3');
+  });
+
+  it('does not read events for other gyms while looking for this one', () => {
+    const other = past('g2', [log('V5', 5)]);
+    pickStartingGrade(vOptions, [], [other, past('g1', [log('V3', 3)])], 'g1');
+    expect(other.getLogs).not.toHaveBeenCalled();
   });
 });

@@ -17,6 +17,24 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.8.0',
+    date: '2026-11-05',
+    changes: [
+      { kind: 'new', text: 'A summary when you finish a climbing session, with your climbs as a strip of tape colours and a Share button.' },
+      { kind: 'new', text: 'A new 30-day high gets a firm buzz and a quick flash of its tape colour.' },
+      { kind: 'new', text: 'Progress marks your first send of each top grade on the trend chart. Tap one to see when.' },
+      { kind: 'new', text: 'Tap a row in the grade pyramid to see every climb at that grade.' },
+      { kind: 'new', text: 'Milestones like 200 sends, and a line for your next grade.' },
+      { kind: 'improved', text: 'Streaks count weeks, not days, so rest days no longer break them.' },
+      { kind: 'improved', text: 'The climb logger starts on the grade you climbed last.' },
+      { kind: 'improved', text: 'The grade pyramid has the hardest grade on top, in quieter colours.' },
+      { kind: 'improved', text: 'The grade trend shows the average of your 3 best sends each week.' },
+      { kind: 'improved', text: 'Today no longer shows your last session twice, and only shows comparisons when you improved.' },
+      { kind: 'improved', text: 'Calendar dots show climbing and strength in different colours.' },
+      { kind: 'improved', text: 'Delete session moved into the ... menu on a session.' },
+    ],
+  },
+  {
     version: '2.7.2',
     date: '2026-11-05',
     changes: [

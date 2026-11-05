@@ -484,3 +484,194 @@ export const trendWeeksForPeriod = (
   );
   return Math.max(MIN_TREND_WEEKS, span + 1);
 };
+
+/** "11 Sep", or "11 Sep 2025" when it isn't this year. */
+export const formatDayMonth = (ms: number, now: Date = new Date()): string => {
+  const d = new Date(ms);
+  const base = formatShortDate(ms);
+  return d.getFullYear() === now.getFullYear() ? base : `${base} ${d.getFullYear()}`;
+};
+
+/** How many of the week's best sends make up its "usual top grade". */
+export const TOP_SENDS_AVERAGED = 3;
+
+export type TopSendsTrendPoint = {
+  /** Monday of the week, local midnight. */
+  weekStart: number;
+  weekLabel: string;
+  /** Average of the week's best TOP_SENDS_AVERAGED sends (fewer if fewer were logged), V scale. */
+  usual: number;
+  /** The single hardest send that week, V scale. */
+  hardest: number;
+};
+
+/**
+ * Per week over the last `weeks` weeks, oldest first, pooled across gyms on the V scale: the
+ * "usual top grade" (average of the three best sends) and the single hardest send. The average
+ * keeps one lucky send from setting the line; the hardest is kept so it still shows as a dot.
+ * Uses midpoint grades and skips weeks without climbing, like buildHardestSendTrend.
+ */
+export const buildTopSendsTrend = (
+  sessions: SessionRow[],
+  weeks: number,
+  today: Date = new Date()
+): TopSendsTrendPoint[] => {
+  const thisWeekStart = startOfWeek(today);
+  const firstWeekStart = addDays(thisWeekStart, -(weeks - 1) * 7).getTime();
+  const gradesByWeek = new Map<number, number[]>();
+
+  sessions
+    .filter((session) => session.type === 'climb' && session.started_at >= firstWeekStart)
+    .forEach((session) => {
+      const weekStart = startOfWeek(new Date(session.started_at)).getTime();
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        const list = gradesByWeek.get(weekStart) ?? [];
+        list.push(midpointGrade(log.gradeMin, log.gradeMax));
+        gradesByWeek.set(weekStart, list);
+      });
+    });
+
+  return Array.from(gradesByWeek.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([weekStart, grades]) => {
+      const best = [...grades].sort((a, b) => b - a).slice(0, TOP_SENDS_AVERAGED);
+      return {
+        weekStart,
+        weekLabel: formatShortDate(weekStart),
+        usual: best.reduce((sum, g) => sum + g, 0) / best.length,
+        hardest: best[0],
+      };
+    });
+};
+
+export type FirstSend = {
+  grade: number;
+  /** When the grade was first sent, anywhere. */
+  at: number;
+  /** Monday of that week, to line the marker up with the weekly trend. */
+  weekStart: number;
+};
+
+/**
+ * The first-ever send of each of the user's top `count` grades (pooled V scale, midpoint), hardest
+ * first. These are the notable firsts worth marking on the trend; easy grades are left out.
+ */
+export const findFirstSendsOfTopGrades = (sessions: SessionRow[], count = 4): FirstSend[] => {
+  const firstByGrade = new Map<number, number>();
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => {
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        const grade = midpointGrade(log.gradeMin, log.gradeMax);
+        const seen = firstByGrade.get(grade);
+        if (seen === undefined || log.createdAt < seen) firstByGrade.set(grade, log.createdAt);
+      });
+    });
+
+  return Array.from(firstByGrade.entries())
+    .sort(([a], [b]) => b - a)
+    .slice(0, count)
+    .map(([grade, at]) => ({ grade, at, weekStart: startOfWeek(new Date(at)).getTime() }));
+};
+
+/** Every logged climb at a V grade (midpoint, pooled across gyms). */
+export const countSendsAtGrade = (sessions: SessionRow[], grade: number): number => {
+  let count = 0;
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => {
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        if (midpointGrade(log.gradeMin, log.gradeMax) === grade) count += 1;
+      });
+    });
+  return count;
+};
+
+export type PyramidRowScope =
+  /** The pooled pyramid buckets by V grade. */
+  | { kind: 'pooled'; grade: number }
+  /** A single gym's pyramid buckets by that gym's own label. */
+  | { kind: 'gym'; gymId: string | null; gradeLabel: string };
+
+export type PyramidRowClimb = {
+  eventId: string;
+  createdAt: number;
+  gymName: string;
+  gradeLabel: string;
+  result: 'SEND' | 'FLASH';
+};
+
+/** The climbs behind one pyramid row, newest first, matching how that pyramid buckets them. */
+export const listClimbsForPyramidRow = (sessions: SessionRow[], scope: PyramidRowScope): PyramidRowClimb[] => {
+  const climbs: PyramidRowClimb[] = [];
+  sessions
+    .filter((session) => session.type === 'climb')
+    .filter((session) => scope.kind === 'pooled' || session.gym_id === scope.gymId)
+    .forEach((session) => {
+      applyClimbEvents(getSessionEvents(session.id)).forEach((log: ClimbLog) => {
+        const matches =
+          scope.kind === 'pooled'
+            ? midpointGrade(log.gradeMin, log.gradeMax) === scope.grade
+            : log.gradeLabel === scope.gradeLabel;
+        if (!matches) return;
+        climbs.push({
+          eventId: log.eventId,
+          createdAt: log.createdAt,
+          gymName: gymNameFor(log.gymId ?? session.gym_id ?? undefined),
+          gradeLabel: log.gradeLabel,
+          result: log.result,
+        });
+      });
+    });
+  return climbs.sort((a, b) => b.createdAt - a.createdAt);
+};
+
+export const SEND_MILESTONES = [50, 100, 200, 300, 500, 1000];
+export const FLASH_MILESTONES = [10, 25, 50];
+
+export type Milestone =
+  | { kind: 'sends'; count: number; at: number }
+  | { kind: 'flashes'; count: number; grade: number; at: number };
+
+/**
+ * The most recent milestone crossed in the last `days` days, or null: total climbs passing
+ * 50/100/200/300/500/1000, or flashes at one V grade (midpoint, pooled) passing 10/25/50.
+ */
+export const findRecentMilestone = (
+  sessions: SessionRow[],
+  now: Date = new Date(),
+  days = 7
+): Milestone | null => {
+  const logs: ClimbLog[] = [];
+  sessions
+    .filter((session) => session.type === 'climb')
+    .forEach((session) => logs.push(...applyClimbEvents(getSessionEvents(session.id))));
+  logs.sort((a, b) => a.createdAt - b.createdAt);
+
+  const cutoff = now.getTime() - days * DAY_MS;
+  let latest: Milestone | null = null;
+  let total = 0;
+  const flashesByGrade = new Map<number, number>();
+
+  logs.forEach((log) => {
+    total += 1;
+    if (SEND_MILESTONES.includes(total) && log.createdAt >= cutoff) {
+      latest = { kind: 'sends', count: total, at: log.createdAt };
+    }
+    if (log.result === 'FLASH') {
+      const grade = midpointGrade(log.gradeMin, log.gradeMax);
+      const flashes = (flashesByGrade.get(grade) ?? 0) + 1;
+      flashesByGrade.set(grade, flashes);
+      if (FLASH_MILESTONES.includes(flashes) && log.createdAt >= cutoff) {
+        latest = { kind: 'flashes', count: flashes, grade, at: log.createdAt };
+      }
+    }
+  });
+
+  return latest;
+};
+
+export const formatMilestone = (milestone: Milestone): string =>
+  milestone.kind === 'sends'
+    ? `You passed ${milestone.count} sends`
+    : `${milestone.count} V${milestone.grade} flashes`;

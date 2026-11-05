@@ -15,6 +15,7 @@ const KILTER_LAST_SYNCED_KEY = 'kilter_last_synced_at';
 const KILTER_USERNAME_KEY = 'kilter_username';
 const KILTER_SESSION_KEY = 'kilter_session';
 const LAST_ROUTINE_ID_KEY = 'last_routine_id';
+const ASKED_FOR_GYM_KEY = 'asked_for_gym';
 
 // Derived from the palette so a new accent can't be silently rejected on the next launch.
 const VALID_ACCENT_IDS = Object.keys(ACCENT_PALETTE) as AccentColorId[];
@@ -219,6 +220,18 @@ export const getLastRoutineId = (): string | null => {
 export const setLastRoutineId = (routineId: string | null): void => {
   if (routineId) setSetting(LAST_ROUTINE_ID_KEY, routineId);
   else run('DELETE FROM app_settings WHERE key = ?;', [LAST_ROUTINE_ID_KEY]);
+};
+
+/** Whether Start climbing has already opened the gym picker once, so it never asks again. */
+export const getAskedForGym = (): boolean => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    ASKED_FOR_GYM_KEY,
+  ]);
+  return setting?.value === '1';
+};
+
+export const setAskedForGym = (): void => {
+  setSetting(ASKED_FOR_GYM_KEY, '1');
 };
 
 const INSTALL_ID_KEY = 'install_id';

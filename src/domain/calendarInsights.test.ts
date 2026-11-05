@@ -5,7 +5,7 @@ jest.mock('./sessionStore', () => ({
 }));
 
 import { getSessionEvents } from './sessionStore';
-import { buildSessionReplayMap } from './calendarInsights';
+import { buildSessionReplayMap, dayDotKinds } from './calendarInsights';
 import type { SessionRow } from './types';
 
 const mockGetSessionEvents = getSessionEvents as jest.Mock;
@@ -149,5 +149,20 @@ describe('buildSessionReplayMap', () => {
     expect(result.size).toBe(2);
     expect(result.get('c1')!.climbs).toHaveLength(1);
     expect(result.get('s1')!.sets).toHaveLength(1);
+  });
+});
+
+describe('dayDotKinds', () => {
+  it('is empty for a rest day', () => {
+    expect(dayDotKinds([])).toEqual([]);
+  });
+
+  it('gives one mark per type, however many sessions of it', () => {
+    expect(dayDotKinds([{ type: 'climb' }, { type: 'climb' }])).toEqual(['climb']);
+    expect(dayDotKinds([{ type: 'strength' }])).toEqual(['strength']);
+  });
+
+  it('puts climbing first on a day with both', () => {
+    expect(dayDotKinds([{ type: 'strength' }, { type: 'climb' }])).toEqual(['climb', 'strength']);
   });
 });

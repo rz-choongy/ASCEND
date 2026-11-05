@@ -12,7 +12,14 @@ import {
   buildGradeDistribution,
   buildGradeDistributionAcrossGyms,
   buildHardestSendTrend,
+  buildTopSendsTrend,
+  countSendsAtGrade,
   filterSessionsToPeriod,
+  findFirstSendsOfTopGrades,
+  findRecentMilestone,
+  formatDayMonth,
+  formatMilestone,
+  listClimbsForPyramidRow,
   MIN_TREND_WEEKS,
   trendWeeksForPeriod,
 } from './progressInsights';
@@ -264,5 +271,169 @@ describe('trendWeeksForPeriod', () => {
     const twentyWeeksAgo = now.getTime() - 20 * 7 * 86_400_000;
     expect(trendWeeksForPeriod('All', [at(now.getTime()), at(twentyWeeksAgo)], now)).toBe(21);
     expect(trendWeeksForPeriod('All', [at(now.getTime())], now)).toBe(MIN_TREND_WEEKS);
+  });
+});
+
+describe('formatDayMonth', () => {
+  const now = new Date(2026, 10, 5);
+
+  it('drops the year inside the current year', () => {
+    expect(formatDayMonth(new Date(2026, 8, 11).getTime(), now)).toBe('11 Sep');
+  });
+
+  it('adds the year otherwise', () => {
+    expect(formatDayMonth(new Date(2025, 8, 11).getTime(), now)).toBe('11 Sep 2025');
+  });
+});
+
+// Shared helpers for the dated tests below.
+const TODAY_WED = new Date(2026, 9, 28); // week starts Mon 26 Oct
+const dayAt = (month: number, day: number, hour = 18) => new Date(2026, month, day, hour).getTime();
+const datedSession = (id: string, gymId: string | null, startedAt: number): SessionRow => ({
+  ...makeSession(id, gymId),
+  started_at: startedAt,
+});
+const datedClimb = (
+  id: string,
+  grade: number,
+  createdAt: number,
+  result: 'SEND' | 'FLASH' = 'SEND',
+  gradeLabel = `V${grade}`
+) => ({
+  id,
+  type: 'CLIMB_LOGGED',
+  payload: { gradeLabel, gradeMin: grade, gradeMax: grade, result, gradeColor: null },
+  createdAt,
+});
+
+describe('buildTopSendsTrend', () => {
+  it('averages the three best sends of each week and keeps the hardest', () => {
+    mockGetSessionEvents.mockImplementation(
+      (sessionId: string) =>
+        ({
+          a: [
+            datedClimb('e1', 8, dayAt(9, 26)),
+            datedClimb('e2', 5, dayAt(9, 26)),
+            datedClimb('e3', 5, dayAt(9, 26)),
+            datedClimb('e4', 2, dayAt(9, 26)),
+          ],
+          b: [datedClimb('e5', 4, dayAt(9, 20)), datedClimb('e6', 6, dayAt(9, 20))],
+        })[sessionId] ?? []
+    );
+
+    const trend = buildTopSendsTrend(
+      [datedSession('a', 'gym-1', dayAt(9, 26)), datedSession('b', 'gym-2', dayAt(9, 20))],
+      12,
+      TODAY_WED
+    );
+
+    expect(trend.map(({ weekLabel, usual, hardest }) => ({ weekLabel, usual, hardest }))).toEqual([
+      { weekLabel: '19 Oct', usual: 5, hardest: 6 },
+      { weekLabel: '26 Oct', usual: 6, hardest: 8 },
+    ]);
+  });
+
+  it('uses a single send as both values', () => {
+    mockGetSessionEvents.mockReturnValue([datedClimb('e1', 3, dayAt(9, 26))]);
+    const trend = buildTopSendsTrend([datedSession('a', null, dayAt(9, 26))], 12, TODAY_WED);
+    expect(trend[0]).toMatchObject({ usual: 3, hardest: 3 });
+  });
+});
+
+describe('findFirstSendsOfTopGrades', () => {
+  it('returns the first send of each of the top grades, hardest first', () => {
+    mockGetSessionEvents.mockImplementation(
+      (sessionId: string) =>
+        ({
+          a: [datedClimb('e1', 2, dayAt(8, 1)), datedClimb('e2', 3, dayAt(8, 1)), datedClimb('e3', 4, dayAt(8, 1))],
+          b: [datedClimb('e4', 5, dayAt(9, 6)), datedClimb('e5', 4, dayAt(9, 6))],
+          c: [datedClimb('e6', 6, dayAt(9, 27)), datedClimb('e7', 5, dayAt(9, 27))],
+        })[sessionId] ?? []
+    );
+
+    const firsts = findFirstSendsOfTopGrades(
+      [datedSession('a', null, dayAt(8, 1)), datedSession('b', null, dayAt(9, 6)), datedSession('c', null, dayAt(9, 27))],
+      4
+    );
+
+    expect(firsts.map((f) => [f.grade, f.at])).toEqual([
+      [6, dayAt(9, 27)],
+      [5, dayAt(9, 6)],
+      [4, dayAt(8, 1)],
+      [3, dayAt(8, 1)],
+    ]);
+    expect(firsts[0].weekStart).toBe(new Date(2026, 9, 26).getTime());
+  });
+});
+
+describe('countSendsAtGrade', () => {
+  it('counts climbs whose midpoint is the grade', () => {
+    mockGetSessionEvents.mockReturnValue([
+      climbEvent('e1', 'Green', 6, 7),
+      climbEvent('e2', 'V6', 6, 6),
+      climbEvent('e3', 'V7', 7, 7),
+    ]);
+    expect(countSendsAtGrade([makeSession('a', null)], 6)).toBe(2);
+    expect(countSendsAtGrade([makeSession('a', null)], 9)).toBe(0);
+  });
+});
+
+describe('listClimbsForPyramidRow', () => {
+  beforeEach(() => {
+    mockGetSessionEvents.mockImplementation(
+      (sessionId: string) =>
+        ({
+          a: [datedClimb('e1', 4, dayAt(9, 1), 'FLASH', 'Blue'), datedClimb('e2', 5, dayAt(9, 1))],
+          b: [datedClimb('e3', 4, dayAt(9, 9), 'SEND', 'Yellow')],
+        })[sessionId] ?? []
+    );
+  });
+  const sessions = () => [datedSession('a', 'gym-1', dayAt(9, 1)), datedSession('b', 'gym-2', dayAt(9, 9))];
+
+  it('pools by V grade, newest first', () => {
+    const climbs = listClimbsForPyramidRow(sessions(), { kind: 'pooled', grade: 4 });
+    expect(climbs.map((c) => [c.eventId, c.result])).toEqual([
+      ['e3', 'SEND'],
+      ['e1', 'FLASH'],
+    ]);
+  });
+
+  it("matches one gym's own label", () => {
+    const climbs = listClimbsForPyramidRow(sessions(), { kind: 'gym', gymId: 'gym-1', gradeLabel: 'Blue' });
+    expect(climbs.map((c) => c.eventId)).toEqual(['e1']);
+  });
+});
+
+describe('findRecentMilestone', () => {
+  const now = new Date(2026, 9, 28, 20);
+  const manySends = (n: number, at: (i: number) => number, grade = 3, result: 'SEND' | 'FLASH' = 'SEND') =>
+    Array.from({ length: n }, (_, i) => datedClimb(`s${grade}-${result}-${i}`, grade, at(i), result));
+
+  it('reports a send total crossed this week', () => {
+    // 99 old sends, then the 100th today.
+    mockGetSessionEvents.mockReturnValue([
+      ...manySends(99, () => dayAt(8, 1)),
+      datedClimb('last', 3, dayAt(9, 28, 10)),
+    ]);
+    const milestone = findRecentMilestone([makeSession('a', null)], now);
+    expect(milestone).toEqual({ kind: 'sends', count: 100, at: dayAt(9, 28, 10) });
+    expect(formatMilestone(milestone!)).toBe('You passed 100 sends');
+  });
+
+  it('ignores milestones older than the window', () => {
+    mockGetSessionEvents.mockReturnValue([...manySends(50, () => dayAt(8, 1)), datedClimb('x', 3, dayAt(9, 28, 10))]);
+    expect(findRecentMilestone([makeSession('a', null)], now)).toBeNull();
+  });
+
+  it('picks the most recent of several, including flashes at one grade', () => {
+    mockGetSessionEvents.mockReturnValue([
+      ...manySends(9, () => dayAt(8, 1), 5, 'FLASH'),
+      ...manySends(40, () => dayAt(8, 1)),
+      datedClimb('fifty', 3, dayAt(9, 26)), // 50th climb overall
+      datedClimb('tenth', 5, dayAt(9, 27), 'FLASH'), // 10th V5 flash
+    ]);
+    const milestone = findRecentMilestone([makeSession('a', null)], now);
+    expect(milestone).toEqual({ kind: 'flashes', count: 10, grade: 5, at: dayAt(9, 27) });
+    expect(formatMilestone(milestone!)).toBe('10 V5 flashes');
   });
 });

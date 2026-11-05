@@ -14,7 +14,10 @@ import {
   buildWeekActivity,
   lastClimbSessions,
   lastStrengthSessions,
+  restDayLine,
   summarizeClimbSession,
+  usualWeekTarget,
+  weekStreak,
 } from './dashboard';
 import type { SessionRow } from './types';
 
@@ -177,5 +180,74 @@ describe('lastStrengthSessions with an emptied session', () => {
     const result = lastStrengthSessions([session('s1', 'strength', 1), session('s2', 'strength', 2)]);
     expect(result?.latest.sessionId).toBe('s1');
     expect(result?.previous).toBeNull();
+  });
+});
+
+// Thu 5 Nov 2026, local time. Weeks run Mon-Sun, so this week started Mon 2 Nov.
+const NOW = new Date(2026, 10, 5, 12);
+const at = (month: number, day: number, hour = 18) => new Date(2026, month, day, hour).getTime();
+
+describe('weekStreak', () => {
+  it('is 0 with no sessions', () => {
+    expect(weekStreak([], NOW)).toBe(0);
+  });
+
+  it('counts this week and the unbroken weeks before it', () => {
+    expect(weekStreak([at(10, 3), at(9, 27), at(9, 20), at(9, 6)], NOW)).toBe(3);
+  });
+
+  it("doesn't break the run when this week has no session yet", () => {
+    expect(weekStreak([at(9, 31), at(9, 26), at(9, 19)], NOW)).toBe(2);
+  });
+
+  it('is 0 when the last session was two weeks ago', () => {
+    expect(weekStreak([at(9, 22)], NOW)).toBe(0);
+  });
+
+  it('counts several sessions in one week once', () => {
+    expect(weekStreak([at(10, 2), at(10, 3), at(10, 4)], NOW)).toBe(1);
+  });
+
+  it('puts Sunday in the week before Monday', () => {
+    // Sun 1 Nov belongs to the week of Mon 26 Oct, so this week is still empty.
+    expect(weekStreak([at(10, 1, 23)], NOW)).toBe(1);
+    expect(weekStreak([at(10, 1, 23), at(10, 2, 0)], NOW)).toBe(2);
+  });
+});
+
+describe('usualWeekTarget', () => {
+  // Monday of the week `weeksAgo` complete weeks back.
+  const weekOf = (weeksAgo: number, extraDays = 0) => new Date(2026, 10, 2 - 7 * weeksAgo + extraDays, 18).getTime();
+  const sessionsPerWeek = (counts: number[]) =>
+    counts.flatMap((count, i) => Array.from({ length: count }, (_, j) => weekOf(i + 1, j)));
+
+  it('is at least 2 with little history', () => {
+    expect(usualWeekTarget([], NOW)).toBe(2);
+    expect(usualWeekTarget(sessionsPerWeek([1, 1, 1]), NOW)).toBe(2);
+  });
+
+  it('takes the median of the last 8 complete weeks, empty weeks included', () => {
+    expect(usualWeekTarget(sessionsPerWeek([4, 4, 3, 4, 0, 4, 3, 5]), NOW)).toBe(4);
+    expect(usualWeekTarget(sessionsPerWeek([3, 3, 3, 0, 0, 0, 3, 3]), NOW)).toBe(3);
+  });
+
+  it('ignores this week and anything older than 8 weeks', () => {
+    const old = sessionsPerWeek([0, 0, 0, 0, 0, 0, 0, 0, 6, 6]);
+    expect(usualWeekTarget([...old, at(10, 3), at(10, 4), at(10, 5)], NOW)).toBe(2);
+  });
+});
+
+describe('restDayLine', () => {
+  it('is null with no sessions', () => {
+    expect(restDayLine(null, NOW)).toBeNull();
+  });
+
+  it('names the weekday within the last 6 days', () => {
+    expect(restDayLine({ type: 'climb', started_at: at(10, 3) }, NOW)).toBe('Rest day. Last climbed Tue');
+    expect(restDayLine({ type: 'strength', started_at: at(9, 30) }, NOW)).toBe('Rest day. Last trained Fri');
+  });
+
+  it('gives the date once it is a week or more back', () => {
+    expect(restDayLine({ type: 'climb', started_at: at(9, 29) }, NOW)).toBe('Rest day. Last climbed 29 Oct');
   });
 });

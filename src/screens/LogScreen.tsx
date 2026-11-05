@@ -13,6 +13,9 @@ import {
   lastClimbSessions,
   summarizeClimbSession,
   lastStrengthSessions,
+  restDayLine,
+  usualWeekTarget,
+  weekStreak,
   type ClimbSessionSummary,
   type LastSessions,
   type RecentSession,
@@ -27,14 +30,19 @@ import {
   getActiveSession,
   getCompletedSessions,
   getSessionEvents,
-  getSessionStreak,
   getSessionsForDateRange,
   setSessionStatus,
 } from '../domain/sessionStore';
 import { finishSession } from './confirmEndTime';
 import { getRoutines, type RoutineSummary } from '../domain/routineStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
-import { getLastRoutineId, getShowSessionTimer, setLastRoutineId } from '../domain/settingsStore';
+import {
+  getAskedForGym,
+  getLastRoutineId,
+  getShowSessionTimer,
+  setAskedForGym,
+  setLastRoutineId,
+} from '../domain/settingsStore';
 import { applySetEvents } from '../domain/strengthLogUtils';
 import { formatWeight } from '../domain/strengthProgress';
 import type { BodyweightLogRow, SessionRow, SessionType } from '../domain/types';
@@ -73,12 +81,18 @@ type Dashboard = {
   activeSession: SessionRow | null;
   /** The selected gym's name, or null when only the built-in default scale is set. */
   gym: { name: string; parent: string | null } | null;
+  /** Consecutive weeks with a session. */
   streak: number;
+  /** Sessions in a usual week, for the week card's full-week line. */
+  usualTarget: number;
+  /** "Rest day. Last climbed Tue", or null on a day with a session. */
+  restLine: string | null;
   showTimer: boolean;
   lastType: SessionType | null;
   climb: LastSessions<ClimbSessionSummary> | null;
   strength: LastSessions<StrengthSessionSummary> | null;
   week: WeekActivity;
+  /** One row more than shown, so the session in the Last card can be dropped without coming up short. */
   recent: RecentSession[];
   /** Best grade with its tape colour for each recent climb, for the list's grade chips. */
   recentBest: Record<string, { label: string; color: string }>;
@@ -114,17 +128,23 @@ const loadDashboard = (): Dashboard => {
   const strengthHistory = completed.filter((session) => session.type === 'strength');
   const routines = getRoutines();
   const lastRoutineId = getLastRoutineId();
-  const recentRows = completed.slice(-RECENT_SHOWN);
+  const recentRows = completed.slice(-(RECENT_SHOWN + 1));
+  const startedAts = completed.map((s) => s.started_at);
+  const activeSession = getActiveSession();
+  const week = buildWeekActivity(thisWeek, now);
+  const sessionToday = week.days.some((d) => d.isToday && (d.climbed || d.trained));
   return {
-    activeSession: getActiveSession(),
+    activeSession,
     gym: selectedGym(),
-    streak: getSessionStreak(),
+    streak: weekStreak(startedAts, now),
+    usualTarget: usualWeekTarget(startedAts, now),
+    restLine: activeSession || sessionToday ? null : restDayLine(completed[completed.length - 1] ?? null, now),
     showTimer: getShowSessionTimer(),
     lastType: completed[completed.length - 1]?.type ?? null,
     climb: lastClimbSessions(completed),
     strength: lastStrengthSessions(strengthHistory, getExerciseNames()),
-    week: buildWeekActivity(thisWeek, now),
-    recent: buildRecentSessions(recentRows, strengthHistory, RECENT_SHOWN),
+    week,
+    recent: buildRecentSessions(recentRows, strengthHistory, RECENT_SHOWN + 1),
     recentBest: bestGradesFor(recentRows),
     bodyweight: getLatestBodyweight(),
     routines,
@@ -160,6 +180,9 @@ export function LogScreen() {
 
   const mode: SessionType = pickedMode ?? data.lastType ?? 'climb';
   const { activeSession, strength } = data;
+  const lastMode = activeSession ? activeSession.type : mode;
+  const lastShownId = lastMode === 'climb' ? data.climb?.latest.sessionId : data.strength?.latest.sessionId;
+  const recent = data.recent.filter((r) => r.sessionId !== lastShownId).slice(0, RECENT_SHOWN);
   const firstExercise = strength?.latest.exercises[0];
   const strengthStartsFrom = firstExercise
     ? `${firstExercise.name} · ${firstExercise.weight === 0 ? 'BW' : `${formatWeight(firstExercise.weight)} kg`} × ${firstExercise.reps}`
@@ -178,6 +201,13 @@ export function LogScreen() {
     const existing = getActiveSession();
     if (existing) {
       navigateToSession(existing.type, existing.id);
+      return;
+    }
+    // Ask for the gym once, the first time a climb starts with none picked. Picking one
+    // returns here, and the next tap starts the session.
+    if (mode === 'climb' && !data?.gym && !getAskedForGym()) {
+      setAskedForGym();
+      navigation.navigate('GymSelect');
       return;
     }
     const gym = mode === 'climb' ? ensureSelectedClimbGym() : null;
@@ -288,17 +318,17 @@ export function LogScreen() {
         )}
 
         <LastSessionCard
-          mode={activeSession ? activeSession.type : mode}
+          mode={lastMode}
           climb={data.climb}
           strength={data.strength}
           onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
         />
 
-        <WeekCard week={data.week} streak={data.streak} />
+        <WeekCard week={data.week} streak={data.streak} usualTarget={data.usualTarget} restLine={data.restLine} />
 
-        {data.recent.length > 0 ? (
+        {recent.length > 0 ? (
           <RecentSessionsList
-            sessions={data.recent}
+            sessions={recent}
             bestGrades={data.recentBest}
             onOpen={(sessionId) => navigation.navigate('SessionDetail', { sessionId })}
             onSeeAll={() => navigation.navigate('Calendar')}

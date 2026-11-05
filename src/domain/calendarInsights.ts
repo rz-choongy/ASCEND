@@ -52,3 +52,16 @@ export const buildSessionReplayMap = (
 
   return map;
 };
+
+export type DayDotKind = 'climb' | 'strength';
+
+/**
+ * The marks a calendar day carries: one per session type done that day, climbing first, so a
+ * day with both shows two dots side by side in a fixed order.
+ */
+export const dayDotKinds = (sessions: Pick<SessionRow, 'type'>[]): DayDotKind[] => {
+  const kinds: DayDotKind[] = [];
+  if (sessions.some((s) => s.type === 'climb')) kinds.push('climb');
+  if (sessions.some((s) => s.type === 'strength')) kinds.push('strength');
+  return kinds;
+};

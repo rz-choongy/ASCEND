@@ -249,3 +249,80 @@ export const findSessionHighIndex = (
   if (sessionMax <= priorBest) return null;
   return logs.findIndex((log) => log.gradeMax === sessionMax);
 };
+
+/**
+ * Whether logging a climb at `gradeMax` makes it the row that earns the "30-day high" badge
+ * (see findSessionHighIndex): it beats the 30-day bar and every climb already in the session.
+ * A repeat at the session's top grade doesn't count -- the badge stays on the first one.
+ */
+export const isNewThirtyDayHigh = (
+  previousLogs: Pick<ClimbLog, 'gradeMax'>[],
+  gradeMax: number,
+  priorBest: number | null
+): boolean => {
+  if (priorBest == null || gradeMax <= priorBest) return false;
+  return previousLogs.every((log) => log.gradeMax < gradeMax);
+};
+
+type StartingGradeOption = { id?: string; label: string; min: number; max: number };
+
+type PastClimbSession = {
+  gymId: string | null;
+  /** Read lazily, so only the sessions actually checked hit the event store. */
+  getLogs: () => Pick<ClimbLog, 'gradeId' | 'gradeLabel' | 'gradeMin' | 'gradeMax' | 'gymId'>[];
+};
+
+/** The gym option a past log maps to: same grade id, else same label, else the band holding it. */
+const matchGradeOption = <G extends StartingGradeOption>(
+  options: G[],
+  log: Pick<ClimbLog, 'gradeId' | 'gradeLabel' | 'gradeMin' | 'gradeMax'>
+): G | undefined =>
+  (log.gradeId ? options.find((option) => option.id === log.gradeId) : undefined) ??
+  options.find((option) => option.label === log.gradeLabel) ??
+  options.find((option) => option.min <= log.gradeMin && log.gradeMax <= option.max);
+
+/**
+ * The grade the climb logger opens on: the last climb logged in this session; else the last
+ * climb of the most recent past session at this gym; else of the most recent past session
+ * anywhere; else the first option. A candidate only counts if it maps to one of this gym's
+ * current options, otherwise the next one is tried. `pastSessions` is newest first.
+ */
+export const pickStartingGrade = <G extends StartingGradeOption>(
+  options: G[],
+  sessionLogs: Pick<ClimbLog, 'gradeId' | 'gradeLabel' | 'gradeMin' | 'gradeMax'>[],
+  pastSessions: PastClimbSession[],
+  gymId: string | null
+): G | undefined => {
+  const lastOf = <T,>(items: T[]): T | undefined => items[items.length - 1];
+
+  const current = lastOf(sessionLogs);
+  const fromCurrent = current ? matchGradeOption(options, current) : undefined;
+  if (fromCurrent) return fromCurrent;
+
+  // One read per session at most, shared by both passes.
+  const cache = new Map<PastClimbSession, ReturnType<PastClimbSession['getLogs']>>();
+  const logsOf = (session: PastClimbSession) => {
+    let logs = cache.get(session);
+    if (!logs) {
+      logs = session.getLogs();
+      cache.set(session, logs);
+    }
+    return logs;
+  };
+  const firstMatch = (sameGymOnly: boolean): G | undefined => {
+    for (const session of pastSessions) {
+      // Skip other gyms before reading their events.
+      if (sameGymOnly && session.gymId != null && session.gymId !== gymId) continue;
+      const logs = logsOf(session);
+      const last = lastOf(logs);
+      if (!last) continue;
+      if (sameGymOnly && (session.gymId ?? last.gymId ?? null) !== gymId) continue;
+      // Most recent session with climbs wins; if its grade is gone, fall through to the next.
+      const match = matchGradeOption(options, last);
+      if (match) return match;
+    }
+    return undefined;
+  };
+
+  return (gymId ? firstMatch(true) : undefined) ?? firstMatch(false) ?? options[0];
+};

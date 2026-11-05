@@ -300,3 +300,54 @@ export const buildRecentSessions = (
     };
   });
 };
+
+const weekKey = (ms: number): number => startOfWeek(new Date(ms)).getTime();
+
+/**
+ * Consecutive Mon-Sun weeks (local time) with at least one session, ending at
+ * this week. A week with nothing yet doesn't break the run, it just isn't counted.
+ */
+export const weekStreak = (startedAts: number[], now: Date = new Date()): number => {
+  const weeks = new Set(startedAts.map(weekKey));
+  let cursor = startOfWeek(now);
+  if (!weeks.has(cursor.getTime())) cursor = addDays(cursor, -7);
+  let streak = 0;
+  while (weeks.has(cursor.getTime())) {
+    streak += 1;
+    cursor = addDays(cursor, -7);
+  }
+  return streak;
+};
+
+const USUAL_WEEKS = 8;
+const USUAL_WEEK_MIN = 2;
+
+/**
+ * How many sessions make a normal week: the median over the last 8 complete
+ * weeks, empty weeks included, and never fewer than 2.
+ */
+export const usualWeekTarget = (startedAts: number[], now: Date = new Date()): number => {
+  const thisWeek = startOfWeek(now);
+  const counts = new Map<number, number>();
+  startedAts.forEach((ms) => counts.set(weekKey(ms), (counts.get(weekKey(ms)) ?? 0) + 1));
+  const perWeek = Array.from({ length: USUAL_WEEKS }, (_, i) => counts.get(addDays(thisWeek, -7 * (i + 1)).getTime()) ?? 0).sort(
+    (a, b) => a - b
+  );
+  const mid = USUAL_WEEKS / 2;
+  const median = Math.round((perWeek[mid - 1] + perWeek[mid]) / 2);
+  return Math.max(USUAL_WEEK_MIN, median);
+};
+
+const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "Rest day. Last climbed Tue": the weekday within the last 6 days, else "3 Nov". */
+export const restDayLine = (last: Pick<SessionRow, 'type' | 'started_at'> | null, now: Date = new Date()): string | null => {
+  if (!last) return null;
+  const d = new Date(last.started_at);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const daysAgo = Math.round((today.getTime() - day.getTime()) / 86_400_000);
+  const when = daysAgo <= 6 ? DAY_SHORT[d.getDay()] : `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`;
+  return `Rest day. Last ${last.type === 'climb' ? 'climbed' : 'trained'} ${when}`;
+};

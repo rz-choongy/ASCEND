@@ -1,42 +1,54 @@
 import { useMemo, useState } from 'react';
-import { LayoutAnimation, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native';
 import { applyClimbEvents } from '../../domain/climbLogUtils';
 import {
   buildAllTimeStats,
   buildGradeDistribution,
   buildGradeDistributionAcrossGyms,
-  buildHardestSendTrend,
+  buildTopSendsTrend,
   buildWeeklyFrequency,
+  countSendsAtGrade,
   findFirstReachedDate,
+  findFirstSendsOfTopGrades,
+  findRecentMilestone,
+  formatDayMonth,
+  formatMilestone,
   getAvailableClimbGyms,
+  listClimbsForPyramidRow,
   trendWeeksForPeriod,
+  TOP_SENDS_AVERAGED,
+  type GradeDistributionBar,
   type ProgressPeriod,
 } from '../../domain/progressInsights';
 import { getSessionEvents } from '../../domain/sessionStore';
-import {
-  getFavoriteGradeGymIds,
-  getProgressGradeGymId,
-  setFavoriteGradeGymIds,
-  setProgressGradeGymId,
-} from '../../domain/settingsStore';
-import { formatMonthDay } from '../../domain/strengthProgress';
+import { getProgressGradeGymId, setProgressGradeGymId } from '../../domain/settingsStore';
 import type { SessionRow } from '../../domain/types';
-import { BarChart, Card, Chip, GradeChip, LineChart, StatRow, font, spacing, useTheme } from '../../ui';
+import { BarChart, Card, GradeChip, LineChart, StatRow, font, radius, spacing, useTheme } from '../../ui';
+import type { LineChartMarker } from '../../ui/components/LineChart';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
+import { GradeClimbsSheet } from './GradeClimbsSheet';
 import { GymScopeSheet, type GymScopeOption } from './GymScopeSheet';
 
 const WEEKS_SHOWN = 8;
+/** First sends of this many of the user's top grades get a marker on the trend. */
+const FIRST_SEND_MARKERS = 4;
 
 /** Sentinel scope meaning "pool every gym", stored alongside real gym ids. */
 const ALL_GYMS = '__all__';
 /** Climbs logged before gyms were tracked have no gym id; this stands in for it as a key. */
 const UNSPECIFIED = '__unspecified__';
-/** Before the user pins any, the most-visited gyms get the chips. */
-const DEFAULT_PINNED = 2;
 
 const keyOf = (gymId: string | null) => gymId ?? UNSPECIFIED;
 const gymIdOf = (key: string) => (key === UNSPECIFIED ? null : key);
+
+const PERIOD_NOTE: Record<ProgressPeriod, string> = {
+  W: 'last 7 days',
+  M: 'last 30 days',
+  '3M': 'last 90 days',
+  Y: 'last year',
+  All: 'all time',
+};
 
 type Props = {
   /** Full history: the weekly frequency chart and "since" dates ignore the period. */
@@ -52,13 +64,15 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
   // undefined = user hasn't picked one this session yet -- fall back to the persisted
   // setting. A string is either a gym id or the ALL_GYMS sentinel.
   const [selectedScope, setSelectedScope] = useState<string | null | undefined>(undefined);
-  const [storedFavorites, setStoredFavorites] = useState<string[] | null>(() => getFavoriteGradeGymIds());
   const [isGymSheetOpen, setIsGymSheetOpen] = useState(false);
+  const [openRow, setOpenRow] = useState<GradeDistributionBar | null>(null);
 
   const allTimeStats = useMemo(() => buildAllTimeStats(scopedSessions), [scopedSessions]);
   const weeklyFrequency = useMemo(() => buildWeeklyFrequency(sessions, WEEKS_SHOWN), [sessions]);
   const trendWeeks = useMemo(() => trendWeeksForPeriod(period, sessions), [period, sessions]);
-  const gradeTrend = useMemo(() => buildHardestSendTrend(sessions, trendWeeks), [sessions, trendWeeks]);
+  const gradeTrend = useMemo(() => buildTopSendsTrend(sessions, trendWeeks), [sessions, trendWeeks]);
+  const firstSends = useMemo(() => findFirstSendsOfTopGrades(sessions, FIRST_SEND_MARKERS), [sessions]);
+  const milestone = useMemo(() => findRecentMilestone(sessions), [sessions]);
   const availableGyms = useMemo(() => getAvailableClimbGyms(scopedSessions), [scopedSessions]);
 
   const activeScope = useMemo(() => {
@@ -87,23 +101,8 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
       .sort((a, b) => b.sessions - a.sessions);
   }, [availableGyms, scopedSessions]);
 
-  const favoriteKeys = useMemo(
-    () => new Set(storedFavorites ?? gymOptions.slice(0, DEFAULT_PINNED).map((g) => g.key)),
-    [storedFavorites, gymOptions]
-  );
   const activeKey = isAllScope ? null : keyOf(activeScope);
-  // Pinned gyms, plus whichever unpinned gym is being viewed so the selection stays visible.
-  const chipGyms = gymOptions.filter((g) => favoriteKeys.has(g.key) || g.key === activeKey);
-  const hasUnpinned = gymOptions.some((g) => !favoriteKeys.has(g.key));
-
-  function handleToggleFavoriteGym(key: string) {
-    const next = new Set(favoriteKeys);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    const ids = [...next];
-    setStoredFavorites(ids);
-    setFavoriteGradeGymIds(ids);
-  }
+  const activeGymName = isAllScope ? 'All gyms' : (gymOptions.find((g) => g.key === activeKey)?.name ?? 'All gyms');
 
   const gradeDistribution = useMemo(() => {
     if (availableGyms.length === 0) return [];
@@ -111,11 +110,20 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
       ? buildGradeDistributionAcrossGyms(scopedSessions, colors.gradePalette)
       : buildGradeDistribution(scopedSessions, activeScope);
   }, [scopedSessions, activeScope, isAllScope, availableGyms.length, colors.gradePalette]);
+  // Hardest at the top, the way a pyramid stands.
+  const pyramidRows = useMemo(() => [...gradeDistribution].reverse(), [gradeDistribution]);
 
   const totalPyramidSends = useMemo(
     () => gradeDistribution.reduce((sum, bar) => sum + bar.count, 0),
     [gradeDistribution]
   );
+
+  const openRowClimbs = useMemo(() => {
+    if (!openRow) return [];
+    return isAllScope
+      ? listClimbsForPyramidRow(scopedSessions, { kind: 'pooled', grade: Number(openRow.label.slice(1)) })
+      : listClimbsForPyramidRow(scopedSessions, { kind: 'gym', gymId: activeScope, gradeLabel: openRow.label });
+  }, [openRow, isAllScope, scopedSessions, activeScope]);
 
   const climbSessions = useMemo(() => scopedSessions.filter((s) => s.type === 'climb'), [scopedSessions]);
   const logsPerSession = useMemo(
@@ -139,10 +147,31 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
     return (best as { color: string | null } | null)?.color ?? undefined;
   }, [logsPerSession]);
 
-  // "Since" is the first time the grade was ever reached, not the first time inside the period.
+  // The first time the grade was ever reached, not the first time inside the period.
   const firstReached = useMemo(
     () => findFirstReachedDate(sessions, allTimeStats.hardestGradeLabel),
     [sessions, allTimeStats.hardestGradeLabel]
+  );
+
+  // Tape colours come from the V-scale palette: the trend pools gyms, so one gym's hex would be arbitrary.
+  const trendMarkers: LineChartMarker[] = firstSends
+    .map((first) => ({
+      index: gradeTrend.findIndex((point) => point.weekStart === first.weekStart),
+      value: first.grade,
+      color:
+        colors.gradePalette.length > 0
+          ? colors.gradePalette[first.grade % colors.gradePalette.length]
+          : colors.chartStrong,
+      label: `First V${first.grade} · ${formatDayMonth(first.at)}`,
+    }))
+    .filter((marker) => marker.index >= 0);
+
+  // The grade above the latest week's usual top grade, and how often it's been sent in the period.
+  const latestUsual = gradeTrend.length > 0 ? Math.round(gradeTrend[gradeTrend.length - 1].usual) : null;
+  const nextGrade = latestUsual === null ? null : latestUsual + 1;
+  const nextGradeSends = useMemo(
+    () => (nextGrade === null ? 0 : countSendsAtGrade(scopedSessions, nextGrade)),
+    [scopedSessions, nextGrade]
   );
 
   const pyramidMax = Math.max(1, ...gradeDistribution.map((bar) => bar.count));
@@ -151,12 +180,21 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
 
   return (
     <View style={styles.stack}>
+      {milestone ? (
+        <View style={styles.milestone}>
+          <View style={styles.milestoneDot} />
+          <Text style={styles.milestoneText} numberOfLines={1}>
+            {formatMilestone(milestone)}
+          </Text>
+        </View>
+      ) : null}
+
       <StatRow
         items={[
           {
             label: 'Hardest',
             value: allTimeStats.hardestGradeLabel ?? '—',
-            sub: firstReached ? `since ${formatMonthDay(firstReached)}` : undefined,
+            sub: firstReached ? `Sent ${formatDayMonth(firstReached)}` : undefined,
             dotColor: allTimeStats.hardestGradeLabel ? hardestColor : undefined,
           },
           {
@@ -181,47 +219,47 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
             </Text>
           </View>
 
-          {availableGyms.length > 1 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scopeChips}>
-              <Chip label="All" selected={isAllScope} onPress={() => handleSelectScope(ALL_GYMS)} />
-              {chipGyms.map((gym) => (
-                <Chip
-                  key={gym.key}
-                  label={gym.name}
-                  selected={gym.key === activeKey}
-                  onPress={() => handleSelectScope(gymIdOf(gym.key))}
-                />
-              ))}
-              <Chip
-                label={hasUnpinned ? 'More ▾' : 'Gyms ▾'}
+          <View style={styles.controlsRow}>
+            {availableGyms.length > 1 ? (
+              <Pressable
                 onPress={() => setIsGymSheetOpen(true)}
-                style={styles.moreChip}
-              />
-            </ScrollView>
-          ) : null}
-
-          <View style={styles.legend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, styles.pyrFlash]} />
-              <Text style={styles.legendText}>Flash</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, styles.pyrSend]} />
-              <Text style={styles.legendText}>Send</Text>
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`Gym: ${activeGymName}. Change gym`}
+                style={({ pressed }) => [styles.gymPicker, pressed ? styles.gymPickerPressed : null]}
+              >
+                <Text style={styles.gymPickerText} numberOfLines={1}>
+                  {activeGymName} ▾
+                </Text>
+              </Pressable>
+            ) : (
+              <View />
+            )}
+            <View style={styles.legend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, styles.pyrFlash]} />
+                <Text style={styles.legendText}>Flash</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, styles.pyrSend]} />
+                <Text style={styles.legendText}>Send</Text>
+              </View>
             </View>
           </View>
 
-          {/* Easiest first, reading down -- the order grades are climbed in. Each bar is
-              flashes in strong ink, then the other sends in quiet grey; the total sits to the right. */}
+          {/* Hardest first, reading down, so the pyramid stands on its base. Each bar is flashes
+              in a soft accent, then the other sends in quiet grey; the total sits to the right.
+              Tap a row for the climbs behind it. */}
           <View style={styles.pyramid}>
-            {gradeDistribution.map((bar) => {
+            {pyramidRows.map((bar) => {
               const sends = bar.count - bar.flashCount;
               return (
-                <View
+                <Pressable
                   key={bar.label}
-                  style={styles.pyrRow}
-                  accessible
-                  accessibilityLabel={`${bar.label}: ${bar.count} climbs, ${bar.flashCount} flashed`}
+                  onPress={() => setOpenRow(bar)}
+                  style={({ pressed }) => [styles.pyrRow, pressed ? styles.pyrRowPressed : null]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${bar.label}: ${bar.count} climbs, ${bar.flashCount} flashed. Show climbs`}
                 >
                   <GradeChip label={bar.label} color={bar.color} style={styles.pyrGrade} />
                   <View style={styles.pyrTrack}>
@@ -235,29 +273,38 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
                     ) : null}
                   </View>
                   <Text style={styles.pyrCount}>{bar.count}</Text>
-                </View>
+                </Pressable>
               );
             })}
           </View>
 
+          {nextGrade !== null ? (
+            <Text style={styles.nextGrade} numberOfLines={1}>
+              Next grade V{nextGrade}:{' '}
+              {nextGradeSends === 0 ? 'no sends yet' : `${nextGradeSends} send${nextGradeSends === 1 ? '' : 's'} so far`}
+            </Text>
+          ) : null}
+
+          {isAllScope ? (
+            <Text style={styles.scopeNote}>Grades from {availableGyms.length} gyms, matched on the V-scale.</Text>
+          ) : null}
+
           <GymScopeSheet
             visible={isGymSheetOpen}
             gyms={gymOptions}
-            favoriteKeys={favoriteKeys}
             selectedKey={activeKey}
             onSelect={(key) => {
-              handleSelectScope(gymIdOf(key));
+              handleSelectScope(key === null ? ALL_GYMS : gymIdOf(key));
               setIsGymSheetOpen(false);
             }}
-            onToggleFavorite={handleToggleFavoriteGym}
             onClose={() => setIsGymSheetOpen(false)}
           />
-          {isAllScope ? (
-            <Text style={styles.scopeNote}>
-              Pooled by V-scale across {availableGyms.length} gyms — grade names differ per gym, the numeric
-              grade doesn't.
-            </Text>
-          ) : null}
+          <GradeClimbsSheet
+            grade={openRow ? { label: openRow.label, color: openRow.color } : null}
+            climbs={openRowClimbs}
+            scopeNote={isAllScope ? PERIOD_NOTE[period] : `${activeGymName} · ${PERIOD_NOTE[period]}`}
+            onClose={() => setOpenRow(null)}
+          />
         </Card>
       ) : null}
 
@@ -265,14 +312,27 @@ export function ClimbProgressView({ sessions, scopedSessions, period }: Props) {
         <Card padded="graph">
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Grade trend</Text>
-            <Text style={styles.cardMeta}>hardest send by week · {trendMeta}</Text>
+            <Text style={styles.cardMeta}>{trendMeta}</Text>
           </View>
+          <Text style={styles.cardSub}>Average of your {TOP_SENDS_AVERAGED} best sends each week</Text>
           <View style={styles.chart}>
             <LineChart
-              points={gradeTrend.map((p) => ({ value: p.grade, label: p.weekLabel }))}
+              points={gradeTrend.map((p) => ({ value: p.usual, label: p.weekLabel }))}
+              dots={gradeTrend.map((p) => (p.hardest === p.usual ? null : p.hardest))}
+              markers={trendMarkers}
               height={140}
               valueFormatter={(value) => `V${Math.round(value)}`}
             />
+          </View>
+          <View style={[styles.legend, styles.trendLegend]}>
+            <View style={styles.legendItem}>
+              <View style={styles.legendLine} />
+              <Text style={styles.legendText}>Top {TOP_SENDS_AVERAGED} average</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={styles.legendRing} />
+              <Text style={styles.legendText}>Hardest send</Text>
+            </View>
           </View>
         </Card>
       ) : null}
@@ -309,6 +369,15 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
   StyleSheet.create({
     stack: { gap: spacing.xs },
 
+    milestone: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.xxs,
+    },
+    milestoneDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.accent },
+    milestoneText: { ...typography.bodyMuted, color: colors.textPrimary, flexShrink: 1 },
+
     cardHeader: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -317,19 +386,36 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     },
     cardTitle: { ...typography.title },
     cardMeta: { ...typography.meta, flexShrink: 1, textAlign: 'right' },
+    cardSub: { ...typography.meta, marginTop: spacing.xxs },
 
-    // Scrolls rather than wraps: the row stays one clean line however many gyms
-    // the user has climbed at.
-    scopeChips: { flexDirection: 'row', gap: spacing.xxs, paddingTop: spacing.xs },
+    controlsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.xs,
+      marginTop: spacing.xs,
+    },
+    gymPicker: {
+      flexShrink: 1,
+      minHeight: 32,
+      paddingHorizontal: spacing.s,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      justifyContent: 'center',
+    },
+    gymPickerPressed: { backgroundColor: colors.fill },
+    gymPickerText: { ...font('medium'), fontSize: 13, color: colors.textPrimary },
     scopeNote: {
       ...typography.meta,
       color: colors.textMuted,
-      marginTop: spacing.xs,
+      marginTop: spacing.xxs,
       lineHeight: 18,
     },
+    nextGrade: { ...typography.meta, marginTop: spacing.s },
 
-    pyramid: { marginTop: spacing.xs, gap: 8 },
-    pyrRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    pyramid: { marginTop: spacing.s, gap: 2 },
+    pyrRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 3, borderRadius: radius.sm },
+    pyrRowPressed: { backgroundColor: colors.fillSoft },
     pyrGrade: { width: 40 },
     pyrTrack: {
       flex: 1,
@@ -341,7 +427,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       overflow: 'hidden',
     },
     pyrSegment: { height: '100%', borderRadius: 6 },
-    pyrFlash: { backgroundColor: colors.chartStrong },
+    // Soft accent for flashes, quiet grey for sends: both read on the dark and the white card
+    // without a bright block pulling the eye off the grade labels.
+    pyrFlash: { backgroundColor: colors.textSecondary },
     pyrSend: { backgroundColor: colors.chartQuiet },
     pyrCount: {
       ...font('semibold'),
@@ -351,10 +439,12 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       textAlign: 'right',
       fontVariant: ['tabular-nums'],
     },
-    moreChip: { borderStyle: 'dashed' },
-    legend: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.xs },
+    legend: { flexDirection: 'row', gap: spacing.s },
+    trendLegend: { marginTop: spacing.xs },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     legendDot: { width: 8, height: 8, borderRadius: 4 },
+    legendLine: { width: 12, height: 2, borderRadius: 1, backgroundColor: colors.chartStrong },
+    legendRing: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: colors.textMuted },
     legendText: { ...typography.meta },
 
     chart: { marginTop: spacing.s },

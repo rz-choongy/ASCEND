@@ -25,7 +25,9 @@ import {
   findSessionHighIndex,
   formatVGrade,
   isGradeBand,
+  isNewThirtyDayHigh,
   loggedClimbVGrade,
+  pickStartingGrade,
 } from '../domain/climbLogUtils';
 import { formatElapsed } from '../domain/dateUtils';
 import {
@@ -45,6 +47,8 @@ import {
   getShowTileVRange,
 } from '../domain/settingsStore';
 import { useClimbSessionLogs } from '../hooks/useClimbSessionLogs';
+import { HighPulse } from './climb/HighPulse';
+import { SessionSummarySheet } from './climb/SessionSummarySheet';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   BoltIcon,
@@ -141,6 +145,21 @@ const loadGrades = (gymId: string | null): GradeOption[] => {
   return grades.length > 0 ? grades : GRADE_OPTIONS;
 };
 
+/**
+ * The grade the logger opens on: the last climb in this session, else the last climb of the
+ * most recent earlier session at this gym, else at any gym, else the first grade.
+ */
+const startingGrade = (sessionId: string, gymId: string | null, grades: GradeOption[]): GradeOption => {
+  const pastSessions = getCompletedSessions('climb')
+    .filter((row) => row.id !== sessionId)
+    .reverse()
+    .map((row) => ({ gymId: row.gym_id, getLogs: () => applyClimbEvents(getSessionEvents(row.id)) }));
+  return (
+    pickStartingGrade(grades, applyClimbEvents(getSessionEvents(sessionId)), pastSessions, gymId) ??
+    GRADE_OPTIONS[0]
+  );
+};
+
 export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProps) => {
   const { colors, typography, shadows } = useTheme();
   const styles = useMemo(
@@ -169,6 +188,11 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     result: 'SEND' | 'FLASH';
     grade: GradeOption;
   } | null>(null);
+  /** False until the first focus has picked a starting grade. */
+  const gradeInitializedRef = useRef(false);
+  const [showSummary, setShowSummary] = useState(false);
+  /** The row that just set a new 30-day high, for its one-off colour pulse. */
+  const [pulseEventId, setPulseEventId] = useState<string | null>(null);
 
   const logs = useClimbSessionLogs(sessionId, refreshKey);
   const recentLogs = useMemo(() => logs.slice().reverse(), [logs]);
@@ -240,12 +264,15 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
 
       setCurrentGym(gym);
       setGradeOptions(grades);
+      // First open: start on the grade last logged. Coming back (e.g. from the gym picker):
+      // keep the pick if this gym still has it, else work it out again for the new gym.
+      const firstFocus = !gradeInitializedRef.current;
+      gradeInitializedRef.current = true;
       setSelectedGrade((previous) => {
-        return (
-          grades.find((grade) => grade.id === previous.id || grade.label === previous.label) ??
-          grades[0] ??
-          GRADE_OPTIONS[0]
-        );
+        const kept = firstFocus
+          ? undefined
+          : grades.find((grade) => grade.id === previous.id || grade.label === previous.label);
+        return kept ?? startingGrade(sessionId, gym?.id ?? null, grades);
       });
     }, [route.params.gymId, sessionId])
   );
@@ -335,8 +362,14 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     setTimeout(() => {
       isLoggingRef.current = false;
     }, 400);
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    appendEvent(sessionId, 'CLIMB_LOGGED', {
+    // Same rule as the "30-day high" badge. That climb gets one firm tap instead of the usual one.
+    const newHigh = isNewThirtyDayHigh(logs, gradeMax, priorMonthBest);
+    if (newHigh) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const eventId = appendEvent(sessionId, 'CLIMB_LOGGED', {
       gradeId: grade.id,
       gradeLabel: grade.label,
       gradeMin,
@@ -346,6 +379,7 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       result,
       climbName: climbName.trim() || null,
     });
+    if (newHigh) setPulseEventId(eventId);
     setClimbName('');
     bump();
   };
@@ -380,15 +414,27 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
     bump();
   };
 
+  const finishAndLeave = () => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSessionTitle(sessionId, title.trim());
+    // popTo goes back to the existing tabs; navigate would stack a second copy on top.
+    finishSession(sessionId, () => {
+      setShowSummary(false);
+      navigation.popTo('Tabs');
+    });
+  };
+
   const handleDone = () => {
     if (session?.status !== 'active') {
       navigation.popTo('Tabs');
       return;
     }
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSessionTitle(sessionId, title.trim());
-    // popTo goes back to the existing tabs; navigate would stack a second copy on top.
-    finishSession(sessionId, () => navigation.popTo('Tabs'));
+    // A session with climbs gets one look back before it closes; Done in there finishes it.
+    if (logs.length > 0) {
+      setShowSummary(true);
+      return;
+    }
+    finishAndLeave();
   };
 
   if (!session) {
@@ -404,6 +450,16 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   const elapsedMs = Math.max(0, now - session.started_at);
 
   const stripColors = logs.map((log) => log.gradeColor ?? colors.chartQuiet);
+  const isThirtyDayHigh = sessionHighEventId != null;
+  const shareMessage = sessionStats
+    ? [
+        `${title.trim() || DEFAULT_TITLE}${currentGymName ? ` at ${currentGymName}` : ''}`,
+        `${sessionStats.count} send${sessionStats.count === 1 ? '' : 's'} · best ${sessionStats.bestLabel}${
+          isThirtyDayHigh ? ' · 30-day high' : ''
+        }`,
+        `In order: ${logs.map((log) => log.gradeLabel).join(', ')}`,
+      ].join('\n')
+    : '';
 
   return (
     // Bottom edge too: Done sits at the very bottom and must clear the home indicator.
@@ -597,6 +653,9 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
                   .join(', ')}
                 style={styles.logRow}
               >
+                {log.eventId === pulseEventId ? (
+                  <HighPulse color={log.gradeColor ?? colors.accent} />
+                ) : null}
                 <GradeChip
                   variant="dot"
                   label={log.gradeLabel}
@@ -635,6 +694,19 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
         <View style={styles.finishBar}>
           <Button label="Done" variant="secondary" onPress={handleDone} style={styles.finishButton} />
         </View>
+      ) : null}
+
+      {sessionStats ? (
+        <SessionSummarySheet
+          visible={showSummary}
+          stripColors={stripColors}
+          sendCount={sessionStats.count}
+          bestLabel={sessionStats.bestLabel}
+          isThirtyDayHigh={isThirtyDayHigh}
+          shareMessage={shareMessage}
+          onDone={finishAndLeave}
+          onClose={() => setShowSummary(false)}
+        />
       ) : null}
 
       {/* Wide colour bands get pinned to an exact grade before they're written. */}

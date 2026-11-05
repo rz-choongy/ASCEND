@@ -73,7 +73,7 @@ export function ProgressScreen() {
     <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance + spacing.lg }]}
       >
         <Text style={styles.screenTitle}>Progress</Text>
 

@@ -41,6 +41,7 @@ export {
 } from './components/Icon';
 export { IconButton } from './components/IconButton';
 export { ListGroup, ListRow, ListSectionHeader } from './components/ListRow';
+export { OverflowMenu, type OverflowMenuItem } from './components/OverflowMenu';
 export { PressableScale } from './components/PressableScale';
 export { ScreenHeader } from './components/ScreenHeader';
 export { SessionStrip } from './components/SessionStrip';

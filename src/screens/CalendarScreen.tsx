@@ -13,6 +13,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   buildSessionReplayMap,
+  dayDotKinds,
   type SessionReplay,
 } from '../domain/calendarInsights';
 import { buildMonthGrid, chunkWeeks } from '../domain/calendarGrid';
@@ -440,8 +441,7 @@ export function CalendarScreen() {
                   const daySessions = (sessionsByDate.get(key) ?? []).filter(
                     (s) => !typeFilter || s.type === typeFilter
                   );
-                  const climbed = daySessions.some((s) => s.type === 'climb');
-                  const trained = daySessions.some((s) => s.type === 'strength');
+                  const dots = dayDotKinds(daySessions);
                   const isToday = sameDay(day, today);
                   const isSelected = sameDay(day, selectedDate);
 
@@ -468,10 +468,15 @@ export function CalendarScreen() {
                           {day.getDate()}
                         </Text>
                       </View>
-                      {/* Same marks as the Today week strip: a filled dot for a climb, a ring
-                          around it for strength. */}
-                      <View style={[styles.dayRing, trained ? styles.dayRingStrength : null]}>
-                        <View style={[styles.dayDot, climbed ? styles.dayDotClimb : null]} />
+                      {/* One small dot per type: accent for climbing, grey for strength.
+                          A day with both shows the two side by side. */}
+                      <View style={styles.dayDots}>
+                        {dots.map((kind) => (
+                          <View
+                            key={kind}
+                            style={[styles.dayDot, kind === 'climb' ? styles.dayDotClimb : styles.dayDotStrength]}
+                          />
+                        ))}
                       </View>
                     </TouchableOpacity>
                   );
@@ -658,27 +663,25 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
     color: colors.onAction,
     ...font('semibold'),
   },
-  dayRing: {
-    width: 12,
+  // Fixed height so a day with no dots lines up with one that has them.
+  dayDots: {
     height: 12,
-    borderRadius: 6,
     marginTop: 2,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dayRingStrength: {
-    borderColor: colors.textSecondary,
+    gap: 3,
   },
   dayDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'transparent',
   },
   dayDotClimb: {
-    backgroundColor: colors.textPrimary,
+    backgroundColor: colors.accent,
+  },
+  dayDotStrength: {
+    backgroundColor: colors.textSecondary,
   },
 
   // Divider

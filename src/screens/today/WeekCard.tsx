@@ -7,34 +7,51 @@ import type { Typography } from '../../ui/tokens/typography';
 
 type Props = {
   week: WeekActivity;
+  /** Consecutive weeks with a session. */
   streak: number;
+  /** Sessions in a usual week; reaching it joins the week's dots with a line. */
+  usualTarget: number;
+  /** A quiet note on days without a session, e.g. "Rest day. Last climbed Tue". */
+  restLine?: string | null;
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Mon-Sun: a filled circle on days with a session, a ring around today. Totals sit in the header. */
-export const WeekCard = ({ week, streak }: Props) => {
+export const WeekCard = ({ week, streak, usualTarget, restLine }: Props) => {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
 
-  const summary = [
-    plural(week.sessions, 'session', 'sessions'),
-    plural(week.sends, 'send', 'sends'),
-    plural(week.sets, 'set', 'sets'),
-  ].join(', ');
+  const full = week.sessions >= usualTarget;
+  const summary = full
+    ? 'Usual week done'
+    : [
+        plural(week.sessions, 'session', 'sessions'),
+        plural(week.sends, 'send', 'sends'),
+        plural(week.sets, 'set', 'sets'),
+      ].join(', ');
+  const activeIdx = week.days.flatMap((day, i) => (day.climbed || day.trained ? [i] : []));
+  const first = activeIdx[0];
+  const last = activeIdx[activeIdx.length - 1];
+  // Each day is an equal column with its dot centred, so the line runs centre to centre.
+  const join =
+    full && first !== undefined && last > first
+      ? { left: `${((first + 0.5) / 7) * 100}%` as const, width: `${((last - first) / 7) * 100}%` as const }
+      : null;
 
   return (
     <Card padded="compact" style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.titleBlock}>
           <Text style={styles.title}>This week</Text>
-          {streak > 0 ? <Text style={styles.streak}>{`${streak}-day streak`}</Text> : null}
+          {streak > 0 ? <Text style={styles.streak}>{streak === 1 ? '1 week' : `${streak} weeks in a row`}</Text> : null}
         </View>
         <Text style={styles.summary} numberOfLines={1}>
           {summary}
         </Text>
       </View>
       <View style={styles.days}>
+        {join ? <View pointerEvents="none" style={[styles.join, join]} /> : null}
         {week.days.map((day, i) => {
           const active = day.climbed || day.trained;
           return (
@@ -55,6 +72,7 @@ export const WeekCard = ({ week, streak }: Props) => {
           );
         })}
       </View>
+      {restLine ? <Text style={styles.rest}>{restLine}</Text> : null}
     </Card>
   );
 };
@@ -115,4 +133,16 @@ const createStyles = (colors: ThemeColors, typography: Typography) =>
       backgroundColor: colors.textSecondary,
     },
     circleToday: {},
+    // Sits behind the dots at their centre: label line (14) + gap (4) + half a dot, less half the line.
+    join: {
+      position: 'absolute',
+      top: 14 + 4 + 3.5 - 1,
+      height: 2,
+      borderRadius: 1,
+      backgroundColor: colors.accent,
+      opacity: 0.35,
+    },
+    rest: {
+      ...typography.meta,
+    },
   });
