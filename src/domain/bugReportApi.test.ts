@@ -53,26 +53,62 @@ describe('submitBugReport', () => {
       app_version: '2.5.1',
       diagnostics: { Platform: 'android 36' },
       screenshot_path: null,
+      attachment_paths: [],
     });
   });
 
-  it('uploads the screenshot first and links it by report id', async () => {
+  it('uploads each attachment in order and links them by report id', async () => {
     const api = loadApi({ url: 'https://x.supabase.co', key: 'pk' });
     fetchMock.mockResolvedValue(okResponse);
 
-    await api.submitBugReport({ ...input, screenshotUri: 'file:///shot.png' });
+    await api.submitBugReport({
+      ...input,
+      attachments: [
+        { uri: 'file:///rec.mp4', kind: 'video' },
+        { uri: 'file:///shot.png', kind: 'image' },
+        { uri: 'content://media/42', kind: 'image', mimeType: 'image/jpeg' },
+      ],
+    });
 
-    expect(fetchMock.mock.calls[0][0]).toBe('https://x.supabase.co/storage/v1/object/bug-screenshots/report-1.png');
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).screenshot_path).toBe('report-1.png');
+    const urls = fetchMock.mock.calls.map(([url]) => url);
+    expect(urls.slice(0, 3)).toEqual([
+      'https://x.supabase.co/storage/v1/object/bug-screenshots/report-1-0.mp4',
+      'https://x.supabase.co/storage/v1/object/bug-screenshots/report-1-1.png',
+      'https://x.supabase.co/storage/v1/object/bug-screenshots/report-1-2.jpg',
+    ]);
+    const row = JSON.parse(fetchMock.mock.calls[3][1].body);
+    expect(row.attachment_paths).toEqual(['report-1-0.mp4', 'report-1-1.png', 'report-1-2.jpg']);
+    // The first image, not the video, so older triage tooling still finds a screenshot.
+    expect(row.screenshot_path).toBe('report-1-1.png');
   });
 
-  it('still files the report when the screenshot upload fails', async () => {
+  it('still files the report when an upload fails, and notes the dropped file', async () => {
     const api = loadApi({ url: 'https://x.supabase.co', key: 'pk' });
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 413 }).mockResolvedValueOnce(okResponse);
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, status: 413 })
+      .mockResolvedValueOnce(okResponse)
+      .mockResolvedValueOnce(okResponse);
 
-    await api.submitBugReport({ ...input, screenshotUri: 'file:///shot.jpg' });
+    await api.submitBugReport({
+      ...input,
+      attachments: [
+        { uri: 'file:///big.mov', kind: 'video' },
+        { uri: 'file:///shot.jpg', kind: 'image' },
+      ],
+    });
 
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).screenshot_path).toBeNull();
+    const row = JSON.parse(fetchMock.mock.calls[2][1].body);
+    expect(row.attachment_paths).toEqual(['report-1-1.jpg']);
+    expect(row.diagnostics['Dropped attachments']).toBe('1');
+  });
+
+  it('picks the upload type from the mime type when the uri has no extension', () => {
+    const api = loadApi({});
+    expect(api.uploadTypeFor({ uri: 'content://x', kind: 'video', mimeType: 'video/quicktime' })).toEqual({
+      ext: 'mov',
+      type: 'video/quicktime',
+    });
+    expect(api.uploadTypeFor({ uri: 'content://x', kind: 'image' })).toEqual({ ext: 'jpg', type: 'image/jpeg' });
   });
 
   it('throws when the insert is rejected', async () => {

@@ -4,7 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { requireOptionalNativeModule } from 'expo';
 import * as Updates from 'expo-updates';
 import { APP_VERSION } from '../changelog';
-import { isBugReportApiConfigured, submitBugReport } from '../domain/bugReportApi';
+import {
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENTS,
+  isBugReportApiConfigured,
+  submitBugReport,
+  type BugAttachment,
+} from '../domain/bugReportApi';
 import { getInstallId } from '../domain/settingsStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -51,6 +57,13 @@ const collectDiagnostics = (): Record<string, string> => ({
   Reported: new Date().toLocaleString(),
 });
 
+type PickedAttachment = BugAttachment & { durationMs?: number | null };
+
+const formatDuration = (ms: number) => {
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
 const formatDiagnostics = (diagnostics: Record<string, string>) =>
   Object.entries(diagnostics)
     .map(([key, value]) => `${key}: ${value}`)
@@ -61,20 +74,22 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
   const styles = useMemo(() => createStyles(colors, typography, shadows), [colors, typography, shadows]);
 
   const [description, setDescription] = useState('');
-  const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<PickedAttachment[]>([]);
   const [sending, setSending] = useState(false);
 
   const diagnosticsData = useMemo(collectDiagnostics, []);
   const diagnostics = useMemo(() => formatDiagnostics(diagnosticsData), [diagnosticsData]);
   const canSend = description.trim().length > 0 && !sending;
 
-  const handleAttachScreenshot = async () => {
+  const handleAddAttachments = async () => {
+    const room = MAX_ATTACHMENTS - attachments.length;
+    if (room <= 0) return;
     try {
       // Imported lazily, not at module scope, and only after the probe: BugReportScreen is imported
       // eagerly by App.tsx, and expo-image-picker throws (fatally, see hasNativeModule) when
       // its native module isn't in the install.
       if (!hasNativeModule('ExponentImagePicker')) {
-        showDialog("Can't attach a screenshot yet", 'This install needs a new build to attach screenshots to bug reports.');
+        showDialog("Can't attach files yet", 'This install needs a new build to attach screenshots to bug reports.');
         return;
       }
       const ImagePicker = await import('expo-image-picker');
@@ -82,16 +97,30 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
       // picker, which needs none. Asking anyway is worse than useless on Android 13+, where
       // READ_EXTERNAL_STORAGE can never be granted, so the request always came back denied.
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ['images', 'videos'],
+        allowsMultipleSelection: true,
+        selectionLimit: room,
         quality: 0.7,
       });
-      if (!result.canceled && result.assets[0]) {
-        setScreenshotUri(result.assets[0].uri);
+      if (result.canceled) return;
+      const picked = result.assets.map<PickedAttachment & { tooBig: boolean }>((asset) => ({
+        uri: asset.uri,
+        kind: asset.type === 'video' ? 'video' : 'image',
+        mimeType: asset.mimeType ?? null,
+        durationMs: asset.duration ?? null,
+        tooBig: (asset.fileSize ?? 0) > MAX_ATTACHMENT_BYTES,
+      }));
+      const kept = picked.filter((a) => !a.tooBig).map(({ tooBig: _tooBig, ...a }) => a);
+      setAttachments((current) => [...current, ...kept].slice(0, MAX_ATTACHMENTS));
+      if (kept.length < picked.length) {
+        showDialog('Video too large', 'Files over 50 MB are left out. Trim the recording to the part that shows the bug.');
       }
     } catch (e) {
-      showDialog("Couldn't attach the screenshot", e instanceof Error ? e.message : 'Something went wrong.');
+      showDialog("Couldn't attach the file", e instanceof Error ? e.message : 'Something went wrong.');
     }
   };
+
+  const removeAttachment = (uri: string) => setAttachments((current) => current.filter((a) => a.uri !== uri));
 
   const handleSend = async () => {
     if (!canSend) return;
@@ -107,7 +136,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
           description,
           appVersion: APP_VERSION,
           diagnostics: diagnosticsData,
-          screenshotUri,
+          attachments,
         });
         setSending(false);
         navigation.goBack();
@@ -134,7 +163,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
           recipients: [REPORT_EMAIL],
           subject,
           body,
-          attachments: screenshotUri ? [screenshotUri] : [],
+          attachments: attachments.map((a) => a.uri),
         });
         if (result.status !== MailComposer.MailComposerStatus.CANCELLED) {
           navigation.goBack();
@@ -143,7 +172,7 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
         // No mail account configured -- hand the text to the share sheet so the
         // report can still go out some other way. The share sheet doesn't
         // reliably carry both a file and a message together, so this
-        // fallback path is text-only even if a screenshot was attached.
+        // fallback path is text-only even if files were attached.
         await Share.share({ message: `${subject}\n\n${body}` });
         navigation.goBack();
       }
@@ -180,28 +209,45 @@ export const BugReportScreen = ({ navigation }: RootStackScreenProps<'BugReport'
           editable={!sending}
         />
 
-        <Text style={styles.label}>Screenshot</Text>
-        {screenshotUri ? (
-          <View style={styles.screenshotPreview}>
-            <Image source={{ uri: screenshotUri }} style={styles.screenshotImage} />
-            <IconButton
-              variant="bare"
-              size={28}
-              onPress={() => setScreenshotUri(null)}
-              accessibilityLabel="Remove screenshot"
-              style={styles.screenshotRemove}
-            >
-              <CloseIcon size={14} color={colors.textPrimary} />
-            </IconButton>
+        <Text style={styles.label}>Screenshots or a screen recording</Text>
+        {attachments.length > 0 && (
+          <View style={styles.attachments}>
+            {attachments.map((attachment, index) => (
+              <View key={attachment.uri} style={styles.attachment}>
+                {attachment.kind === 'image' ? (
+                  <Image source={{ uri: attachment.uri }} style={styles.attachmentTile} />
+                ) : (
+                  // No thumbnail module in the build, so a video shows as a labelled tile.
+                  <View style={[styles.attachmentTile, styles.videoTile]}>
+                    <Text style={styles.videoGlyph}>▶</Text>
+                    <Text style={styles.videoLabel}>
+                      {attachment.durationMs ? formatDuration(attachment.durationMs) : 'Video'}
+                    </Text>
+                  </View>
+                )}
+                <IconButton
+                  variant="bare"
+                  size={28}
+                  onPress={() => removeAttachment(attachment.uri)}
+                  accessibilityLabel={`Remove ${attachment.kind === 'video' ? 'video' : 'screenshot'} ${index + 1}`}
+                  style={styles.attachmentRemove}
+                  disabled={sending}
+                >
+                  <CloseIcon size={14} color={colors.textPrimary} />
+                </IconButton>
+              </View>
+            ))}
           </View>
-        ) : (
+        )}
+        {attachments.length < MAX_ATTACHMENTS && (
           <Button
-            label="Attach a screenshot"
+            label={attachments.length === 0 ? 'Add screenshots or video' : 'Add more'}
             variant="secondary"
-            onPress={handleAttachScreenshot}
+            onPress={handleAddAttachments}
             disabled={sending}
           />
         )}
+        <Text style={styles.hint}>Up to {MAX_ATTACHMENTS} files. Videos up to 50 MB.</Text>
 
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Included with your report</Text>
@@ -245,22 +291,47 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
       fontSize: 14,
       ...font('regular'),
     },
-    screenshotPreview: {
-      alignSelf: 'flex-start',
+    attachments: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.s,
+      paddingTop: spacing.xs,
+      paddingBottom: spacing.xxs,
     },
-    screenshotImage: {
-      width: 96,
-      height: 96,
+    attachment: {
+      position: 'relative',
+    },
+    attachmentTile: {
+      width: 80,
+      height: 80,
       borderRadius: radius.md,
       backgroundColor: colors.fill,
     },
-    screenshotRemove: {
+    videoTile: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xxs,
+    },
+    videoGlyph: {
+      color: colors.textPrimary,
+      fontSize: 18,
+      lineHeight: 22,
+    },
+    videoLabel: {
+      ...typography.meta,
+      color: colors.textSecondary,
+    },
+    attachmentRemove: {
       position: 'absolute',
       top: -8,
       right: -8,
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+    },
+    hint: {
+      ...typography.meta,
+      color: colors.textMuted,
     },
     notice: {
       backgroundColor: colors.surface,

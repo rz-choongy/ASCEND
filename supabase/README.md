@@ -4,6 +4,9 @@ Only used for bug reports in v1. App data stays on-device.
 
 - `migrations/20261020000000_bug_reports.sql`: `public.bug_reports` (insert-only for the app),
   `private.owner_installs`, and the private `bug-screenshots` bucket.
+- `migrations/20261106000000_bug_report_attachments.sql`: `attachment_paths` (up to 6 files per
+  report, named `<id>-<n>.<ext>`), and videos (mp4/mov/webm, 50 MB) in the same bucket.
+  `screenshot_path` still holds the first image for older tooling.
 - The app needs `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (publishable key) in
   `.env.local` and as EAS environment variables. Without them, reports fall back to email.
 - Mark an install as the owner's (skips the bug-vs-feature check) from the SQL editor, using the

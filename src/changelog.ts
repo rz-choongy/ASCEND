@@ -17,6 +17,13 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.4',
+    date: '2026-11-06',
+    changes: [
+      { kind: 'improved', text: 'Bug reports take up to 6 screenshots, or a screen recording up to 50 MB.' },
+    ],
+  },
+  {
     version: '2.7.3',
     date: '2026-11-05',
     changes: [
