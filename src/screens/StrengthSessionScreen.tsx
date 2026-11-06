@@ -24,7 +24,6 @@ import {
 import { getRoutine, type RoutineItem } from '../domain/routineStore';
 import {
   appendEvent,
-  deleteEmptySession,
   getAbandonedSessions,
   getCompletedSessions,
   getSessionById,
@@ -316,64 +315,11 @@ export const StrengthSessionScreen = ({ route, navigation }: StrengthSessionScre
     return () => clearInterval(interval);
   }, [showTimer, session?.status]);
 
-  // See ClimbSessionScreen for why this listener exists: any exit path (header back,
-  // hardware back, swipe, or Done) must never leave a session stuck 'active' forever.
-  // Both cases now ask first: an empty session (nothing logged) offers Delete/Keep going,
-  // while one with real sets offers Stay/Leave for now/Finish session (no discard), since 'abandoned'
-  // sessions are excluded from every stats query and a mis-tap would otherwise erase
-  // logged sets with no way back.
-  const leavingRef = useRef(false);
+  // Leaving (X, back, swipe) is one step: the session keeps running and Today shows it
+  // with Resume and Finish. Only Done or Finish end it, so nothing is lost by accident.
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      if (leavingRef.current) return;
-      const current = getSessionById(sessionId);
-      if (current?.status !== 'active') return;
-
-      const hasUnsavedLogs = applySetEvents(getSessionEvents(sessionId)).length > 0;
-      if (!hasUnsavedLogs) {
-        e.preventDefault();
-        showDialog('Leave this session?', "You haven't logged anything yet.", [
-          { text: 'Stay', style: 'cancel' },
-          {
-            text: 'Leave for now',
-            onPress: () => {
-              leavingRef.current = true;
-              navigation.dispatch(e.data.action);
-            },
-          },
-          {
-            text: 'Delete empty session',
-            style: 'destructive',
-            onPress: () => {
-              deleteEmptySession(sessionId);
-              navigation.dispatch(e.data.action);
-            },
-          },
-        ]);
-        return;
-      }
-
-      e.preventDefault();
-      // No discard here: a session with logs can only be finished or left running.
-      // Leaving keeps it active, so the user can check another tab and resume from Today.
-      showDialog('Leave this session?', 'It keeps running. Resume it from Today.', [
-        { text: 'Stay', style: 'cancel' },
-        {
-          text: 'Leave for now',
-          onPress: () => {
-            setSessionTitle(sessionId, title.trim());
-            leavingRef.current = true;
-            navigation.dispatch(e.data.action);
-          },
-        },
-        {
-          text: 'Finish session',
-          onPress: () => {
-            setSessionTitle(sessionId, title.trim());
-            finishSession(sessionId, () => navigation.dispatch(e.data.action));
-          },
-        },
-      ]);
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      if (getSessionById(sessionId)?.status === 'active') setSessionTitle(sessionId, title.trim());
     });
     return unsubscribe;
   }, [navigation, sessionId, title]);
