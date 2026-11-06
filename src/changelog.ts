@@ -32,6 +32,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       { kind: 'improved', text: 'Today no longer shows your last session twice, and only shows comparisons when you improved.' },
       { kind: 'improved', text: 'Calendar dots show climbing and strength in different colours.' },
       { kind: 'improved', text: 'Delete session moved into the ... menu on a session.' },
+      { kind: 'improved', text: 'Leaving a session no longer offers Discard. Leave for now keeps it running so you can resume from Today.' },
     ],
   },
   {

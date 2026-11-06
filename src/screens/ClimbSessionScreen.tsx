@@ -37,7 +37,6 @@ import {
   getCompletedSessions,
   getSessionById,
   getSessionEvents,
-  setSessionStatus,
   setSessionTitle,
 } from '../domain/sessionStore';
 import { finishSession } from './confirmEndTime';
@@ -280,21 +279,30 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
   // Any way of leaving this screen — header back, Android hardware back, swipe, or the
   // Done flow above — should never leave a session stuck 'active' forever. If Done already
   // completed it, this is a no-op. Both cases now ask first: an empty session (nothing
-  // logged) offers Delete/Keep going, while one with real logs offers Keep logging/Finish
-  // session/Discard, since 'abandoned' sessions are excluded from every stats query and a
+  // logged) offers Delete/Keep going, while one with real logs offers Stay/Leave for now/Finish
+  // session (no discard), since 'abandoned' sessions are excluded from every stats query and a
   // mis-tap would otherwise erase logged climbs with no way back.
+  const leavingRef = useRef(false);
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (leavingRef.current) return;
       const current = getSessionById(sessionId);
       if (current?.status !== 'active') return;
 
       const hasUnsavedLogs = applyClimbEvents(getSessionEvents(sessionId)).length > 0;
       if (!hasUnsavedLogs) {
         e.preventDefault();
-        showDialog('Discard this session?', "You haven't logged anything yet.", [
-          { text: 'Keep going', style: 'cancel' },
+        showDialog('Leave this session?', "You haven't logged anything yet.", [
+          { text: 'Stay', style: 'cancel' },
           {
-            text: 'Delete',
+            text: 'Leave for now',
+            onPress: () => {
+              leavingRef.current = true;
+              navigation.dispatch(e.data.action);
+            },
+          },
+          {
+            text: 'Delete empty session',
             style: 'destructive',
             onPress: () => {
               deleteEmptySession(sessionId);
@@ -306,21 +314,23 @@ export const ClimbSessionScreen = ({ route, navigation }: ClimbSessionScreenProp
       }
 
       e.preventDefault();
-      showDialog('Leave this session?', 'You have logged climbs in this session.', [
-        { text: 'Keep logging', style: 'cancel' },
+      // No discard here: a session with logs can only be finished or left running.
+      // Leaving keeps it active, so the user can check another tab and resume from Today.
+      showDialog('Leave this session?', 'It keeps running. Resume it from Today.', [
+        { text: 'Stay', style: 'cancel' },
+        {
+          text: 'Leave for now',
+          onPress: () => {
+            setSessionTitle(sessionId, title.trim());
+            leavingRef.current = true;
+            navigation.dispatch(e.data.action);
+          },
+        },
         {
           text: 'Finish session',
           onPress: () => {
             setSessionTitle(sessionId, title.trim());
             finishSession(sessionId, () => navigation.dispatch(e.data.action));
-          },
-        },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => {
-            setSessionStatus(sessionId, 'abandoned');
-            navigation.dispatch(e.data.action);
           },
         },
       ]);
