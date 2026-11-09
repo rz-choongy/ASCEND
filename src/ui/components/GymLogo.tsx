@@ -1,29 +1,41 @@
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { gymLogoUrl } from '../../domain/gymLogo';
 import { font } from '../tokens/fonts';
 import { useTheme } from '../theme/ThemeContext';
 
 type GymLogoProps = {
-  /** Website the logo comes from. Null shows the gym's first letter. */
-  domain: string | null;
+  /** Logo image (web URL or picked photo). Null shows the gym's first letter. */
+  uri: string | null;
   name: string;
   size?: number;
 };
 
 /** A gym's logo loaded from the web, or its first letter when there is none or it fails to load. */
-export const GymLogo = ({ domain, name, size = 36 }: GymLogoProps) => {
+export const GymLogo = ({ uri, name, size = 36 }: GymLogoProps) => {
   const { colors } = useTheme();
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [domain]);
+  useEffect(() => setFailed(false), [uri]);
 
   const box = { width: size, height: size, borderRadius: size * 0.28 };
 
-  if (domain && !failed) {
+  // A picked photo fills its tile; a website icon sits inside a white one.
+  if (uri?.startsWith('data:') && !failed) {
+    return (
+      <Image
+        source={{ uri }}
+        style={[box, { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }]}
+        resizeMode="cover"
+        onError={() => setFailed(true)}
+        accessibilityIgnoresInvertColors
+      />
+    );
+  }
+
+  if (uri && !failed) {
     return (
       <View style={[styles.logoTile, box, { borderColor: colors.border }]}>
         <Image
-          source={{ uri: gymLogoUrl(domain) }}
+          source={{ uri }}
           style={{ width: size * 0.78, height: size * 0.78 }}
           resizeMode="contain"
           onError={() => setFailed(true)}

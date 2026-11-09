@@ -34,6 +34,8 @@ export type GymRow = {
   parent_id: string | null;
   /** Website the logo comes from. NULL = not looked up yet, '' = no logo. */
   logo_domain?: string | null;
+  /** A logo picked from photos, as a data: URI. Wins over logo_domain. */
+  logo_image?: string | null;
   created_at: number;
   updated_at: number;
 };

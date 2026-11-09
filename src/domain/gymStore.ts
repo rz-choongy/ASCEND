@@ -21,6 +21,8 @@ export type CreateGymInput = {
   parentId?: string | null;
   /** Website the logo comes from; '' = no logo, omitted = look it up later. */
   logoDomain?: string | null;
+  /** A logo picked from photos (data: URI). */
+  logoImage?: string | null;
 };
 
 export type UpdateGymInput = {
@@ -364,9 +366,10 @@ export const createGym = (input: CreateGymInput): GymRow => {
         is_default,
         parent_id,
         logo_domain,
+        logo_image,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         gymId,
         normalizeName(input.name),
@@ -374,6 +377,7 @@ export const createGym = (input: CreateGymInput): GymRow => {
         existingDefault ? 0 : 1,
         parentId,
         input.logoDomain ?? null,
+        input.logoImage ?? null,
         timestamp,
         timestamp,
       ]
@@ -524,6 +528,11 @@ export const updateGym = (input: UpdateGymInput): GymRow => {
 /** domain: the website to show the logo of, '' for no logo, null to look it up again. */
 export const setGymLogoDomain = (gymId: string, domain: string | null): void => {
   run('UPDATE gyms SET logo_domain = ?, updated_at = ? WHERE id = ?;', [domain, Date.now(), gymId]);
+};
+
+/** A logo picked from photos (data: URI), or null to go back to the website logo. */
+export const setGymLogoImage = (gymId: string, image: string | null): void => {
+  run('UPDATE gyms SET logo_image = ?, updated_at = ? WHERE id = ?;', [image, Date.now(), gymId]);
 };
 
 /**

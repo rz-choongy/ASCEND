@@ -17,6 +17,15 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.6',
+    date: '2026-11-09',
+    changes: [
+      { kind: 'improved', text: 'Logo search finds more gyms: it checks maps too, and reads "Nine" and "9" as the same.' },
+      { kind: 'new', text: 'No logo online? Choose one from your photos when you edit the gym.' },
+      { kind: 'fixed', text: 'Gyms no longer get a blank globe or another company’s logo.' },
+    ],
+  },
+  {
     version: '2.7.5',
     date: '2026-11-09',
     changes: [

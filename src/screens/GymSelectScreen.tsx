@@ -8,7 +8,7 @@ import {
   getSelectedClimbGym,
   setSelectedClimbGym,
 } from '../domain/gymStore';
-import { autoMatchGymLogos, resolveLogoDomain } from '../domain/gymLogo';
+import { autoMatchGymLogos, resolveLogoUri } from '../domain/gymLogo';
 import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -84,7 +84,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   );
 
   const renderLogo = (gym: GymRow) => (
-    <GymLogo domain={resolveLogoDomain(gym, allGyms)} name={gym.name} />
+    <GymLogo uri={resolveLogoUri(gym, allGyms)} name={gym.name} />
   );
 
   const handleSelectGym = (gymId: string) => {

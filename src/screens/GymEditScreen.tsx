@@ -19,10 +19,12 @@ import {
   getGymById,
   getGyms,
   setGymLogoDomain,
+  setGymLogoImage,
   setSelectedClimbGym,
   updateGym,
 } from '../domain/gymStore';
-import { searchLogoCandidates, type LogoCandidate } from '../domain/gymLogo';
+import * as ImagePicker from 'expo-image-picker';
+import { gymLogoUrl, searchLogoCandidates, type LogoCandidate } from '../domain/gymLogo';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -153,12 +155,14 @@ const snapshotForm = (
   name: string,
   gradingType: GradingType,
   rows: EditableGradeRow[],
-  logoDomain: string | null = null
+  logoDomain: string | null = null,
+  logoImage: string | null = null
 ): string =>
   JSON.stringify({
     name: name.trim(),
     gradingType,
     logoDomain,
+    logoImage,
     rows: rows.map(({ draftId: _draftId, ...fields }) => fields),
   });
 
@@ -216,6 +220,8 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const [isSaving, setIsSaving] = useState(false);
   // null = not chosen (looked up automatically later), '' = no logo, otherwise a website.
   const [logoDomain, setLogoDomain] = useState<string | null>(null);
+  // A logo picked from photos, for gyms with none online. Wins over logoDomain.
+  const [logoImage, setLogoImage] = useState<string | null>(null);
   const [logoCandidates, setLogoCandidates] = useState<LogoCandidate[]>([]);
   const [logoSearch, setLogoSearch] = useState<'idle' | 'searching' | 'offline'>('idle');
   // Plain ref, not state: guards against a second tap firing before React
@@ -225,7 +231,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const initialSnapshotRef = useRef(snapshotForm(name, gradingType, rows));
   // Set right before a save or delete navigates away, so the guard lets it through.
   const allowLeaveRef = useRef(false);
-  const latestSnapshot = snapshotForm(name, gradingType, rows, logoDomain);
+  const latestSnapshot = snapshotForm(name, gradingType, rows, logoDomain, logoImage);
   const latestSnapshotRef = useRef(latestSnapshot);
   latestSnapshotRef.current = latestSnapshot;
 
@@ -238,11 +244,13 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     setRows(loadedRows);
     setGradingType(editingGym.grading_type);
     setLogoDomain(editingGym.logo_domain ?? null);
+    setLogoImage(editingGym.logo_image ?? null);
     initialSnapshotRef.current = snapshotForm(
       editingGym.name,
       editingGym.grading_type,
       loadedRows,
-      editingGym.logo_domain ?? null
+      editingGym.logo_domain ?? null,
+      editingGym.logo_image ?? null
     );
   }, [editingGym, editingGymId]);
 
@@ -292,6 +300,27 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     });
     return unsubscribe;
   }, [navigation]);
+
+  const chooseLogoPhoto = async () => {
+    // System photo picker: needs no permission. Small and square, since it lives in the database.
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.25,
+      base64: true,
+    });
+    const asset = result.canceled ? null : result.assets[0];
+    if (!asset?.base64) return;
+    setLogoImage(`data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`);
+    // Stop the automatic search from replacing it later.
+    if (!logoDomain) setLogoDomain('');
+  };
+
+  const removeLogo = () => {
+    setLogoImage(null);
+    setLogoDomain('');
+  };
 
   const replaceTypeRows = (nextType: GradingType) => {
     setGradingType(nextType);
@@ -529,12 +558,15 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         if (logoDomain !== (editingGym?.logo_domain ?? null)) {
           setGymLogoDomain(editingGymId, logoDomain);
         }
+        if (logoImage !== (editingGym?.logo_image ?? null)) {
+          setGymLogoImage(editingGymId, logoImage);
+        }
         // Editing a gym shouldn't switch the selected gym or the live session to it.
         leave();
         return;
       }
 
-      const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true, logoDomain });
+      const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true, logoDomain, logoImage });
       const gymId = getCreatedGymId(created);
       if (!gymId) return;
       navigateAfterSave(gymId);
@@ -635,27 +667,30 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
 
         <Text style={styles.label}>Logo</Text>
         <View style={styles.logoList}>
-          {logoDomain ? (
+          {logoImage || logoDomain ? (
             <View style={[styles.logoRow, styles.logoRowSelected]}>
-              <GymLogo domain={logoDomain} name={name} size={32} />
+              <GymLogo uri={logoImage ?? gymLogoUrl(logoDomain ?? '')} name={name} size={32} />
               <Text style={styles.logoRowText} numberOfLines={1}>
-                {logoDomain}
+                {logoImage ? 'From your photos' : logoDomain}
               </Text>
-              <Pressable onPress={() => setLogoDomain('')} hitSlop={8}>
+              <Pressable onPress={removeLogo} hitSlop={8}>
                 <Text style={styles.logoAction}>Remove</Text>
               </Pressable>
             </View>
           ) : null}
           {logoCandidates
-            .filter((candidate) => candidate.domain !== logoDomain)
+            .filter((candidate) => logoImage || candidate.domain !== logoDomain)
             .map((candidate) => (
               <PressableScale
                 key={candidate.domain}
                 style={styles.logoRow}
-                onPress={() => setLogoDomain(candidate.domain)}
+                onPress={() => {
+                  setLogoImage(null);
+                  setLogoDomain(candidate.domain);
+                }}
                 scaleTo={0.98}
               >
-                <GymLogo domain={candidate.domain} name={candidate.name} size={32} />
+                <GymLogo uri={gymLogoUrl(candidate.domain)} name={candidate.name} size={32} />
                 <View style={styles.logoRowTextCol}>
                   <Text style={styles.logoRowText} numberOfLines={1}>
                     {candidate.name}
@@ -667,7 +702,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                 <Text style={styles.logoAction}>Use</Text>
               </PressableScale>
             ))}
-          {!logoDomain && logoCandidates.length === 0 ? (
+          {!logoImage && !logoDomain && logoCandidates.length === 0 ? (
             <Text style={styles.logoHint}>
               {logoSearch === 'searching'
                 ? 'Looking for a logo…'
@@ -675,9 +710,12 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
                   ? 'Can’t search for logos offline.'
                   : name.trim().length < 2
                     ? 'Type the gym’s name to find its logo.'
-                    : 'No logo found for this name.'}
+                    : 'No logo found online. Choose one from your photos, like a screenshot of their Instagram.'}
             </Text>
           ) : null}
+          <Pressable onPress={() => void chooseLogoPhoto()} hitSlop={8} style={styles.logoPhotoLink}>
+            <Text style={styles.logoAction}>{logoImage ? 'Choose another photo' : 'Choose from photos'}</Text>
+          </Pressable>
         </View>
 
         <Text style={styles.label}>Grading type</Text>
@@ -952,6 +990,10 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
     color: colors.accentInk,
     fontSize: 14,
     ...font('semibold'),
+  },
+  logoPhotoLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xxs,
   },
   logoHint: {
     color: colors.textMuted,
