@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { RecentSession } from '../../domain/dashboard';
 import { formatDuration } from '../../domain/dateUtils';
-import { DumbbellIcon, GradeChip, MountainMarkIcon, font, radius, spacing, useTheme, type Shadows } from '../../ui';
+import { DumbbellIcon, GradeChip, GymLogo, MountainMarkIcon, font, radius, spacing, useTheme, type Shadows } from '../../ui';
 import type { ThemeColors } from '../../ui/tokens/colors';
 import type { Typography } from '../../ui/tokens/typography';
 
@@ -56,13 +56,17 @@ export const RecentSessionsList = ({ sessions, onOpen, onSeeAll, bestGrades }: P
                 accessibilityRole="button"
                 accessibilityLabel={`${session.title}, ${whenLabel(session.startedAt)}, ${session.figure}, ${session.detail}`}
               >
-                <View style={[styles.icon, climb ? styles.iconClimb : null]}>
-                  {climb ? (
-                    <MountainMarkIcon size={14} color={colors.accentInk} />
-                  ) : (
-                    <DumbbellIcon size={14} color={colors.textPrimary} />
-                  )}
-                </View>
+                {session.logoUri ? (
+                  <GymLogo uri={session.logoUri} name={session.title} size={28} />
+                ) : (
+                  <View style={[styles.icon, climb ? styles.iconClimb : null]}>
+                    {climb ? (
+                      <MountainMarkIcon size={14} color={colors.accentInk} />
+                    ) : (
+                      <DumbbellIcon size={14} color={colors.textPrimary} />
+                    )}
+                  </View>
+                )}
                 <View style={styles.body}>
                   <Text style={styles.rowTitle} numberOfLines={1}>
                     {session.title}

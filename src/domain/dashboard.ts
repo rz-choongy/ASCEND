@@ -1,6 +1,7 @@
 import { applyClimbEvents } from './climbLogUtils';
 import { addDays, startOfWeek } from './dateUtils';
-import { gymShortNameById, isUnnamedDefaultGym } from './gymStore';
+import { resolveLogoUri } from './gymLogo';
+import { getGyms, gymShortNameById, isUnnamedDefaultGym } from './gymStore';
 import { getSessionEvents } from './sessionStore';
 import { applySetEvents } from './strengthLogUtils';
 import { estimateOneRepMax, exerciseKeyFor, findRecordSetIds, type ExerciseNames } from './strengthProgress';
@@ -253,6 +254,8 @@ export type RecentSession = {
   figure: string;
   /** Supporting detail: "best V5" / "2 PRs". */
   detail: string;
+  /** The climb's gym logo, when it has one. */
+  logoUri: string | null;
 };
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -272,6 +275,12 @@ export const buildRecentSessions = (
     (needsStrength ? summarizeStrengthSessions(strengthHistory) : []).map((s) => [s.sessionId, s])
   );
 
+  const gyms = recent.some((s) => s.type === 'climb' && s.gym_id) ? getGyms() : [];
+  const logoFor = (gymId: string | null): string | null => {
+    const gym = gymId ? gyms.find((g) => g.id === gymId) : undefined;
+    return gym && !isUnnamedDefaultGym(gym) ? resolveLogoUri(gym, gyms) : null;
+  };
+
   return recent.map((session) => {
     if (session.type === 'climb') {
       const summary = summarizeClimbSession(session);
@@ -283,6 +292,7 @@ export const buildRecentSessions = (
         durationMs: summary.durationMs,
         figure: plural(summary.sends, 'send', 'sends'),
         detail: summary.bestGradeLabel ? `best ${summary.bestGradeLabel}` : 'no sends',
+        logoUri: logoFor(session.gym_id),
       };
     }
     const summary = strengthById.get(session.id);
@@ -297,6 +307,7 @@ export const buildRecentSessions = (
         summary && summary.records > 0
           ? plural(summary.records, 'PR', 'PRs')
           : plural(summary?.exercises.length ?? 0, 'exercise', 'exercises'),
+      logoUri: null,
     };
   });
 };

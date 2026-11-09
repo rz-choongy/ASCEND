@@ -56,6 +56,7 @@ import { ActiveSessionCard } from './today/ActiveSessionCard';
 import { BodyweightRow } from './today/BodyweightRow';
 import { LastSessionCard } from './today/LastSessionCard';
 import { RecentSessionsList } from './today/RecentSessionsList';
+import { autoMatchGymLogos } from '../domain/gymLogo';
 import { StartCard } from './today/StartCard';
 import { WeekCard } from './today/WeekCard';
 
@@ -173,6 +174,14 @@ export function LogScreen() {
   useFocusEffect(
     useCallback(() => {
       setData(loadDashboard());
+      // Gyms without a logo yet get one looked up, so past sessions show it too.
+      let active = true;
+      void autoMatchGymLogos().then((changed) => {
+        if (active && changed) setData(loadDashboard());
+      });
+      return () => {
+        active = false;
+      };
     }, [])
   );
 

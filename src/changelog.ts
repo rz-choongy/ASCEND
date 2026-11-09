@@ -22,6 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { kind: 'improved', text: 'Logo search finds more gyms: it checks maps too, and reads "Nine" and "9" as the same.' },
       { kind: 'new', text: 'No logo online? Choose one from your photos when you edit the gym.' },
+      { kind: 'new', text: 'Recent shows each climb’s gym logo, past sessions included.' },
       { kind: 'fixed', text: 'Gyms no longer get a blank globe or another company’s logo.' },
     ],
   },

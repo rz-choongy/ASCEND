@@ -6,9 +6,24 @@ jest.mock('./sessionStore', () => ({
 jest.mock('./gymStore', () => ({
   gymShortNameById: jest.fn((id: string) => (id === 'gym-1' ? 'Boulder Lab' : null)),
   isUnnamedDefaultGym: (gym: { id: string; name: string }) => gym.name === 'Default V-Scale',
+  getGyms: () => [
+    {
+      id: 'gym-1',
+      name: 'Boulder Lab',
+      grading_type: 'v_scale',
+      is_default: 0,
+      parent_id: null,
+      logo_domain: 'boulderlab.com',
+      logo_image: null,
+      created_at: 0,
+      updated_at: 0,
+    },
+  ],
+  setGymLogoDomain: jest.fn(),
 }));
 
 import { getSessionEvents } from './sessionStore';
+import { gymLogoUrl } from './gymLogo';
 import {
   buildRecentSessions,
   buildWeekActivity,
@@ -165,6 +180,13 @@ describe('buildRecentSessions', () => {
       ['Pull day', '2 sets', '2 exercises'],
       ['Boulder Lab', '1 send', 'best V4'],
     ]);
+  });
+
+  it("shows a climb's gym logo, including on sessions logged before logos existed", () => {
+    eventsBySession({ c1: [climb('a', 'V4', 4)], s1: [set('b', 'Pull-ups', 20, 6)] });
+    const strength = [session('s1', 'strength', 2)];
+    const rows = buildRecentSessions([session('c1', 'climb', 1), ...strength], strength, 5);
+    expect(rows.map((r) => r.logoUri)).toEqual([null, gymLogoUrl('boulderlab.com')]);
   });
 });
 
