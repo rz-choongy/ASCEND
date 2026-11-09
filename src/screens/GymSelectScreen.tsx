@@ -8,6 +8,7 @@ import {
   getSelectedClimbGym,
   setSelectedClimbGym,
 } from '../domain/gymStore';
+import { autoMatchGymLogos, resolveLogoDomain } from '../domain/gymLogo';
 import type { GymRow } from '../domain/types';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -15,6 +16,7 @@ import {
   Button,
   ChevronLeftIcon,
   ChevronRightIcon,
+  GymLogo,
   IconButton,
   PencilIcon,
   PressableScale,
@@ -57,6 +59,13 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
       const selected = getSelectedClimbGym() ?? ensureSelectedClimbGym();
       setAllGyms(getGyms());
       setSelectedGymId(selected?.id ?? null);
+      let active = true;
+      void autoMatchGymLogos().then((changed) => {
+        if (active && changed) setAllGyms(getGyms());
+      });
+      return () => {
+        active = false;
+      };
     }, [])
   );
 
@@ -72,6 +81,10 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
   const branchCount = useCallback(
     (gymId: string) => allGyms.filter((g) => g.parent_id === gymId).length,
     [allGyms]
+  );
+
+  const renderLogo = (gym: GymRow) => (
+    <GymLogo domain={resolveLogoDomain(gym, allGyms)} name={gym.name} />
   );
 
   const handleSelectGym = (gymId: string) => {
@@ -144,6 +157,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
             const selected = branch.id === selectedGymId;
             return (
               <View key={branch.id} style={[styles.gymCard, selected ? styles.gymCardSelected : null]}>
+                {renderLogo(branch)}
                 <View style={styles.gymTextCol}>
                   <Text style={styles.gymName}>{branch.name}</Text>
                   <Text style={styles.gymMeta}>Grades from {drillParent?.name ?? 'company'}</Text>
@@ -215,6 +229,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
                 onPress={() => handleRootGymPress(gym)}
                 scaleTo={0.98}
               >
+                {renderLogo(gym)}
                 <View style={styles.gymTextCol}>
                   <Text style={styles.gymName}>{gym.name}</Text>
                   <Text style={styles.gymMeta}>{`${count} branch${count === 1 ? '' : 'es'}`}</Text>
@@ -235,6 +250,7 @@ export const GymSelectScreen = ({ route, navigation }: GymSelectScreenProps) => 
 
           return (
             <View key={gym.id} style={[styles.gymCard, selected ? styles.gymCardSelected : null]}>
+              {renderLogo(gym)}
               <View style={styles.gymTextCol}>
                 <Text style={styles.gymName}>{gym.name}</Text>
                 <Text style={styles.gymMeta}>{gradingTypeLabel(gym.grading_type)}</Text>

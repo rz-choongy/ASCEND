@@ -32,6 +32,8 @@ export type GymRow = {
   grading_type: GymGradingType;
   is_default: number;
   parent_id: string | null;
+  /** Website the logo comes from. NULL = not looked up yet, '' = no logo. */
+  logo_domain?: string | null;
   created_at: number;
   updated_at: number;
 };

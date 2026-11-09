@@ -18,9 +18,11 @@ import {
   getGradeOptionsForGym,
   getGymById,
   getGyms,
+  setGymLogoDomain,
   setSelectedClimbGym,
   updateGym,
 } from '../domain/gymStore';
+import { searchLogoCandidates, type LogoCandidate } from '../domain/gymLogo';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -28,6 +30,7 @@ import {
   IconButton,
   PressableScale,
   CloseIcon,
+  GymLogo,
   SegmentedControl,
   Stepper,
   font,
@@ -146,10 +149,16 @@ const toNumber = (value: string, fallback: number): number => {
 };
 
 /** Compares what the user can change, ignoring draft ids, to spot unsaved edits. */
-const snapshotForm = (name: string, gradingType: GradingType, rows: EditableGradeRow[]): string =>
+const snapshotForm = (
+  name: string,
+  gradingType: GradingType,
+  rows: EditableGradeRow[],
+  logoDomain: string | null = null
+): string =>
   JSON.stringify({
     name: name.trim(),
     gradingType,
+    logoDomain,
     rows: rows.map(({ draftId: _draftId, ...fields }) => fields),
   });
 
@@ -205,6 +214,10 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   // One grade at a time shows its V steppers; the rest stay one compact line.
   const [openRangeId, setOpenRangeId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // null = not chosen (looked up automatically later), '' = no logo, otherwise a website.
+  const [logoDomain, setLogoDomain] = useState<string | null>(null);
+  const [logoCandidates, setLogoCandidates] = useState<LogoCandidate[]>([]);
+  const [logoSearch, setLogoSearch] = useState<'idle' | 'searching' | 'offline'>('idle');
   // Plain ref, not state: guards against a second tap firing before React
   // re-renders with the disabled button, since handleSave runs synchronously.
   const isSavingRef = useRef(false);
@@ -212,7 +225,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
   const initialSnapshotRef = useRef(snapshotForm(name, gradingType, rows));
   // Set right before a save or delete navigates away, so the guard lets it through.
   const allowLeaveRef = useRef(false);
-  const latestSnapshot = snapshotForm(name, gradingType, rows);
+  const latestSnapshot = snapshotForm(name, gradingType, rows, logoDomain);
   const latestSnapshotRef = useRef(latestSnapshot);
   latestSnapshotRef.current = latestSnapshot;
 
@@ -224,8 +237,41 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
     setName(editingGym.name);
     setRows(loadedRows);
     setGradingType(editingGym.grading_type);
-    initialSnapshotRef.current = snapshotForm(editingGym.name, editingGym.grading_type, loadedRows);
+    setLogoDomain(editingGym.logo_domain ?? null);
+    initialSnapshotRef.current = snapshotForm(
+      editingGym.name,
+      editingGym.grading_type,
+      loadedRows,
+      editingGym.logo_domain ?? null
+    );
   }, [editingGym, editingGymId]);
+
+  // Logo suggestions follow the name as it's typed.
+  useEffect(() => {
+    const query = name.trim();
+    if (parentId || editingGym?.parent_id || query.length < 2) {
+      setLogoCandidates([]);
+      setLogoSearch('idle');
+      return;
+    }
+    let active = true;
+    setLogoSearch('searching');
+    const timer = setTimeout(() => {
+      searchLogoCandidates(query)
+        .then((found) => {
+          if (!active) return;
+          setLogoCandidates(found.slice(0, 4));
+          setLogoSearch('idle');
+        })
+        .catch(() => {
+          if (active) setLogoSearch('offline');
+        });
+    }, 400);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [name, parentId, editingGym?.parent_id]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -480,12 +526,15 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           gradingType,
           gradeOptions,
         });
+        if (logoDomain !== (editingGym?.logo_domain ?? null)) {
+          setGymLogoDomain(editingGymId, logoDomain);
+        }
         // Editing a gym shouldn't switch the selected gym or the live session to it.
         leave();
         return;
       }
 
-      const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true });
+      const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true, logoDomain });
       const gymId = getCreatedGymId(created);
       if (!gymId) return;
       navigateAfterSave(gymId);
@@ -583,6 +632,53 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           style={styles.input}
           autoFocus={!editingGym}
         />
+
+        <Text style={styles.label}>Logo</Text>
+        <View style={styles.logoList}>
+          {logoDomain ? (
+            <View style={[styles.logoRow, styles.logoRowSelected]}>
+              <GymLogo domain={logoDomain} name={name} size={32} />
+              <Text style={styles.logoRowText} numberOfLines={1}>
+                {logoDomain}
+              </Text>
+              <Pressable onPress={() => setLogoDomain('')} hitSlop={8}>
+                <Text style={styles.logoAction}>Remove</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          {logoCandidates
+            .filter((candidate) => candidate.domain !== logoDomain)
+            .map((candidate) => (
+              <PressableScale
+                key={candidate.domain}
+                style={styles.logoRow}
+                onPress={() => setLogoDomain(candidate.domain)}
+                scaleTo={0.98}
+              >
+                <GymLogo domain={candidate.domain} name={candidate.name} size={32} />
+                <View style={styles.logoRowTextCol}>
+                  <Text style={styles.logoRowText} numberOfLines={1}>
+                    {candidate.name}
+                  </Text>
+                  <Text style={styles.logoRowMeta} numberOfLines={1}>
+                    {candidate.domain}
+                  </Text>
+                </View>
+                <Text style={styles.logoAction}>Use</Text>
+              </PressableScale>
+            ))}
+          {!logoDomain && logoCandidates.length === 0 ? (
+            <Text style={styles.logoHint}>
+              {logoSearch === 'searching'
+                ? 'Looking for a logo…'
+                : logoSearch === 'offline'
+                  ? 'Can’t search for logos offline.'
+                  : name.trim().length < 2
+                    ? 'Type the gym’s name to find its logo.'
+                    : 'No logo found for this name.'}
+            </Text>
+          ) : null}
+        </View>
 
         <Text style={styles.label}>Grading type</Text>
         <SegmentedControl options={TYPE_OPTIONS} value={gradingType} onChange={updateType} />
@@ -822,6 +918,45 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadows: Shad
   label: {
     ...typography.section,
     marginTop: spacing.xs,
+  },
+  logoList: {
+    gap: spacing.xxs,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.fill,
+    paddingHorizontal: spacing.xs,
+  },
+  logoRowSelected: {
+    backgroundColor: colors.accentMuted,
+  },
+  logoRowTextCol: {
+    flex: 1,
+  },
+  logoRowText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 14,
+    ...font('medium'),
+  },
+  logoRowMeta: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    ...font('regular'),
+  },
+  logoAction: {
+    color: colors.accentInk,
+    fontSize: 14,
+    ...font('semibold'),
+  },
+  logoHint: {
+    color: colors.textMuted,
+    fontSize: 13,
+    ...font('regular'),
   },
   // Filled text field, no outline -- how iOS draws an input inside a form.
   input: {

@@ -52,7 +52,7 @@ const defaultExerciseCategories: Record<string, string> = {
   'exercise-hangboard': 'cat-fingers',
 };
 
-const APP_SCHEMA_VERSION = 9;
+const APP_SCHEMA_VERSION = 10;
 
 type Migration = {
   version: number;
@@ -142,6 +142,7 @@ const ensureSchema = (): void => {
 
   ensureColumns('gyms', [
     { name: 'parent_id', ddl: 'parent_id TEXT' },
+    { name: 'logo_domain', ddl: 'logo_domain TEXT' },
     { name: 'is_default', ddl: 'is_default INTEGER NOT NULL DEFAULT 0' },
     { name: 'created_at', ddl: 'created_at INTEGER NOT NULL DEFAULT 0' },
     { name: 'updated_at', ddl: 'updated_at INTEGER NOT NULL DEFAULT 0' },
@@ -312,6 +313,14 @@ const addGymParentIdColumn = (): void => {
   }
 };
 
+// NULL = not looked up yet, '' = no logo, otherwise the website the logo comes from.
+const addGymLogoDomainColumn = (): void => {
+  const gymColumns = getAll<{ name: string }>('PRAGMA table_info(gyms);');
+  if (!gymColumns.some((col) => col.name === 'logo_domain')) {
+    run('ALTER TABLE gyms ADD COLUMN logo_domain TEXT;');
+  }
+};
+
 // Numeric-graded gyms used to seed every grade with color_hex NULL, so every logged climb
 // looked identical (falling back to one neutral color everywhere colors are shown). Backfill
 // existing rows with the same cycle gymStore.ts now assigns to newly created numeric gyms.
@@ -415,6 +424,7 @@ const migrations: Migration[] = [
   { version: 7, up: createBodyweightLogsTable },
   { version: 8, up: addExerciseCategories },
   { version: 9, up: createRoutinesTables },
+  { version: 10, up: addGymLogoDomainColumn },
 ];
 
 export const migrate = (): void => {

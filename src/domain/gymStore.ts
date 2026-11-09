@@ -19,6 +19,8 @@ export type CreateGymInput = {
   makeSelected?: boolean;
   /** If set, this gym is a branch of the given parent gym and inherits its grade system. */
   parentId?: string | null;
+  /** Website the logo comes from; '' = no logo, omitted = look it up later. */
+  logoDomain?: string | null;
 };
 
 export type UpdateGymInput = {
@@ -361,10 +363,20 @@ export const createGym = (input: CreateGymInput): GymRow => {
         grading_type,
         is_default,
         parent_id,
+        logo_domain,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [gymId, normalizeName(input.name), gradingType, existingDefault ? 0 : 1, parentId, timestamp, timestamp]
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        gymId,
+        normalizeName(input.name),
+        gradingType,
+        existingDefault ? 0 : 1,
+        parentId,
+        input.logoDomain ?? null,
+        timestamp,
+        timestamp,
+      ]
     );
 
     // Branches have no grade rows of their own; they always resolve to parent's grades.
@@ -507,6 +519,11 @@ export const updateGym = (input: UpdateGymInput): GymRow => {
     throw new Error('Gym could not be updated.');
   }
   return updated;
+};
+
+/** domain: the website to show the logo of, '' for no logo, null to look it up again. */
+export const setGymLogoDomain = (gymId: string, domain: string | null): void => {
+  run('UPDATE gyms SET logo_domain = ?, updated_at = ? WHERE id = ?;', [domain, Date.now(), gymId]);
 };
 
 /**

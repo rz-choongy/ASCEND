@@ -17,6 +17,14 @@ export type ChangelogEntry = {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.5',
+    date: '2026-11-09',
+    changes: [
+      { kind: 'new', text: 'Gyms show their logo, found online from the gym’s name. Branches use their company’s logo.' },
+      { kind: 'new', text: 'Pick or remove a gym’s logo when you edit it.' },
+    ],
+  },
+  {
     version: '2.7.4',
     date: '2026-11-06',
     changes: [
