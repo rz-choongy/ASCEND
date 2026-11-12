@@ -24,7 +24,7 @@ import {
   updateGym,
 } from '../domain/gymStore';
 import * as ImagePicker from 'expo-image-picker';
-import { gymLogoUrl, searchLogoCandidates, type LogoCandidate } from '../domain/gymLogo';
+import { gymLogoUrl, searchLogoCandidates, shareGymLogos, type LogoCandidate } from '../domain/gymLogo';
 import { setSessionGymId } from '../domain/sessionStore';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
@@ -561,6 +561,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
         if (logoImage !== (editingGym?.logo_image ?? null)) {
           setGymLogoImage(editingGymId, logoImage);
         }
+        void shareGymLogos(new Set([editingGymId]));
         // Editing a gym shouldn't switch the selected gym or the live session to it.
         leave();
         return;
@@ -569,6 +570,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
       const created = createGym({ name: trimmedName, gradingType, gradeOptions, makeSelected: true, logoDomain, logoImage });
       const gymId = getCreatedGymId(created);
       if (!gymId) return;
+      void shareGymLogos(new Set([gymId]));
       navigateAfterSave(gymId);
     } finally {
       isSavingRef.current = false;
@@ -671,7 +673,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             <View style={[styles.logoRow, styles.logoRowSelected]}>
               <GymLogo uri={logoImage ?? gymLogoUrl(logoDomain ?? '')} name={name} size={32} />
               <Text style={styles.logoRowText} numberOfLines={1}>
-                {logoImage ? 'From your photos' : logoDomain}
+                {logoImage ? (logoImage.startsWith('data:') ? 'From your photos' : 'Shared photo') : logoDomain}
               </Text>
               <Pressable onPress={removeLogo} hitSlop={8}>
                 <Text style={styles.logoAction}>Remove</Text>
@@ -679,24 +681,26 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
             </View>
           ) : null}
           {logoCandidates
-            .filter((candidate) => logoImage || candidate.domain !== logoDomain)
+            .filter((candidate) =>
+              candidate.imageUrl ? candidate.imageUrl !== logoImage : logoImage || candidate.domain !== logoDomain
+            )
             .map((candidate) => (
               <PressableScale
-                key={candidate.domain}
+                key={candidate.imageUrl ?? candidate.domain}
                 style={styles.logoRow}
                 onPress={() => {
-                  setLogoImage(null);
-                  setLogoDomain(candidate.domain);
+                  setLogoImage(candidate.imageUrl ?? null);
+                  setLogoDomain(candidate.imageUrl ? '' : candidate.domain);
                 }}
                 scaleTo={0.98}
               >
-                <GymLogo uri={gymLogoUrl(candidate.domain)} name={candidate.name} size={32} />
+                <GymLogo uri={candidate.imageUrl ?? gymLogoUrl(candidate.domain)} name={candidate.name} size={32} />
                 <View style={styles.logoRowTextCol}>
                   <Text style={styles.logoRowText} numberOfLines={1}>
-                    {candidate.name}
+                    {candidate.source === 'shared' ? 'Used by other climbers' : candidate.name}
                   </Text>
                   <Text style={styles.logoRowMeta} numberOfLines={1}>
-                    {candidate.domain}
+                    {candidate.imageUrl ? 'Shared photo' : candidate.domain}
                   </Text>
                 </View>
                 <Text style={styles.logoAction}>Use</Text>
@@ -716,6 +720,7 @@ export const GymEditScreen = ({ route, navigation }: GymEditScreenProps) => {
           <Pressable onPress={() => void chooseLogoPhoto()} hitSlop={8} style={styles.logoPhotoLink}>
             <Text style={styles.logoAction}>{logoImage ? 'Choose another photo' : 'Choose from photos'}</Text>
           </Pressable>
+          <Text style={styles.logoHint}>Logos you set are shared with other climbers who add this gym.</Text>
         </View>
 
         <Text style={styles.label}>Grading type</Text>

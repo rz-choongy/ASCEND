@@ -1,6 +1,7 @@
 import { formatClockTime, formatDuration } from '../domain/dateUtils';
 import { getLastLogAt, getSessionById, setSessionEndedAt, setSessionStatus } from '../domain/sessionStore';
 import { syncActiveSessionNotification } from '../domain/sessionNotification';
+import { syncCloud } from '../integrations/cloud/cloudSync';
 import { showDialog } from '../ui';
 
 // Past this gap between the last log and tapping Done, assume the session was left running.
@@ -17,6 +18,7 @@ export const finishSession = (sessionId: string, onDone?: () => void): void => {
     setSessionStatus(sessionId, 'completed');
     if (endAt != null) setSessionEndedAt(sessionId, endAt);
     void syncActiveSessionNotification();
+    void syncCloud();
     onDone?.();
   };
 

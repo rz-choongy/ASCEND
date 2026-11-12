@@ -3,5 +3,5 @@
   "compilerOptions": {
     "strict": true
   },
-  "exclude": ["src/_quarantine"]
+  "exclude": ["src/_quarantine", "supabase/functions"]
 }

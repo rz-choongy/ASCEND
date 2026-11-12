@@ -18,8 +18,9 @@ export const GymLogo = ({ uri, name, size = 36 }: GymLogoProps) => {
 
   const box = { width: size, height: size, borderRadius: size * 0.28 };
 
-  // A picked photo fills its tile; a website icon sits inside a white one.
-  if (uri?.startsWith('data:') && !failed) {
+  // A photo (picked here or shared by others) fills its tile; a website icon sits inside a white one.
+  const isPhoto = !!uri && !uri.startsWith('https://www.google.com/s2/');
+  if (uri && isPhoto && !failed) {
     return (
       <Image
         source={{ uri }}

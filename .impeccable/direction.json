@@ -1,0 +1,55 @@
+{
+  "title": "ASCEND: choose the visual world",
+  "question": "The roll assigned Routed Hangboard. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Routed Hangboard",
+      "kicker": "THE ROLL",
+      "lineage": "Beastmaker / Lattice wooden training boards",
+      "thesis": "The app is the board you train on: grades are routed pockets you press into, numbers are laser-etched.",
+      "palette": ["#d9bf93", "#a9875c", "#1e1a16", "#f4f1ec"],
+      "materials": ["sanded beech ply", "routed pockets with end-grain walls", "laser-etched numerals", "chalk residue on used grades"],
+      "viewport": "Log screen is one board: a big routed grade rail, etched session clock, Start as the deepest pocket.",
+      "risk": "Can tip into wood-texture kitsch; grain must stay flat tone, never a photo."
+    },
+    {
+      "id": "challenger-orienteering",
+      "label": "Orienteering Map",
+      "lineage": "ISOM orienteering maps and legends",
+      "thesis": "A session is a course: each send is a punched control on the purple line.",
+      "case": "Fuses well: grades as control circles, today's session as the purple leg; outdoor feel, a step away from gym life.",
+      "palette": ["#ffffff", "#f6c745", "#8a5a2b", "#b0207f"],
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-orienteering-map-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/notation-diagram-systems-orienteering-map.webp"
+    },
+    {
+      "id": "challenger-boarding-pass",
+      "label": "Boarding Pass + Gate Board",
+      "lineage": "airline passes and departure boards",
+      "thesis": "Each session is a pass with segments; history is a board that reranks in place.",
+      "case": "Very clear and fast to read; weak climbing identity, could be any tracker.",
+      "palette": ["#111111", "#f2f2f2", "#ffcc00", "#e5484d"],
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board.webp"
+    },
+    {
+      "id": "challenger-emission-rail",
+      "label": "Emission Line Rail",
+      "lineage": "lab spectrograms",
+      "thesis": "Everything hangs off one rail; grades are thin bright lines, state is line shape.",
+      "case": "Striking, but hairline marks are hard to hit and read with chalky hands in a bright gym.",
+      "palette": ["#2a2a2c", "#e8e4da", "#ffd23f", "#4fb3ff"],
+      "hero": "https://impeccable.style/worlds/cards/operate-c-emission-line-rail-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/operate-c-emission-line-rail.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean Material 3 fitness tracker, executed impeccably.",
+    "viewport": "Top app bar, FAB to start a session, cards of recent sessions and stats."
+  },
+  "steer": true
+}

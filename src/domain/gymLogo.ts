@@ -1,4 +1,6 @@
-import { getGyms, setGymLogoDomain, isUnnamedDefaultGym } from './gymStore';
+import { getGyms, setGymLogoDomain, setGymLogoImage, isUnnamedDefaultGym } from './gymStore';
+import { lookupDirectoryLogos, shareGymLogo } from './gymLogoDirectory';
+import { getInstallId, getSharedGymLogos, setSharedGymLogos } from './settingsStore';
 import type { GymRow } from './types';
 
 /**
@@ -6,11 +8,21 @@ import type { GymRow } from './types';
  * and the image loads from Google's favicon service, which the OS caches like any image.
  * Name -> website lookup tries Clearbit's free autocomplete, then OpenStreetMap, where many
  * climbing gyms are mapped with their website. None of these need a key. A gym with no logo
- * online can use one picked from photos instead (logo_image).
+ * online can use one picked from photos instead (logo_image). Before any of that, the shared
+ * directory (gymLogoDirectory.ts) says what other climbers chose for a gym with the same name,
+ * and every choice made here is added to it.
  */
 
-/** company = a business directory hit; place = a mapped venue, whose name may add its suburb. */
-export type LogoCandidate = { name: string; domain: string; source?: 'company' | 'place' };
+/**
+ * company = a business directory hit; place = a mapped venue, whose name may add its suburb;
+ * shared = what other climbers chose for this gym, either a website or a photo (imageUrl).
+ */
+export type LogoCandidate = {
+  name: string;
+  domain: string;
+  source?: 'company' | 'place' | 'shared';
+  imageUrl?: string;
+};
 
 const CLEARBIT_URL = 'https://autocomplete.clearbit.com/v1/companies/suggest?query=';
 const OSM_URL = 'https://nominatim.openstreetmap.org/search?format=jsonv2&extratags=1&limit=10&q=';
@@ -128,6 +140,22 @@ const uniqueByDomain = (candidates: LogoCandidate[]): LogoCandidate[] => {
 export const searchLogoCandidates = async (query: string): Promise<LogoCandidate[]> => {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
+  const [shared, web] = await Promise.all([
+    lookupDirectoryLogos([logoNameKey(trimmed)]).catch(() => new Map()),
+    searchWebLogos(trimmed),
+  ]);
+  const choice = shared.get(logoNameKey(trimmed));
+  if (!choice) return web;
+  const sharedCandidate: LogoCandidate = {
+    name: trimmed,
+    domain: choice.domain ?? '',
+    source: 'shared',
+    ...(choice.imageUrl ? { imageUrl: choice.imageUrl } : {}),
+  };
+  return [sharedCandidate, ...web.filter((candidate) => !choice.domain || candidate.domain !== choice.domain)];
+};
+
+const searchWebLogos = async (trimmed: string): Promise<LogoCandidate[]> => {
   const queries = [trimmed, numberVariant(trimmed)].filter((q): q is string => !!q);
   // A bare brand ("Bump") drowns in unrelated companies; say it's a climbing gym.
   const saysClimbing = trimmed.toLowerCase().split(/[^a-z]+/).some((word) => FILLER_WORDS.has(word));
@@ -169,6 +197,9 @@ const nameWords = (name: string): string[] =>
       return asNumber >= 0 ? `${asNumber}` : word;
     });
 
+/** How the shared directory knows two gyms are the same: "Bump Bouldering" and "Bump" are both "bump". */
+export const logoNameKey = (name: string): string => nameWords(name).join(' ').slice(0, 80);
+
 const mentionsClimbing = (name: string): boolean =>
   /\b(climb\w*|boulder\w*)\b/i.test(name);
 
@@ -193,10 +224,45 @@ export const pickConfidentMatch = (gymName: string, candidates: LogoCandidate[])
 
 let autoMatchRunning = false;
 
+/** Identifies a gym's current logo, so each one is shared once. */
+const logoFingerprint = (gym: GymRow): string | null => {
+  if (gym.logo_image) return `${gym.id} img:${gym.logo_image.length}:${gym.logo_image.slice(-32)}`;
+  return gym.logo_domain ? `${gym.id} ${gym.logo_domain}` : null;
+};
+
 /**
- * Looks up a logo for every company or standalone gym never looked up before. Saves the
- * website when the match is clear, '' when it isn't (pick one in the gym editor). Network
- * failures leave the gym untouched so the next run tries again. Returns true if any gym changed.
+ * Sends every company or standalone gym's logo to the shared directory once (until it changes).
+ * picked marks choices made in the gym editor, which count for more than automatic matches.
+ */
+export const shareGymLogos = async (picked: Set<string> = new Set()): Promise<void> => {
+  const shared = getSharedGymLogos();
+  const installId = getInstallId();
+  const roots = getGyms().filter((gym) => !gym.parent_id && !isUnnamedDefaultGym(gym));
+  let changed = false;
+  for (const gym of roots) {
+    const fingerprint = logoFingerprint(gym);
+    if (!fingerprint || shared.has(fingerprint)) continue;
+    const sent = await shareGymLogo({
+      installId,
+      nameKey: logoNameKey(gym.name),
+      gymName: gym.name,
+      domain: gym.logo_domain,
+      image: gym.logo_image,
+      picked: picked.has(gym.id),
+    });
+    // Offline: stop, and try the rest next time.
+    if (!sent) break;
+    shared.add(fingerprint);
+    changed = true;
+  }
+  if (changed) setSharedGymLogos(shared);
+};
+
+/**
+ * Looks up a logo for every company or standalone gym never looked up before: first in the
+ * shared directory, then on the web. Saves the website when the match is clear, '' when it
+ * isn't (pick one in the gym editor). Network failures leave the gym untouched so the next
+ * run tries again. Then shares what this phone has. Returns true if any gym changed.
  */
 export const autoMatchGymLogos = async (): Promise<boolean> => {
   if (autoMatchRunning) return false;
@@ -213,9 +279,24 @@ export const autoMatchGymLogos = async (): Promise<boolean> => {
       }
     }
     const pending = roots.filter((gym) => gym.logo_domain == null);
+    const shared = await lookupDirectoryLogos(pending.map((gym) => logoNameKey(gym.name))).catch(
+      () => new Map<string, never>()
+    );
     for (const gym of pending) {
+      const choice = shared.get(logoNameKey(gym.name));
+      if (choice?.imageUrl) {
+        setGymLogoImage(gym.id, choice.imageUrl);
+        setGymLogoDomain(gym.id, '');
+        changed = true;
+        continue;
+      }
+      if (choice?.domain) {
+        setGymLogoDomain(gym.id, choice.domain);
+        changed = true;
+        continue;
+      }
       try {
-        const match = pickConfidentMatch(gym.name, await searchLogoCandidates(gym.name));
+        const match = pickConfidentMatch(gym.name, await searchWebLogos(gym.name));
         setGymLogoDomain(gym.id, match?.domain ?? '');
         changed = true;
       } catch {
@@ -223,6 +304,7 @@ export const autoMatchGymLogos = async (): Promise<boolean> => {
         break;
       }
     }
+    await shareGymLogos();
   } finally {
     autoMatchRunning = false;
   }

@@ -20,7 +20,10 @@ jest.mock('./gymStore', () => ({
     },
   ],
   setGymLogoDomain: jest.fn(),
+  setGymLogoImage: jest.fn(),
 }));
+jest.mock('./settingsStore', () => ({}));
+jest.mock('./gymLogoDirectory', () => ({}));
 
 import { getSessionEvents } from './sessionStore';
 import { gymLogoUrl } from './gymLogo';

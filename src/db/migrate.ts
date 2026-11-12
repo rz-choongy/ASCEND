@@ -52,7 +52,7 @@ const defaultExerciseCategories: Record<string, string> = {
   'exercise-hangboard': 'cat-fingers',
 };
 
-const APP_SCHEMA_VERSION = 11;
+const APP_SCHEMA_VERSION = 12;
 
 type Migration = {
   version: number;
@@ -88,6 +88,17 @@ const createExternalLogsTable = (): void => {
       event_id TEXT NOT NULL,
       PRIMARY KEY (source, external_id),
       FOREIGN KEY (session_id) REFERENCES sessions(id)
+    );
+  `);
+};
+
+/** What cloud sync last pushed per session (a hash of its payload), so only changed sessions re-send. */
+const createCloudSyncStateTable = (): void => {
+  run(`
+    CREATE TABLE IF NOT EXISTS cloud_sync_state (
+      session_id TEXT PRIMARY KEY NOT NULL,
+      payload_hash TEXT NOT NULL,
+      pushed_at INTEGER NOT NULL
     );
   `);
 };
@@ -176,6 +187,7 @@ const ensureSchema = (): void => {
 
   createExternalLogsTable();
   createBodyweightLogsTable();
+  createCloudSyncStateTable();
 
   run(`
     CREATE TABLE IF NOT EXISTS exercises (
@@ -438,6 +450,7 @@ const migrations: Migration[] = [
   { version: 9, up: createRoutinesTables },
   { version: 10, up: addGymLogoDomainColumn },
   { version: 11, up: addGymLogoImageColumn },
+  { version: 12, up: createCloudSyncStateTable },
 ];
 
 export const migrate = (): void => {

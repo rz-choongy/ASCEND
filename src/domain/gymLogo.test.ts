@@ -1,7 +1,23 @@
-import { gymLogoUrl, numberVariant, pickConfidentMatch, resolveLogoUri } from './gymLogo';
+import { autoMatchGymLogos, gymLogoUrl, logoNameKey, numberVariant, pickConfidentMatch, resolveLogoUri } from './gymLogo';
+import { getGyms, setGymLogoDomain, setGymLogoImage } from './gymStore';
+import { lookupDirectoryLogos, shareGymLogo } from './gymLogoDirectory';
 import type { GymRow } from './types';
 
-jest.mock('./gymStore', () => ({}));
+jest.mock('./gymStore', () => ({
+  getGyms: jest.fn(() => []),
+  setGymLogoDomain: jest.fn(),
+  setGymLogoImage: jest.fn(),
+  isUnnamedDefaultGym: () => false,
+}));
+jest.mock('./gymLogoDirectory', () => ({
+  lookupDirectoryLogos: jest.fn(async () => new Map()),
+  shareGymLogo: jest.fn(async () => true),
+}));
+jest.mock('./settingsStore', () => ({
+  getInstallId: () => 'install-1',
+  getSharedGymLogos: () => new Set<string>(),
+  setSharedGymLogos: jest.fn(),
+}));
 
 const gym = (overrides: Partial<GymRow>): GymRow => ({
   id: 'g',
@@ -87,6 +103,40 @@ describe('resolveLogoUri', () => {
   it('prefers a picked photo over the website logo', () => {
     expect(resolveLogoUri(gym({ logo_domain: 'x.com', logo_image: 'data:image/jpeg;base64,AA' }), [])).toBe(
       'data:image/jpeg;base64,AA'
+    );
+  });
+});
+
+describe('logoNameKey', () => {
+  it('gives the same key to a gym with and without filler words', () => {
+    expect(logoNameKey('Bump Bouldering')).toBe('bump');
+    expect(logoNameKey('Bump')).toBe('bump');
+    expect(logoNameKey('Nine Degrees Climbing')).toBe(logoNameKey('9 Degrees'));
+  });
+});
+
+describe('autoMatchGymLogos', () => {
+  it('uses the shared directory before searching the web', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch');
+    (getGyms as jest.Mock).mockReturnValue([gym({ id: 'bump', name: 'Bump Bouldering' })]);
+    (lookupDirectoryLogos as jest.Mock).mockResolvedValue(
+      new Map([['bump', { domain: null, imageUrl: 'https://x.supabase.co/storage/v1/object/public/gym-logos/a.jpg', votes: 3 }]])
+    );
+
+    expect(await autoMatchGymLogos()).toBe(true);
+    expect(setGymLogoImage).toHaveBeenCalledWith('bump', 'https://x.supabase.co/storage/v1/object/public/gym-logos/a.jpg');
+    expect(setGymLogoDomain).toHaveBeenCalledWith('bump', '');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('shares a gym logo this phone already has', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true } as Response);
+    (getGyms as jest.Mock).mockReturnValue([gym({ id: 'ul', name: 'Urban Climb', logo_domain: 'urbanclimb.com.au' })]);
+
+    await autoMatchGymLogos();
+    expect(shareGymLogo).toHaveBeenCalledWith(
+      expect.objectContaining({ nameKey: 'urban', domain: 'urbanclimb.com.au', picked: false })
     );
   });
 });

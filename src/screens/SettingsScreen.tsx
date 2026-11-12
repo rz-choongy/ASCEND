@@ -35,6 +35,7 @@ import { formatDaysAgo } from '../domain/strengthProgress';
 import { APP_VERSION } from '../changelog';
 import { newerApk, offerApk } from '../release';
 import { isBugReportApiConfigured } from '../domain/bugReportApi';
+import { CloudSyncSection } from './CloudSyncSection';
 import type { RootStackScreenProps } from '../navigation/types';
 import {
   ACCENT_PALETTE,
@@ -490,6 +491,8 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
             />
           )}
         </ListGroup>
+
+        <CloudSyncSection labelStyle={styles.sectionLabel} />
 
         <Text style={styles.sectionLabel}>Data</Text>
         <ListGroup>

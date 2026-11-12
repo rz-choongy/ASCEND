@@ -1,0 +1,1580 @@
+{
+  ".claude/launch.json": {
+    "mtime": 1790146610.9996655,
+    "seen": 1790896627.304111,
+    "ast_hash": "397f1ddc95176401dc8f754a8d5019af",
+    "semantic_hash": ""
+  },
+  ".claude/settings.json": {
+    "mtime": 1789805533.1525693,
+    "seen": 1790896627.304113,
+    "ast_hash": "5c511cbdc7fcda005c8112e781c563bd",
+    "semantic_hash": ""
+  },
+  ".claude/settings.local.json": {
+    "mtime": 1790813491.8216827,
+    "seen": 1790896627.3041139,
+    "ast_hash": "5cf81a63de570094cb51d520024c9111",
+    "semantic_hash": ""
+  },
+  ".vscode/extensions.json": {
+    "mtime": 1789805533.153591,
+    "seen": 1790896627.304115,
+    "ast_hash": "1aa9ce67f4ff4ac0b5b8c8a6414a53d6",
+    "semantic_hash": ""
+  },
+  "App.tsx": {
+    "mtime": 1793787490.3625925,
+    "seen": 1794193863.665171,
+    "ast_hash": "a22aeb50da3cd7a97bba0e8058cbe6dc",
+    "semantic_hash": ""
+  },
+  "app.json": {
+    "mtime": 1792234132.97232,
+    "seen": 1792234327.534712,
+    "ast_hash": "22917f56f1ceb17d9fbc73cf4567e87f",
+    "semantic_hash": ""
+  },
+  "babel.config.js": {
+    "mtime": 1789805533.160099,
+    "seen": 1790896627.304117,
+    "ast_hash": "05b06ed3f7c1992f5c319b5f61f67c54",
+    "semantic_hash": ""
+  },
+  "bug-agent.config.json": {
+    "mtime": 1792495823.1493926,
+    "seen": 1792495836.867241,
+    "ast_hash": "ac3b4254c4807fab49224aa02c9077b3",
+    "semantic_hash": ""
+  },
+  "eas.json": {
+    "mtime": 1793008128.8300273,
+    "seen": 1793605367.476732,
+    "ast_hash": "ef4d00aae1647d691436921836d2e28e",
+    "semantic_hash": ""
+  },
+  "index.ts": {
+    "mtime": 1789805533.1651344,
+    "seen": 1790896627.304118,
+    "ast_hash": "33caa6d28d87fc7e637c033d0d7124b1",
+    "semantic_hash": ""
+  },
+  "metro.config.js": {
+    "mtime": 1789805533.1651995,
+    "seen": 1790896627.304118,
+    "ast_hash": "d6427948dc9c70d99adde82c3e166aa8",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1793789002.265737,
+    "seen": 1794193863.6652942,
+    "ast_hash": "23954d733d0219bccf45269e4dc26f64",
+    "semantic_hash": ""
+  },
+  "scripts/web-coi-proxy.js": {
+    "mtime": 1789805533.166245,
+    "seen": 1790896627.304119,
+    "ast_hash": "a9490aec6ca2c39dd06c1f092c50615f",
+    "semantic_hash": ""
+  },
+  "src/changelog.test.ts": {
+    "mtime": 1790117301.2370665,
+    "seen": 1790896627.304119,
+    "ast_hash": "3f4c2a05bc39e2999d5563e6ab047b8d",
+    "semantic_hash": ""
+  },
+  "src/changelog.ts": {
+    "mtime": 1794196160.251624,
+    "seen": 1794196165.467166,
+    "ast_hash": "2d270287da0953a29de519435b07320b",
+    "semantic_hash": ""
+  },
+  "src/db/db.ts": {
+    "mtime": 1789805533.1663978,
+    "seen": 1790896627.30412,
+    "ast_hash": "3409ff196d7829b53886dad688fb93bb",
+    "semantic_hash": ""
+  },
+  "src/db/migrate.ts": {
+    "mtime": 1794195945.2549918,
+    "seen": 1794196165.4671848,
+    "ast_hash": "7257ea7188c5fd4759b98c82adb7c774",
+    "semantic_hash": ""
+  },
+  "src/domain/bodyweightStore.test.ts": {
+    "mtime": 1790170990.7553544,
+    "seen": 1790896627.304121,
+    "ast_hash": "1ceb55bb9f1e01da83aa3c7a50446d1f",
+    "semantic_hash": ""
+  },
+  "src/domain/bodyweightStore.ts": {
+    "mtime": 1790170990.755481,
+    "seen": 1790896627.3041222,
+    "ast_hash": "63f97ab661dd7afe96e4912e591e0a5f",
+    "semantic_hash": ""
+  },
+  "src/domain/calendarInsights.test.ts": {
+    "mtime": 1793957063.2869797,
+    "seen": 1794193863.6654599,
+    "ast_hash": "2b87c8e8d713a437ff50153cbba17b2d",
+    "semantic_hash": ""
+  },
+  "src/domain/calendarInsights.ts": {
+    "mtime": 1793957063.2871954,
+    "seen": 1794193863.6654599,
+    "ast_hash": "1391d1baf6e5693dd287943acb677cb8",
+    "semantic_hash": ""
+  },
+  "src/domain/climbLogUtils.test.ts": {
+    "mtime": 1793957063.2874053,
+    "seen": 1794193863.665461,
+    "ast_hash": "68f7877627beadbb7782c3d1f5d3e8f9",
+    "semantic_hash": ""
+  },
+  "src/domain/climbLogUtils.ts": {
+    "mtime": 1793957063.287731,
+    "seen": 1794193863.665461,
+    "ast_hash": "dec46cb44dcedcf1fbe29e8ff15591e9",
+    "semantic_hash": ""
+  },
+  "src/domain/dashboard.test.ts": {
+    "mtime": 1793957063.2879794,
+    "seen": 1794193863.665462,
+    "ast_hash": "064fb0bcc57e971663466d2ea2e12eb7",
+    "semantic_hash": ""
+  },
+  "src/domain/dashboard.ts": {
+    "mtime": 1793957063.2882268,
+    "seen": 1794193863.665462,
+    "ast_hash": "ef66c3bcd0cc61dce530624e4f18e9b0",
+    "semantic_hash": ""
+  },
+  "src/domain/dateUtils.test.ts": {
+    "mtime": 1789805533.1669335,
+    "seen": 1790896627.3041239,
+    "ast_hash": "e38d9e55a3e2540014bd7068bc0e272b",
+    "semantic_hash": ""
+  },
+  "src/domain/dateUtils.ts": {
+    "mtime": 1792237745.1199965,
+    "seen": 1792237914.979456,
+    "ast_hash": "823548e48608f98bc9df4ba7ef6bf88f",
+    "semantic_hash": ""
+  },
+  "src/domain/exerciseData.test.ts": {
+    "mtime": 1790176256.0539742,
+    "seen": 1790896627.3041248,
+    "ast_hash": "a70d91a663cce54a357713af06cab3c4",
+    "semantic_hash": ""
+  },
+  "src/domain/exerciseData.ts": {
+    "mtime": 1790176256.0535557,
+    "seen": 1790896627.304126,
+    "ast_hash": "18274c6c56dcd699796974fe79b07e43",
+    "semantic_hash": ""
+  },
+  "src/domain/exerciseStore.test.ts": {
+    "mtime": 1790171135.1466737,
+    "seen": 1790896627.304126,
+    "ast_hash": "7b941476e5f149bea6121d6e89d5c860",
+    "semantic_hash": ""
+  },
+  "src/domain/exerciseStore.ts": {
+    "mtime": 1790175793.492896,
+    "seen": 1790896627.304126,
+    "ast_hash": "f936808bcfe1addff7bf619148a1d9cf",
+    "semantic_hash": ""
+  },
+  "src/domain/gymStore.ts": {
+    "mtime": 1794195945.2556076,
+    "seen": 1794196165.467655,
+    "ast_hash": "195a935d0e62e6145538d5e73ad24970",
+    "semantic_hash": ""
+  },
+  "src/domain/progressInsights.test.ts": {
+    "mtime": 1793957063.2884893,
+    "seen": 1794193863.6656718,
+    "ast_hash": "4e4850e5e71ee3411443a97ffb796de8",
+    "semantic_hash": ""
+  },
+  "src/domain/progressInsights.ts": {
+    "mtime": 1793957063.2887795,
+    "seen": 1794193863.665673,
+    "ast_hash": "63198103a3b1c93208cc7d109f66cde7",
+    "semantic_hash": ""
+  },
+  "src/domain/routineStore.test.ts": {
+    "mtime": 1790951975.3179543,
+    "seen": 1792234327.534726,
+    "ast_hash": "6402763d1626e7146485e639cb59da6c",
+    "semantic_hash": ""
+  },
+  "src/domain/routineStore.ts": {
+    "mtime": 1790951975.318292,
+    "seen": 1792234327.534726,
+    "ast_hash": "c3d6875083bf2909263a4beb2556f085",
+    "semantic_hash": ""
+  },
+  "src/domain/sessionStore.import.test.ts": {
+    "mtime": 1790170990.7562866,
+    "seen": 1790896627.3041291,
+    "ast_hash": "308457010da8aaab0b7fd65518593945",
+    "semantic_hash": ""
+  },
+  "src/domain/sessionStore.test.ts": {
+    "mtime": 1792332813.4684572,
+    "seen": 1792333023.589963,
+    "ast_hash": "a9982c4d705be293545d8a26b645e0f8",
+    "semantic_hash": ""
+  },
+  "src/domain/sessionStore.ts": {
+    "mtime": 1792332775.1378648,
+    "seen": 1792333023.589964,
+    "ast_hash": "c1c7859913412906ec3ec5b8257f4e76",
+    "semantic_hash": ""
+  },
+  "src/domain/settingsStore.ts": {
+    "mtime": 1793957063.2890406,
+    "seen": 1794193863.665814,
+    "ast_hash": "97501eebf2603cf7863042e50e4ea650",
+    "semantic_hash": ""
+  },
+  "src/domain/strengthLogUtils.test.ts": {
+    "mtime": 1790951975.3194382,
+    "seen": 1792234327.53473,
+    "ast_hash": "3e4ed0854401d523ad9c3c058a9e332c",
+    "semantic_hash": ""
+  },
+  "src/domain/strengthLogUtils.ts": {
+    "mtime": 1790951975.3197513,
+    "seen": 1792234327.53473,
+    "ast_hash": "68b203a281f8ae1a740624c03fa1f2d9",
+    "semantic_hash": ""
+  },
+  "src/domain/strengthProgress.test.ts": {
+    "mtime": 1790951975.3211467,
+    "seen": 1792234327.53473,
+    "ast_hash": "c80ad4fe28f7dbeef6fc1f5062ec6834",
+    "semantic_hash": ""
+  },
+  "src/domain/strengthProgress.ts": {
+    "mtime": 1790951975.3214612,
+    "seen": 1792234327.534731,
+    "ast_hash": "5c5c1c45538a6795e5d8c20904918cfc",
+    "semantic_hash": ""
+  },
+  "src/domain/types.ts": {
+    "mtime": 1794195945.2553198,
+    "seen": 1794196165.4679208,
+    "ast_hash": "c35034b809d624b1a847951b751ff571",
+    "semantic_hash": ""
+  },
+  "src/hooks/useClimbSessionLogs.ts": {
+    "mtime": 1789805533.16793,
+    "seen": 1790896627.304132,
+    "ast_hash": "0796dff34a8587d5d9bd570d850c9189",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterApi.test.ts": {
+    "mtime": 1789822266.414341,
+    "seen": 1790896627.3041332,
+    "ast_hash": "03082fed52f69f5713defd2f8f5bb7c9",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterApi.ts": {
+    "mtime": 1789822160.4761631,
+    "seen": 1790896627.3041332,
+    "ast_hash": "97831660b4de707aec766dd9cb7e3118",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterAuth.test.ts": {
+    "mtime": 1790170990.7575414,
+    "seen": 1790896627.304134,
+    "ast_hash": "111a1531b9e9c76340cd9907b06fcfde",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterAuth.ts": {
+    "mtime": 1790170990.7578762,
+    "seen": 1790896627.304134,
+    "ast_hash": "90e19e9ae62cea8874fde3c7961c5436",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterClient.ts": {
+    "mtime": 1790117301.2390053,
+    "seen": 1790896627.304134,
+    "ast_hash": "e884443c866a8169673b051159bfef15",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterConfig.ts": {
+    "mtime": 1789822160.4720445,
+    "seen": 1790896627.3041348,
+    "ast_hash": "97484961f912c0d5e79579073e763031",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterMapping.test.ts": {
+    "mtime": 1790170990.7580802,
+    "seen": 1790896627.3041348,
+    "ast_hash": "84621d0e53d867895644e5180be7c3eb",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterMapping.ts": {
+    "mtime": 1790170990.758297,
+    "seen": 1790896627.3041348,
+    "ast_hash": "4b6eb129a8748b23fdbe8f450e6b0c2d",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterSessionStore.test.ts": {
+    "mtime": 1790117301.2392373,
+    "seen": 1790896627.304136,
+    "ast_hash": "30d6abc493db6b1b8e135528d038584c",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterSessionStore.ts": {
+    "mtime": 1790117301.2394524,
+    "seen": 1790896627.304136,
+    "ast_hash": "3589e68933ff63d09489bc736ea74ab3",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterSync.test.ts": {
+    "mtime": 1790170990.7586598,
+    "seen": 1790896627.304137,
+    "ast_hash": "4738bdf54c84e9bad56ff49883a9efc6",
+    "semantic_hash": ""
+  },
+  "src/integrations/kilter/kilterSync.ts": {
+    "mtime": 1790170990.7588851,
+    "seen": 1790896627.304137,
+    "ast_hash": "81fe3b4e25ff408810e4e4438614ef6a",
+    "semantic_hash": ""
+  },
+  "src/navigation/Dock.tsx": {
+    "mtime": 1793957063.2892473,
+    "seen": 1794193863.666235,
+    "ast_hash": "a1eded81f9ef550eaee963f942d77470",
+    "semantic_hash": ""
+  },
+  "src/navigation/tabBar.ts": {
+    "mtime": 1790149508.935818,
+    "seen": 1790896627.304138,
+    "ast_hash": "b72232c03c9a951ce34484334c5346db",
+    "semantic_hash": ""
+  },
+  "src/navigation/types.ts": {
+    "mtime": 1790951975.3219798,
+    "seen": 1792234327.5347378,
+    "ast_hash": "a8f6f6c6defb837eb2081734ce436e59",
+    "semantic_hash": ""
+  },
+  "src/screens/BugReportScreen.tsx": {
+    "mtime": 1793957603.5431855,
+    "seen": 1794193863.666285,
+    "ast_hash": "e1fb2169d481ecf2fefc188248d58182",
+    "semantic_hash": ""
+  },
+  "src/screens/CalendarScreen.tsx": {
+    "mtime": 1793957063.289737,
+    "seen": 1794193863.666286,
+    "ast_hash": "850a96d42f91b26c1164052d243ed5fd",
+    "semantic_hash": ""
+  },
+  "src/screens/CategoriesScreen.tsx": {
+    "mtime": 1793862353.9429724,
+    "seen": 1794193863.666286,
+    "ast_hash": "c3c73761f2234963fbf1714384fd5a5a",
+    "semantic_hash": ""
+  },
+  "src/screens/ChangelogScreen.tsx": {
+    "mtime": 1793862353.9414332,
+    "seen": 1794193863.6662872,
+    "ast_hash": "22d592a24ae082de8974854daae3335e",
+    "semantic_hash": ""
+  },
+  "src/screens/ClimbSessionScreen.tsx": {
+    "mtime": 1793957063.311309,
+    "seen": 1794193863.6662872,
+    "ast_hash": "366411aff7b8329da89ab866a689d7e7",
+    "semantic_hash": ""
+  },
+  "src/screens/ExerciseProgressScreen.tsx": {
+    "mtime": 1793862353.9419754,
+    "seen": 1794193863.6662889,
+    "ast_hash": "8e8a6f054bf650a24d2b17a0c67a2809",
+    "semantic_hash": ""
+  },
+  "src/screens/GymEditScreen.tsx": {
+    "mtime": 1794196128.0621946,
+    "seen": 1794196165.468333,
+    "ast_hash": "abfc1be8760db80bb7907387ff0d6311",
+    "semantic_hash": ""
+  },
+  "src/screens/GymSelectScreen.tsx": {
+    "mtime": 1794196094.255231,
+    "seen": 1794196165.468333,
+    "ast_hash": "67865d4244b1f557cac8bb582849de0d",
+    "semantic_hash": ""
+  },
+  "src/screens/KilterConnectScreen.tsx": {
+    "mtime": 1793862353.9394557,
+    "seen": 1794193863.6662898,
+    "ast_hash": "46f714cb30e8299df9950ad9e729cb08",
+    "semantic_hash": ""
+  },
+  "src/screens/LogScreen.tsx": {
+    "mtime": 1793957063.2902393,
+    "seen": 1794193863.666291,
+    "ast_hash": "7d26cdd0dde1f42f981e130df369f54a",
+    "semantic_hash": ""
+  },
+  "src/screens/ProgressScreen.tsx": {
+    "mtime": 1793957063.2907925,
+    "seen": 1794193863.666291,
+    "ast_hash": "fbc9a31d58b8ba968a980437ac067b6f",
+    "semantic_hash": ""
+  },
+  "src/screens/RoutineEditScreen.tsx": {
+    "mtime": 1793862353.9363906,
+    "seen": 1794193863.666292,
+    "ast_hash": "d1aad8ff02113546ef9c5c3e409e8276",
+    "semantic_hash": ""
+  },
+  "src/screens/RoutinesScreen.tsx": {
+    "mtime": 1790951975.3228571,
+    "seen": 1792234327.534745,
+    "ast_hash": "39f874e0e1c637fe25ce3fbee1c25067",
+    "semantic_hash": ""
+  },
+  "src/screens/SessionHistoryScreen.tsx": {
+    "mtime": 1793957063.2911081,
+    "seen": 1794193863.6663208,
+    "ast_hash": "447cdc8dbe9c0a3ab2d7fbbb26bcfa62",
+    "semantic_hash": ""
+  },
+  "src/screens/SettingsScreen.tsx": {
+    "mtime": 1793862353.9379995,
+    "seen": 1794193863.6663208,
+    "ast_hash": "440c6522a3258aa2054453d8029b322f",
+    "semantic_hash": ""
+  },
+  "src/screens/StrengthSessionScreen.tsx": {
+    "mtime": 1793957063.3117325,
+    "seen": 1794193863.666322,
+    "ast_hash": "52a8e74bc496f5b4af9a452eee5f38be",
+    "semantic_hash": ""
+  },
+  "src/screens/progress/BodyweightCard.tsx": {
+    "mtime": 1793862353.943183,
+    "seen": 1794193863.666347,
+    "ast_hash": "1c1e2e2e180ce05b3331144b66142606",
+    "semantic_hash": ""
+  },
+  "src/screens/progress/ClimbProgressView.tsx": {
+    "mtime": 1793957063.2921584,
+    "seen": 1794193863.666348,
+    "ast_hash": "8a06b31b3006b404a11807ed5741e094",
+    "semantic_hash": ""
+  },
+  "src/screens/progress/GymScopeSheet.tsx": {
+    "mtime": 1793957063.292917,
+    "seen": 1794193863.6663492,
+    "ast_hash": "3a3071f51573aa535effa08532155e21",
+    "semantic_hash": ""
+  },
+  "src/screens/progress/StrengthProgressView.tsx": {
+    "mtime": 1793787490.4599035,
+    "seen": 1794193863.6663492,
+    "ast_hash": "fc4b2eb96fa1060651fcb8988e4d3070",
+    "semantic_hash": ""
+  },
+  "src/screens/strength/ExercisePickerSheet.tsx": {
+    "mtime": 1793862353.9426582,
+    "seen": 1794193863.6663501,
+    "ast_hash": "023e585e95e6843ce5d1d7f6a8e67d14",
+    "semantic_hash": ""
+  },
+  "src/screens/today/ActiveSessionCard.tsx": {
+    "mtime": 1793862353.943458,
+    "seen": 1794193863.6663501,
+    "ast_hash": "7bd28fa99d126db21f8303b70473b139",
+    "semantic_hash": ""
+  },
+  "src/screens/today/BodyweightRow.tsx": {
+    "mtime": 1793862353.9436967,
+    "seen": 1794193863.666351,
+    "ast_hash": "b41056dc558e48aa9d6f2c1cb84f9d03",
+    "semantic_hash": ""
+  },
+  "src/screens/today/LastSessionCard.tsx": {
+    "mtime": 1793957063.2931828,
+    "seen": 1794193863.666351,
+    "ast_hash": "83f68c1ad35662429d1c3590b6e849b2",
+    "semantic_hash": ""
+  },
+  "src/screens/today/RecentSessionsList.tsx": {
+    "mtime": 1793862331.8895876,
+    "seen": 1794193863.666352,
+    "ast_hash": "38541af9084ec3ef2d4b7fa7206a683a",
+    "semantic_hash": ""
+  },
+  "src/screens/today/StartCard.tsx": {
+    "mtime": 1793862331.8889177,
+    "seen": 1794193863.666352,
+    "ast_hash": "5dd139e28aed5a0f807f458475c96769",
+    "semantic_hash": ""
+  },
+  "src/screens/today/WeekCard.tsx": {
+    "mtime": 1793957063.293547,
+    "seen": 1794193863.666353,
+    "ast_hash": "fe730213a2da2a35ba6fe04506908a2d",
+    "semantic_hash": ""
+  },
+  "src/screens/today/deltas.ts": {
+    "mtime": 1793957063.2937448,
+    "seen": 1794193863.666353,
+    "ast_hash": "d913dc5975e98597c6c86e8abb11407f",
+    "semantic_hash": ""
+  },
+  "src/ui/components/BarChart.tsx": {
+    "mtime": 1793787490.4614184,
+    "seen": 1794193863.666353,
+    "ast_hash": "a0eabefecfd5b9f4b7756255d3e2d499",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Button.tsx": {
+    "mtime": 1793862331.8894057,
+    "seen": 1794193863.666354,
+    "ast_hash": "9124632eea9ddb9abb536c7273a0b197",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Card.tsx": {
+    "mtime": 1793787490.461853,
+    "seen": 1794193863.666354,
+    "ast_hash": "bb57512240dd89f317951db939fb1a09",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Chip.tsx": {
+    "mtime": 1793787490.4620466,
+    "seen": 1794193863.666355,
+    "ast_hash": "ae1760dcf01d16cbf578398759f2c05c",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Dialog.tsx": {
+    "mtime": 1793862353.9344547,
+    "seen": 1794193863.666355,
+    "ast_hash": "1b4ed59bb1fb8270cec62cce2f73f9e9",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Divider.tsx": {
+    "mtime": 1790147242.8197012,
+    "seen": 1790896627.304152,
+    "ast_hash": "520c36ec2997a8b2ccc241086d5bca3d",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Icon.tsx": {
+    "mtime": 1790856096.8897955,
+    "seen": 1790896627.304152,
+    "ast_hash": "6dd9b34819a2f77374f079318250fc81",
+    "semantic_hash": ""
+  },
+  "src/ui/components/IconButton.tsx": {
+    "mtime": 1790147242.8544486,
+    "seen": 1790896627.304152,
+    "ast_hash": "6602aa5de65834619f7356a8188e5a95",
+    "semantic_hash": ""
+  },
+  "src/ui/components/LineChart.tsx": {
+    "mtime": 1793957063.2943537,
+    "seen": 1794193863.666435,
+    "ast_hash": "0056f1b9a5d5a0485620aa7f8a91f589",
+    "semantic_hash": ""
+  },
+  "src/ui/components/ListRow.tsx": {
+    "mtime": 1793862353.933858,
+    "seen": 1794193863.6664362,
+    "ast_hash": "abf98eb17b756dfcd9585eeecce688b9",
+    "semantic_hash": ""
+  },
+  "src/ui/components/PressableScale.tsx": {
+    "mtime": 1790178249.0767815,
+    "seen": 1790896627.3041532,
+    "ast_hash": "06f84cbcdc9a055435e5a530235e1cad",
+    "semantic_hash": ""
+  },
+  "src/ui/components/ScreenHeader.tsx": {
+    "mtime": 1793862353.934105,
+    "seen": 1794193863.666462,
+    "ast_hash": "63304cc96cd98e21af56c5b22ad4d08b",
+    "semantic_hash": ""
+  },
+  "src/ui/components/SegmentedControl.tsx": {
+    "mtime": 1793787490.462767,
+    "seen": 1794193863.666463,
+    "ast_hash": "36b08beddd7d9092f67e544050ad7ff7",
+    "semantic_hash": ""
+  },
+  "src/ui/components/StatTile.tsx": {
+    "mtime": 1793862353.9347765,
+    "seen": 1794193863.666464,
+    "ast_hash": "99e8b0d56e83acbdc3f9a9c2c866e203",
+    "semantic_hash": ""
+  },
+  "src/ui/components/Stepper.tsx": {
+    "mtime": 1793862353.9350786,
+    "seen": 1794193863.666464,
+    "ast_hash": "f6d1097aba904fa7377fdc1ec66ac4fc",
+    "semantic_hash": ""
+  },
+  "src/ui/index.ts": {
+    "mtime": 1794193796.2635832,
+    "seen": 1794193863.666465,
+    "ast_hash": "acde93075f97021b19d6541d7132f9c7",
+    "semantic_hash": ""
+  },
+  "src/ui/theme/ThemeContext.tsx": {
+    "mtime": 1790146361.9390357,
+    "seen": 1790896627.3041558,
+    "ast_hash": "a5cb3e94b024db8e52538a8e1927fdaf",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/colors.ts": {
+    "mtime": 1793787490.4637134,
+    "seen": 1794193863.666485,
+    "ast_hash": "e6d20b82f301fb8e280409e9c185e668",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/fonts.ts": {
+    "mtime": 1793789002.267344,
+    "seen": 1794193863.666486,
+    "ast_hash": "acd4f8c1931af130d798db06f5757c1c",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/radius.ts": {
+    "mtime": 1793787490.4640741,
+    "seen": 1794193863.666486,
+    "ast_hash": "4c710bf44c05868e6ccd5674fe7d489a",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/shadow.ts": {
+    "mtime": 1793787490.464226,
+    "seen": 1794193863.666487,
+    "ast_hash": "242d80207b2f28d456d29860fc957a99",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/spacing.ts": {
+    "mtime": 1789805533.170715,
+    "seen": 1790896627.304157,
+    "ast_hash": "5648cc1b0aa2808886cc5ca49b703bc0",
+    "semantic_hash": ""
+  },
+  "src/ui/tokens/typography.ts": {
+    "mtime": 1793862308.2357213,
+    "seen": 1794193863.666514,
+    "ast_hash": "01eb3168eb76d1983df5b6d262b1b1f1",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1789805533.1708424,
+    "seen": 1790896627.304158,
+    "ast_hash": "18934bdf0629cf1106f419b2960d6fee",
+    "semantic_hash": ""
+  },
+  ".github/workflows/eas-build.yml": {
+    "mtime": 1793008138.0018246,
+    "seen": 1793605367.477998,
+    "ast_hash": "b0411b993814216e57ecbcffc5c68f41",
+    "semantic_hash": ""
+  },
+  ".github/workflows/eas-update.yml": {
+    "mtime": 1792504316.3498433,
+    "seen": 1792504356.269232,
+    "ast_hash": "969c14ed7899abc56da32ddde563c258",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1789805533.1536722,
+    "seen": 1790896627.304159,
+    "ast_hash": "f5e3c988a7a1a366f7447653f10eaa5c",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1790951975.3107858,
+    "seen": 1792234327.534764,
+    "ast_hash": "69890cf9391c444f1a115ea893e0e6f8",
+    "semantic_hash": ""
+  },
+  "Climb + Gym Workout Tracker.md": {
+    "mtime": 1789805533.153966,
+    "seen": 1790896627.30416,
+    "ast_hash": "d23f386828349136eebaf6846b586b42",
+    "semantic_hash": ""
+  },
+  "DESIGN.md": {
+    "mtime": 1789805533.1541398,
+    "seen": 1790896627.30416,
+    "ast_hash": "79058c96255d1f11c9ea3e6a13895bed",
+    "semantic_hash": ""
+  },
+  "Docs for reference/Architecture.md": {
+    "mtime": 1789805533.159098,
+    "seen": 1790896627.304161,
+    "ast_hash": "1d4d10bfc2e8acc634abcf47926cec21",
+    "semantic_hash": ""
+  },
+  "Docs for reference/Design Inspo.md": {
+    "mtime": 1789805533.159179,
+    "seen": 1790896627.304161,
+    "ast_hash": "c9d62c9ef285e566ffa09530ab6124f3",
+    "semantic_hash": ""
+  },
+  "Docs for reference/PRD v1.md": {
+    "mtime": 1789805533.15927,
+    "seen": 1790896627.304162,
+    "ast_hash": "7d1cb79e146818bbce1c8129284ac0c4",
+    "semantic_hash": ""
+  },
+  "Docs for reference/User_Journeys.md": {
+    "mtime": 1789805533.159359,
+    "seen": 1790896627.304162,
+    "ast_hash": "c52696d144cf99c7fd6904b6ad887370",
+    "semantic_hash": ""
+  },
+  "docs/ROADMAP.md": {
+    "mtime": 1793787490.2904203,
+    "seen": 1794193863.666783,
+    "ast_hash": "a864cc779ca3c75f0369a28c58ebf116",
+    "semantic_hash": ""
+  },
+  "docs/release-readiness.md": {
+    "mtime": 1793787490.2908258,
+    "seen": 1794193863.666784,
+    "ast_hash": "2c4101a7f4b914e4f6df2deaaa263caa",
+    "semantic_hash": ""
+  },
+  "Design/Climbing session finish screen.png": {
+    "mtime": 1789805533.1547701,
+    "seen": 1790896627.304163,
+    "ast_hash": "72fdfdc048a3f4f64c9e7f33a760acc2",
+    "semantic_hash": ""
+  },
+  "Design/climbing_analytics.png": {
+    "mtime": 1789805533.155517,
+    "seen": 1790896627.3041642,
+    "ast_hash": "a0ee8912227944626b62a57b1a995880",
+    "semantic_hash": ""
+  },
+  "Design/hangboard tracker.png": {
+    "mtime": 1789805533.1563334,
+    "seen": 1790896627.3041642,
+    "ast_hash": "c5736c26a94078d7c8a9566b00179f6b",
+    "semantic_hash": ""
+  },
+  "Design/rest timer.png": {
+    "mtime": 1789805533.1567965,
+    "seen": 1790896627.3041642,
+    "ast_hash": "a99911842b853d69ad96df58d35605e0",
+    "semantic_hash": ""
+  },
+  "Design/strength_logger.png": {
+    "mtime": 1789805533.1572363,
+    "seen": 1790896627.3041651,
+    "ast_hash": "f8b115a235032d1fbf3b44e66c60ee78",
+    "semantic_hash": ""
+  },
+  "Design/tape based climbing session.png": {
+    "mtime": 1789805533.1577804,
+    "seen": 1790896627.3041651,
+    "ast_hash": "7480f9d8dd084fe4d5fc9cb005a38a4f",
+    "semantic_hash": ""
+  },
+  "Design/training routine library.png": {
+    "mtime": 1789805533.1584625,
+    "seen": 1790896627.3041651,
+    "ast_hash": "0c0a4ef052a61e0a9e4e614c6c03dee2",
+    "semantic_hash": ""
+  },
+  "Design/weight trainer session.png": {
+    "mtime": 1789805533.158968,
+    "seen": 1790896627.3041658,
+    "ast_hash": "18c11022138b2aec76ebed3e639844f5",
+    "semantic_hash": ""
+  },
+  "assets/adaptive-icon.png": {
+    "mtime": 1789805533.1596317,
+    "seen": 1790896627.3041658,
+    "ast_hash": "c9cdf3f126efaf5c2733849149d15c9c",
+    "semantic_hash": ""
+  },
+  "assets/favicon.png": {
+    "mtime": 1789805533.1597383,
+    "seen": 1790896627.3041668,
+    "ast_hash": "67d6c47c3203890b396e9f8faabfb1d6",
+    "semantic_hash": ""
+  },
+  "assets/icon.png": {
+    "mtime": 1789805533.1598732,
+    "seen": 1790896627.3041668,
+    "ast_hash": "662ea161e0cdf4f3a536cdea26a63a71",
+    "semantic_hash": ""
+  },
+  "assets/splash-icon.png": {
+    "mtime": 1789805533.160016,
+    "seen": 1790896627.3041668,
+    "ast_hash": "662ea161e0cdf4f3a536cdea26a63a71",
+    "semantic_hash": ""
+  },
+  "src/domain/sessionNotification.ts": {
+    "mtime": 1793787490.455223,
+    "seen": 1794193863.6657221,
+    "ast_hash": "f0d585ec8b43104f04d1df440cfe1451",
+    "semantic_hash": ""
+  },
+  "src/screens/confirmEndTime.ts": {
+    "mtime": 1792332868.559001,
+    "seen": 1792333023.589983,
+    "ast_hash": "c9b5d67fa4c389eae7867cda0e62d29d",
+    "semantic_hash": ""
+  },
+  "src/domain/endTimeDial.test.ts": {
+    "mtime": 1792332813.4681568,
+    "seen": 1792333023.5899572,
+    "ast_hash": "5d82ec498c2239f8b5ed08332273db4c",
+    "semantic_hash": ""
+  },
+  "src/domain/endTimeDial.ts": {
+    "mtime": 1792332803.1218445,
+    "seen": 1792333023.589958,
+    "ast_hash": "907c9e9eb8635beb76b5465d1f3eb75a",
+    "semantic_hash": ""
+  },
+  "src/screens/EndTimeSheet.tsx": {
+    "mtime": 1793862353.936094,
+    "seen": 1794193863.6662881,
+    "ast_hash": "a1884475e2359d2ea3158c9e5e41143a",
+    "semantic_hash": ""
+  },
+  "src/domain/bugReportApi.test.ts": {
+    "mtime": 1793957572.7886899,
+    "seen": 1794193863.6654139,
+    "ast_hash": "6a9b762078a91e2d937de5f7ffe3bcaa",
+    "semantic_hash": ""
+  },
+  "src/domain/bugReportApi.ts": {
+    "mtime": 1793957556.4916377,
+    "seen": 1794193863.6654148,
+    "ast_hash": "40a458eab10f89ac91d551f6c6394e3f",
+    "semantic_hash": ""
+  },
+  "supabase/README.md": {
+    "mtime": 1793957632.3415334,
+    "seen": 1794193863.666785,
+    "ast_hash": "71985fb429d0195d22b7d33158981dc4",
+    "semantic_hash": ""
+  },
+  ".impeccable/direction.json": {
+    "mtime": 1793451954.4021018,
+    "seen": 1793605367.476657,
+    "ast_hash": "5dff33a10b8fb437a06eb7a383f20e67",
+    "semantic_hash": ""
+  },
+  ".impeccable/questions/e49dbf22.state.json": {
+    "mtime": 1793452854.3781242,
+    "seen": 1793605367.4766579,
+    "ast_hash": "df3795e9e07e2a42f0aa602e6ea8da6d",
+    "semantic_hash": ""
+  },
+  "src/domain/calendarGrid.test.ts": {
+    "mtime": 1793007833.6120276,
+    "seen": 1793605367.476949,
+    "ast_hash": "363aba425b41c0be7df8e8069cf50e7c",
+    "semantic_hash": ""
+  },
+  "src/domain/calendarGrid.ts": {
+    "mtime": 1793007822.7743986,
+    "seen": 1793605367.47695,
+    "ast_hash": "39095e22564b415375128bcc744536c1",
+    "semantic_hash": ""
+  },
+  "src/domain/gymStore.test.ts": {
+    "mtime": 1793787490.3167975,
+    "seen": 1794193863.6656709,
+    "ast_hash": "2f72c05315e08e990a3e8b98e8a86800",
+    "semantic_hash": ""
+  },
+  "PRODUCT.md": {
+    "mtime": 1793451397.9617994,
+    "seen": 1793605367.478081,
+    "ast_hash": "89af8e2633114205ba22b854a91be8cc",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/brand-options.html": {
+    "mtime": 1793787490.4114306,
+    "seen": 1794193863.666775,
+    "ast_hash": "e71aa2fc2ebc025325ce1f1048e40861",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/brand-options.png": {
+    "mtime": 1793787490.4131322,
+    "seen": 1794193863.667074,
+    "ast_hash": "4200396f79dd2e069989336fb2b5a2b1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/compare-b.html": {
+    "mtime": 1793787490.416654,
+    "seen": 1794193863.6667771,
+    "ast_hash": "0ead9af32e9040821a255b5da7af9676",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/tape-round2.html": {
+    "mtime": 1793787490.440692,
+    "seen": 1794193863.66678,
+    "ast_hash": "ea79a3c5a23faadb3629dfa05715ea78",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round.html": {
+    "mtime": 1793787490.4422376,
+    "seen": 1794193863.666781,
+    "ast_hash": "75bb9d4176779fdf4d54fa6223258132",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round2.html": {
+    "mtime": 1793787490.4448473,
+    "seen": 1794193863.666781,
+    "ast_hash": "a300d7d7c76956c3c77c371a9880e2a4",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round3.html": {
+    "mtime": 1793787490.4476357,
+    "seen": 1794193863.666782,
+    "ast_hash": "4c4c0e570f04994603d33ed0acbf983d",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/compare-b.png": {
+    "mtime": 1793787490.4184542,
+    "seen": 1794193863.6670752,
+    "ast_hash": "0dfd074a9e9abb01f2f95316913de62e",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/current/climb.png": {
+    "mtime": 1793787490.419492,
+    "seen": 1794193863.667076,
+    "ast_hash": "d9f6dcca86706534a9f334da80558148",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/current/log.png": {
+    "mtime": 1793787490.4206436,
+    "seen": 1794193863.667076,
+    "ast_hash": "01abe9e611e332bc4e74b72f2e922be1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/tape-round2.png": {
+    "mtime": 1793787490.4419658,
+    "seen": 1794193863.667083,
+    "ast_hash": "93225830dd9a2650a56a8687bb0db608",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round.png": {
+    "mtime": 1793787490.444637,
+    "seen": 1794193863.667084,
+    "ast_hash": "0a1d57f4c6c85de3099cce20aefec9c9",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round2.png": {
+    "mtime": 1793787490.4472275,
+    "seen": 1794193863.667084,
+    "ast_hash": "5ebb7154cd7e8d439cad8d1199ddb1c2",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-round3.png": {
+    "mtime": 1793787490.451019,
+    "seen": 1794193863.667084,
+    "ast_hash": "b291359860573c7acc142b6373837933",
+    "semantic_hash": ""
+  },
+  "brandkit/palette.json": {
+    "mtime": 1793787490.366675,
+    "seen": 1794193863.665214,
+    "ast_hash": "de5219151bc5a58346ac3d945c191f12",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/bright/build-compact.py": {
+    "mtime": 1793787490.413462,
+    "seen": 1794193863.665215,
+    "ast_hash": "16331c77688baf94dd5d6301daf0d591",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/bright/build-modern.py": {
+    "mtime": 1793787490.4137108,
+    "seen": 1794193863.665216,
+    "ast_hash": "d0dff6adb6f1701be4e0f0a08eb1f900",
+    "semantic_hash": ""
+  },
+  "brandkit/state.json": {
+    "mtime": 1793787490.451263,
+    "seen": 1794193863.665216,
+    "ast_hash": "4c59c977096e6d44ef303a5bcf1b755f",
+    "semantic_hash": ""
+  },
+  "brandkit/typography.json": {
+    "mtime": 1793787490.4515958,
+    "seen": 1794193863.665217,
+    "ast_hash": "d3f97ee3b2381acea3e8bfd0b4eb7fd9",
+    "semantic_hash": ""
+  },
+  "scripts/announce-apk.sh": {
+    "mtime": 1793787490.3154352,
+    "seen": 1794193863.6652951,
+    "ast_hash": "36b4d5e3d2e1c87044c95159bf344a58",
+    "semantic_hash": ""
+  },
+  "src/dev/seedDemo.ts": {
+    "mtime": 1793787490.4537253,
+    "seen": 1794193863.6653628,
+    "ast_hash": "ce2790fbc344cd1d741db72873c3e834",
+    "semantic_hash": ""
+  },
+  "src/domain/gymLogo.test.ts": {
+    "mtime": 1794196128.0804558,
+    "seen": 1794196165.467632,
+    "ast_hash": "093a83e56a724be50618440775365c05",
+    "semantic_hash": ""
+  },
+  "src/domain/gymLogo.ts": {
+    "mtime": 1794196145.791343,
+    "seen": 1794196165.467632,
+    "ast_hash": "01506c64db4becadbf44dc5f1e4ef91a",
+    "semantic_hash": ""
+  },
+  "src/release.test.ts": {
+    "mtime": 1793787490.3180726,
+    "seen": 1794193863.666283,
+    "ast_hash": "e66d45b6a72024d783683eca0cf66daa",
+    "semantic_hash": ""
+  },
+  "src/release.ts": {
+    "mtime": 1793787490.3182578,
+    "seen": 1794193863.666284,
+    "ast_hash": "1e5e43adeef6bc52a0cea5101eee0354",
+    "semantic_hash": ""
+  },
+  "src/screens/climb/HighPulse.tsx": {
+    "mtime": 1793957063.2915056,
+    "seen": 1794193863.666322,
+    "ast_hash": "8a7b3c283ccc412691f66b797b448087",
+    "semantic_hash": ""
+  },
+  "src/screens/climb/SessionSummarySheet.tsx": {
+    "mtime": 1793957063.2918398,
+    "seen": 1794193863.666323,
+    "ast_hash": "c3f1bfae3874f96a1284aa4261386766",
+    "semantic_hash": ""
+  },
+  "src/screens/progress/GradeClimbsSheet.tsx": {
+    "mtime": 1793957063.2925742,
+    "seen": 1794193863.666348,
+    "ast_hash": "75fb2219f1424e9ad53862fe0fdbaeda",
+    "semantic_hash": ""
+  },
+  "src/ui/components/GradeChip.tsx": {
+    "mtime": 1793957063.29402,
+    "seen": 1794193863.6663811,
+    "ast_hash": "1423e709cf0405c8b9bdf690d4d22ede",
+    "semantic_hash": ""
+  },
+  "src/ui/components/GymLogo.tsx": {
+    "mtime": 1794196128.0626142,
+    "seen": 1794196165.468689,
+    "ast_hash": "e267da8e1e66d403acdabaa42a5f3c02",
+    "semantic_hash": ""
+  },
+  "src/ui/components/OverflowMenu.tsx": {
+    "mtime": 1793957063.2946193,
+    "seen": 1794193863.6664362,
+    "ast_hash": "176f29788f5c9f305b2eda183bd59cf1",
+    "semantic_hash": ""
+  },
+  "src/ui/components/SessionStrip.tsx": {
+    "mtime": 1793787490.4629314,
+    "seen": 1794193863.666463,
+    "ast_hash": "be4f48f2a5c71c68c9ae3bd32b14efa3",
+    "semantic_hash": ""
+  },
+  "brandkit/brand-guide.html": {
+    "mtime": 1793787490.3628688,
+    "seen": 1794193863.666773,
+    "ast_hash": "bdbe70c8c76ad4950db50d049f614449",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents.html": {
+    "mtime": 1793787490.3669124,
+    "seen": 1794193863.666773,
+    "ast_hash": "acd417b99e139ae9018eddee4bc82420",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents2.html": {
+    "mtime": 1793787490.368368,
+    "seen": 1794193863.666774,
+    "ast_hash": "383f738156f96474f41fe4e59e4a1021",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents3.html": {
+    "mtime": 1793787490.3707607,
+    "seen": 1794193863.666774,
+    "ast_hash": "aaaef49ba7f80ad536ce3d140b0b603a",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0.html": {
+    "mtime": 1793787490.3735907,
+    "seen": 1794193863.666775,
+    "ast_hash": "011c9752092f64335e8bdfe7d8823049",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/compact-hybrid.html": {
+    "mtime": 1793787490.4163969,
+    "seen": 1794193863.6667762,
+    "ast_hash": "caca8dc0dd3005a4af969cec10243dd1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options-lean.html": {
+    "mtime": 1793788252.8559475,
+    "seen": 1794193863.666778,
+    "ast_hash": "f1a04247de9a81b8d9e02842742db6d0",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options.html": {
+    "mtime": 1793787950.6679258,
+    "seen": 1794193863.666778,
+    "ast_hash": "a95197ce817d792a3375cdaf54063a91",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-pairs.html": {
+    "mtime": 1793788671.9140875,
+    "seen": 1794193863.6667788,
+    "ast_hash": "44217b7aab658de039b002c2550f9ebd",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/modern-vs-gear-b.html": {
+    "mtime": 1793787490.4296737,
+    "seen": 1794193863.6667788,
+    "ast_hash": "8cf0478312b6cb86e4f9988ad614d310",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/progress.html": {
+    "mtime": 1793787490.4374485,
+    "seen": 1794193863.6667788,
+    "ast_hash": "3f8eb651aaae3056d1578b6f04c3516e",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-scale-a-tightened.html": {
+    "mtime": 1793833978.3882813,
+    "seen": 1794193863.666782,
+    "ast_hash": "b3163e1b6a8c803ab8e34c9640cf5e4c",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/type-scale-ideas.html": {
+    "mtime": 1793794082.249975,
+    "seen": 1794193863.666783,
+    "ast_hash": "87e32788750fbb4367229e0b781ba3d0",
+    "semantic_hash": ""
+  },
+  "brandkit/brand-guide.png": {
+    "mtime": 1793787490.3663352,
+    "seen": 1794193863.667052,
+    "ast_hash": "2c924c84f22ff994accf623d4c87fd59",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents.png": {
+    "mtime": 1793787490.3681147,
+    "seen": 1794193863.667053,
+    "ast_hash": "937c7e8d8df297b71e2cdc2b39e15b7e",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents2.png": {
+    "mtime": 1793787490.370324,
+    "seen": 1794193863.667053,
+    "ast_hash": "837970fbc9b1039eaf645548242a6c8b",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/accents3.png": {
+    "mtime": 1793787490.3732452,
+    "seen": 1794193863.6670542,
+    "ast_hash": "ab8ced49b56e67f316960e451d961714",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-01-today.jpg": {
+    "mtime": 1793787490.3742578,
+    "seen": 1794193863.6670551,
+    "ast_hash": "ba5856657c5b2b342db161456669d883",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-02-today-scroll.jpg": {
+    "mtime": 1793787490.3749123,
+    "seen": 1794193863.6670551,
+    "ast_hash": "f608842fe18f7f023d038f34976987f3",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-10-calendar-month.jpg": {
+    "mtime": 1793787490.3754015,
+    "seen": 1794193863.6670551,
+    "ast_hash": "42d3f280793133244aca20a08a28eeea",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-11-calendar-day.jpg": {
+    "mtime": 1793787490.375973,
+    "seen": 1794193863.667056,
+    "ast_hash": "bf1d1c1b62d7a828c27c5c5d202c3ab4",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-12-calendar-list.jpg": {
+    "mtime": 1793787490.3766148,
+    "seen": 1794193863.667056,
+    "ast_hash": "510f2a3247f30d2a28b8955d929b68d9",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-13-session-detail.jpg": {
+    "mtime": 1793787490.3772936,
+    "seen": 1794193863.6670568,
+    "ast_hash": "1ec4d3c4fc404ca35f6f819db464c912",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-20-progress.jpg": {
+    "mtime": 1793787490.3779156,
+    "seen": 1794193863.6670568,
+    "ast_hash": "545d5762fa5e16378d50ac286fc783a3",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-21-progress-scroll.jpg": {
+    "mtime": 1793787490.379913,
+    "seen": 1794193863.667058,
+    "ast_hash": "644cef527164ca4f14830123692536cb",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-22-progress-scroll2.jpg": {
+    "mtime": 1793787490.3802438,
+    "seen": 1794193863.667058,
+    "ast_hash": "644cef527164ca4f14830123692536cb",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-23-progress-strength.jpg": {
+    "mtime": 1793787490.381195,
+    "seen": 1794193863.667058,
+    "ast_hash": "8fa1da80cdd6cd941199feee5d7c3e62",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-24-progress-strength-scroll.jpg": {
+    "mtime": 1793787490.3822646,
+    "seen": 1794193863.667059,
+    "ast_hash": "204e71ed92ca1f97f5e0cf981963ff61",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-25-exercise.jpg": {
+    "mtime": 1793787490.3837252,
+    "seen": 1794193863.667059,
+    "ast_hash": "ee3ba3715274f0b2a21f61a49d090fc3",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-30-climb-logger.jpg": {
+    "mtime": 1793787490.3843212,
+    "seen": 1794193863.66706,
+    "ast_hash": "6ebe9939168a3dda745a988d504dbc6c",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-31-climb-logger-logged.jpg": {
+    "mtime": 1793787490.3849413,
+    "seen": 1794193863.66706,
+    "ast_hash": "1227fed1ae99772196919c2cb1a58134",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-32-strength-logger.jpg": {
+    "mtime": 1793787490.3854125,
+    "seen": 1794193863.667061,
+    "ast_hash": "3c65518f00f9e5b43a40a35878288ab1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-33-strength-logger-sets.jpg": {
+    "mtime": 1793787490.3860924,
+    "seen": 1794193863.667061,
+    "ast_hash": "d2d8e659bbc0acf8570c18951df6101d",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-40-settings.jpg": {
+    "mtime": 1793787490.3871322,
+    "seen": 1794193863.667062,
+    "ast_hash": "88f0a9f3caac3f847291df762be67756",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-41-settings-accent-open.jpg": {
+    "mtime": 1793787490.3880363,
+    "seen": 1794193863.667062,
+    "ast_hash": "00426552ce36520d9e1d4bfb5a2fc5ac",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-42-settings-scroll.jpg": {
+    "mtime": 1793787490.3888493,
+    "seen": 1794193863.667062,
+    "ast_hash": "75a685ea8450bb57a3ff415c38d92161",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-43-settings-scroll2.jpg": {
+    "mtime": 1793787490.3893127,
+    "seen": 1794193863.667063,
+    "ast_hash": "75a685ea8450bb57a3ff415c38d92161",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-44-choose-gym.jpg": {
+    "mtime": 1793787490.3896651,
+    "seen": 1794193863.667063,
+    "ast_hash": "d8aba57ffba0d4fcb338e1833072b13b",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-45-edit-grades.jpg": {
+    "mtime": 1793787490.3908002,
+    "seen": 1794193863.667064,
+    "ast_hash": "881d008a3743e5b47088ab5082545fb4",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/dark-46-edit-grades-colour-range.jpg": {
+    "mtime": 1793787490.391526,
+    "seen": 1794193863.667064,
+    "ast_hash": "e644f2a516839e5da376822e8a0f6f74",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-01-today.jpg": {
+    "mtime": 1793787490.392244,
+    "seen": 1794193863.667064,
+    "ast_hash": "7994f69a7622558ae5d58eb80417da0a",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-02-today-scroll.jpg": {
+    "mtime": 1793787490.3933897,
+    "seen": 1794193863.6670651,
+    "ast_hash": "7db66da9d64e95ce5fc220900c818f04",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-10-calendar-month.jpg": {
+    "mtime": 1793787490.3938975,
+    "seen": 1794193863.6670651,
+    "ast_hash": "34d62f898b65db001764d816f721a56a",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-11-calendar-day.jpg": {
+    "mtime": 1793787490.3945084,
+    "seen": 1794193863.667066,
+    "ast_hash": "a2b0c2a1e651e7baed9cc6a3b538c343",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-12-calendar-list.jpg": {
+    "mtime": 1793787490.3951468,
+    "seen": 1794193863.667066,
+    "ast_hash": "11607c98d59d7db7a43b200e2774f1b3",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-13-session-detail.jpg": {
+    "mtime": 1793787490.396021,
+    "seen": 1794193863.6670668,
+    "ast_hash": "22d442df76d5de11630b95c139346762",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-20-progress.jpg": {
+    "mtime": 1793787490.4002473,
+    "seen": 1794193863.6670668,
+    "ast_hash": "b757dba94f14d9f8610fec1396f6356e",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-21-progress-scroll.jpg": {
+    "mtime": 1793787490.401241,
+    "seen": 1794193863.6670668,
+    "ast_hash": "742eb6b453d22ac249b97c9ec817ca76",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-22-progress-scroll2.jpg": {
+    "mtime": 1793787490.4015195,
+    "seen": 1794193863.667068,
+    "ast_hash": "742eb6b453d22ac249b97c9ec817ca76",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-23-progress-strength.jpg": {
+    "mtime": 1793787490.4022465,
+    "seen": 1794193863.667068,
+    "ast_hash": "bf78c97f20b9734366ba868b7dc9c74c",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-24-progress-strength-scroll.jpg": {
+    "mtime": 1793787490.403073,
+    "seen": 1794193863.667069,
+    "ast_hash": "791f06bfe98318f8b05318ec6f65d65f",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-25-exercise.jpg": {
+    "mtime": 1793787490.4035826,
+    "seen": 1794193863.667069,
+    "ast_hash": "d28d70e18af6798b756bdba662301914",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-30-climb-logger.jpg": {
+    "mtime": 1793787490.4042602,
+    "seen": 1794193863.66707,
+    "ast_hash": "50fbed79f5d40a59cbd28df3b536c699",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-31-climb-logger-logged.jpg": {
+    "mtime": 1793787490.4048934,
+    "seen": 1794193863.66707,
+    "ast_hash": "b9a79228182ad706fbdb6622c6858e15",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-32-strength-logger.jpg": {
+    "mtime": 1793787490.405517,
+    "seen": 1794193863.66707,
+    "ast_hash": "4597f2f5af04555db320b8d7c05c6d71",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-33-strength-logger-sets.jpg": {
+    "mtime": 1793787490.4064124,
+    "seen": 1794193863.6670709,
+    "ast_hash": "f2b9eb65379a05a84dd08d6f0b0bc613",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-40-settings.jpg": {
+    "mtime": 1793787490.407638,
+    "seen": 1794193863.6670709,
+    "ast_hash": "0e260c3fb1acd93a23405ba347c6717c",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-41-settings-accent-open.jpg": {
+    "mtime": 1793787490.4084375,
+    "seen": 1794193863.667072,
+    "ast_hash": "737b7cb22ab132bb211f07922c1e5b28",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-42-settings-scroll.jpg": {
+    "mtime": 1793787490.4090946,
+    "seen": 1794193863.667072,
+    "ast_hash": "11cd003029acbf6def0bf9971e7fc96d",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-43-settings-scroll2.jpg": {
+    "mtime": 1793787490.4095173,
+    "seen": 1794193863.667072,
+    "ast_hash": "11cd003029acbf6def0bf9971e7fc96d",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-44-choose-gym.jpg": {
+    "mtime": 1793787490.409791,
+    "seen": 1794193863.667073,
+    "ast_hash": "0a587940fccdb8def196f25716f79603",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-45-edit-grades.jpg": {
+    "mtime": 1793787490.410605,
+    "seen": 1794193863.667073,
+    "ast_hash": "852ba11d9f73ff8605957b8d191486cd",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/app-2.7.0/light-46-edit-grades-colour-range.jpg": {
+    "mtime": 1793787490.4111688,
+    "seen": 1794193863.667074,
+    "ast_hash": "983a862b4c518481e5927945f2db9dc1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/bright/strip.png": {
+    "mtime": 1793787490.41611,
+    "seen": 1794193863.6670752,
+    "ast_hash": "baece2144b6256b8342811e509bfadc1",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/current/progress-1.png": {
+    "mtime": 1793787490.4223425,
+    "seen": 1794193863.667077,
+    "ast_hash": "e014f646f7322f21a8a33fc5d9b7c534",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/current/progress-2.png": {
+    "mtime": 1793787490.4238398,
+    "seen": 1794193863.667077,
+    "ast_hash": "dfe5145559f45d9093731906171949dc",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options/today-compare-lean.png": {
+    "mtime": 1793788256.67443,
+    "seen": 1794193863.667077,
+    "ast_hash": "4d3e8126d56b507b9796dcfbbd873e34",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options/today-compare-pairs.png": {
+    "mtime": 1793788675.7465136,
+    "seen": 1794193863.6670778,
+    "ast_hash": "a875a526d96ed9a123fbb82ff97926fa",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options/today-compare.png": {
+    "mtime": 1793787954.5692372,
+    "seen": 1794193863.6670778,
+    "ast_hash": "201e4ad1f8e9316689d2718c7580fa45",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options/type-scale-a-tightened.png": {
+    "mtime": 1793833995.1266353,
+    "seen": 1794193863.667079,
+    "ast_hash": "8ee7a12fafca1ebd12c6e0f654d5cb75",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/font-options/type-scale-ideas.png": {
+    "mtime": 1793794084.5860596,
+    "seen": 1794193863.667079,
+    "ast_hash": "32635a39d65a777859e489ee40bcc353",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/cmp-0.png": {
+    "mtime": 1793787490.424394,
+    "seen": 1794193863.667079,
+    "ast_hash": "8482543dec9df6d95eb17e62f347434d",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/cmp-1.png": {
+    "mtime": 1793787490.4248679,
+    "seen": 1794193863.66708,
+    "ast_hash": "a3594ca2aeb55212dbc379c7785870b3",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/cmp-2.png": {
+    "mtime": 1793787490.4253693,
+    "seen": 1794193863.66708,
+    "ast_hash": "ae1f2259171dc6c435a81bf7f0119ea5",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/cmp-3.png": {
+    "mtime": 1793787490.4259012,
+    "seen": 1794193863.6670809,
+    "ast_hash": "f953bf88a29dbf787054bfa8c62240d5",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/prog-climb-dark.png": {
+    "mtime": 1793787490.4269392,
+    "seen": 1794193863.6670809,
+    "ast_hash": "a03827add05d988aa51566420b172d25",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/prog-climb-light.png": {
+    "mtime": 1793787490.4284523,
+    "seen": 1794193863.6670809,
+    "ast_hash": "062773e044d9b0b5a7ee634472d7c454",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/gearb/prog-strength-dark.png": {
+    "mtime": 1793787490.4293957,
+    "seen": 1794193863.667082,
+    "ast_hash": "92165aa2846019ccbe8750c86c1bbcfe",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/modern-vs-gear-b.png": {
+    "mtime": 1793787490.4369442,
+    "seen": 1794193863.667082,
+    "ast_hash": "c797587527ee0a7304912eb1e454f814",
+    "semantic_hash": ""
+  },
+  "brandkit/reviews/progress.png": {
+    "mtime": 1793787490.4404159,
+    "seen": 1794193863.667083,
+    "ast_hash": "a8781a733d71246e8bbc40dbc95bb598",
+    "semantic_hash": ""
+  }
+}

@@ -249,3 +249,22 @@ export const getInstallId = (): string => {
   setSetting(INSTALL_ID_KEY, id);
   return id;
 };
+
+const SHARED_GYM_LOGOS_KEY = 'shared_gym_logos';
+
+/** Gym logos already sent to the shared directory, as "<gym id> <logo fingerprint>" entries. */
+export const getSharedGymLogos = (): Set<string> => {
+  const setting = getFirst<AppSettingRow>('SELECT value FROM app_settings WHERE key = ? LIMIT 1;', [
+    SHARED_GYM_LOGOS_KEY,
+  ]);
+  try {
+    const parsed: unknown = JSON.parse(setting?.value ?? '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((entry): entry is string => typeof entry === 'string') : []);
+  } catch {
+    return new Set();
+  }
+};
+
+export const setSharedGymLogos = (entries: Set<string>): void => {
+  setSetting(SHARED_GYM_LOGOS_KEY, JSON.stringify([...entries]));
+};

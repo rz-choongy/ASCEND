@@ -10,6 +10,7 @@ import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { migrate } from './src/db/migrate';
 import { syncActiveSessionNotification } from './src/domain/sessionNotification';
+import { syncCloud } from './src/integrations/cloud/cloudSync';
 import { Dock } from './src/navigation/Dock';
 import type { RootStackParamList, TabParamList } from './src/navigation/types';
 import { BugReportScreen } from './src/screens/BugReportScreen';
@@ -179,10 +180,14 @@ export default function App() {
     // needed; syncing on return (and on launch) refreshes or clears it. The reconciler reads the
     // DB each time, so these few calls cover start, finish and restart without per-screen wiring.
     void syncActiveSessionNotification();
+    // Cloud sync (opt-in, a no-op when off) catches up on launch and each return to the app, which
+    // also picks up edits made in session history since the last push.
+    void syncCloud();
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active' || state === 'background') {
         void syncActiveSessionNotification();
       }
+      if (state === 'active') void syncCloud();
     });
     return () => sub.remove();
   }, [isReady]);
